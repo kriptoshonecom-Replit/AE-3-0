@@ -1,0 +1,17 @@
+{
+  "name": "Aloha Essential CPQ 3.0",
+  "short_name": "CPQ 3.0",
+  "description": "Quote builder for Aloha Essential",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#7c3aed",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "500x500",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

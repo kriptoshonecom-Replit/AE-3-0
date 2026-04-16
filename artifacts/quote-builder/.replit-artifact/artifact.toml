@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Quote Builder"
+version = "1.0.0"
+id = "artifacts/quote-builder"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25859
+
+[services.development]
+run = "pnpm --filter @workspace/quote-builder run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/quote-builder", "run", "build" ]
+publicDir = "artifacts/quote-builder/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25859"
+BASE_PATH = "/"

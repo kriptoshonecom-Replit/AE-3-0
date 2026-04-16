@@ -1,0 +1,34 @@
+{
+  "categories": [
+    {
+      "id": "net-new",
+      "name": "Net New",
+      "lineItems": [
+        { "id": "nn-001", "name": "Core Programming",   "duration": 12 },
+        { "id": "nn-002", "name": "Core Training",      "duration": 8 },
+        { "id": "nn-003", "name": "Project Management", "duration": 12 },
+        { "id": "nn-004", "name": "Live Support",       "duration": 8 }
+      ]
+    },
+    {
+      "id": "refresh",
+      "name": "Refresh",
+      "lineItems": [
+        { "id": "rf-001", "name": "Core Programming",   "duration": 6 },
+        { "id": "rf-002", "name": "Core Training",      "duration": 4 },
+        { "id": "rf-003", "name": "Project Management", "duration": 12 },
+        { "id": "rf-004", "name": "Live Support",       "duration": 8 }
+      ]
+    },
+    {
+      "id": "site-copy",
+      "name": "Site Copy",
+      "lineItems": [
+        { "id": "sc-001", "name": "Core Programming",   "duration": 9 },
+        { "id": "sc-002", "name": "Core Training",      "duration": 8 },
+        { "id": "sc-003", "name": "Project Management", "duration": 12 },
+        { "id": "sc-004", "name": "Live Support",       "duration": 8 }
+      ]
+    }
+  ]
+}

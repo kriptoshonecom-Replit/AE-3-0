@@ -1,0 +1,187 @@
+{
+  "categories": [
+    {
+      "id": "core",
+      "name": "Core",
+      "items": [
+        { "id": "co-001", "name": "Aloha Essentials 3.0 TS", "price": 130.00 },
+        { "id": "co-002", "name": "Aloha Essentials 3.0 QS", "price": 130.00 }
+      ]
+    },
+
+    {
+      "id": "terminals",
+      "name": "Terminals",
+      "items": [
+        { "id": "tm-001", "name": "CX5 15 inch 4:3", "price": 88.00 },
+        { "id": "tm-002", "name": "CX5 15 inch 4:3 Wall Mount", "price": 88.00 }
+      ]
+    },
+
+    {
+      "id": "server",
+      "name": "Server",
+      "items": [
+        { "id": "se-001", "name": "N4000 Server 16GB i5 240GB SSD", "price": 97.00 }
+      ]
+    },
+
+    {
+      "id": "serveradd",
+      "name": "Server Add",
+      "items": [
+        { "id": "se-002", "name": "N4000 Server 16GB i5 240GB SSD", "price": 77.00 },
+        { "id": "se-003", "name": "2-Display Port USB KVM Switch", "price": 11.00 },
+        { "id": "se-004", "name": "4-Display Port USB KVM Switch", "price": 15.00 }
+      ]
+    },
+
+    {
+      "id": "tablet",
+      "name": "Tablet",
+      "items": [
+        { "id": "ta-001", "name": "NCR 8-inch Tablet SB EQ 6200 Shoulder Strap (Rugged Frame)", "price": 75.00 },
+        { "id": "ta-002", "name": "NCR 8-inch Tablet MSR Shoulder Strap (Rugged Frame)", "price": 65.00 },
+        { "id": "ta-003", "name": "NCR 8-inch Tablet MSR Shoulder Strap (Scanner Frame)", "price": 70.00 },
+        { "id": "ta-004", "name": "Hand Strap for NCR 8-Inch Tablet", "price": 1.00 },
+        { "id": "ta-005", "name": "NCR 8 inch Tablet Extended Battery Pack", "price": 8.00 },
+        { "id": "ta-006", "name": "Multi-Bay Charger-Power Supply", "price": 11.00 },
+        { "id": "ta-007", "name": "Multi-Bay Charger-Single Base Unit", "price": 8.00 },
+        { "id": "ta-008", "name": "Multi-Bay Charger-5-Bay Charger", "price": 37.00 }
+      ]
+    },
+
+    {
+      "id": "handheld",
+      "name": "Handheld",
+      "items": [
+        { "id": "ha-001", "name": "Ingenico Axium  Ex8000 (OrderPay) Case with Clip", "price": 57.00 },
+        { "id": "ha-002", "name": "Ingenico Axium  Ex8000 (OrderPay) Case with Strap", "price": 57.00 },
+        { "id": "ha-003", "name": "Axium Single-Bay Charging Station", "price": 5.00 },
+        { "id": "ha-004", "name": "Axium Multi-Bay Charging Station", "price": 20.00 },
+        { "id": "ha-005", "name": "Axium Additional License - TS Only", "price": 20.00 }
+      ]
+    },
+
+    {
+      "id": "pinpads",
+      "name": "Pin Pads",
+      "items": [
+        { "id": "pi-001", "name": "Equinox 6200m P-USB with Stand Voyix Pay", "price": 35.00 },
+        { "id": "pi-002", "name": "Equinox 6200m P-USB with Stand WorldPay/Vantiv", "price": 40.00 },
+        { "id": "pi-003", "name": "Equinox 6200m Mobile without Printer Voyix Pay", "price": 35.00 },
+        { "id": "pi-004", "name": "Equinox 6200m Mobile without Printer WorldPay/Vantiv", "price": 40.00 },
+        { "id": "pi-005", "name": "Equinox 6200m P-USB CX5/CX7 POS Mount Voyix Pay", "price": 35.00 },
+        { "id": "pi-006", "name": "Equinox 6200m P-USB CX5/CX7 POS Mount WorldPay/Vantiv", "price": 40.00 },
+        { "id": "pi-007", "name": "Charging Stand for 6200m Mobile", "price": 2.00 },
+        { "id": "pi-008", "name": "Equinox 8500i P-USB with Stand Voyix Pay", "price": 40.00 },
+        { "id": "pi-009", "name": "Equinox 8500i P-USB with Stand WorldPay/Vantiv", "price": 45.00 },
+        { "id": "pi-010", "name": "Weighted Base with Rubber Pad", "price": 1.00 },
+        { "id": "pi-011", "name": "Weighted Base with Adhesive Base", "price": 1.00 }
+      ]
+    },
+
+    {
+      "id": "printers",
+      "name": "Printers",
+      "items": [
+        { "id": "pr-001", "name": "Bixolon SRP-S300 Serial Label Printer", "price": 15.00 },
+        { "id": "pr-002", "name": "Bixolon SRP-S300 Ethernet Label Printer", "price": 16.00 },
+        { "id": "pr-003", "name": "Bixolon SRP-350 Plus V USB+Ethernet+Serial Thermal Printer", "price": 15.00 },
+        { "id": "pr-004", "name": "Bixolon SRP-275 III Kitchen Impact Ethernet", "price": 18.00 },
+        { "id": "pr-005", "name": "Bixolon SRP-275 III Kitchen Impact Serial", "price": 16.00 }
+      ]
+    },
+
+    {
+      "id": "displays",
+      "name": "Displays",
+      "items": [
+        { "id": "dp-001", "name": "XL10 No-Touch Display With MSR", "price": 17.00 },
+        { "id": "dp-002", "name": "XL10 USB-C Touch Display With MSR", "price": 25.00 },
+        { "id": "dp-003", "name": "Mounting Bracket and Cable for CX5/CX7", "price": 1.00 },
+        { "id": "dp-004", "name": "XL10 Table Top Stand", "price": 3.00 }
+      ]
+    },
+
+    {
+      "id": "peripherals",
+      "name": "Peripherals",
+      "items": [
+        { "id": "ps-001", "name": "MS 16 Inch Cash", "price": 10.00 },
+        { "id": "ps-002", "name": "Powervar 250VA Server BBU", "price": 20.00 },
+        { "id": "ps-003", "name": "Powervar 78VA Kitchen GG Power Conditioner", "price": 10.00 },
+        { "id": "ps-004", "name": "DS9308 QR and Bar Code Scanner", "price": 16.00 },
+        { "id": "ps-005", "name": "24 Port Switch with 24 PoE", "price": 25.00 },
+        { "id": "ps-006", "name": "Additional 24 Port Switch", "price": 15.00 },
+        { "id": "ps-007", "name": "Cash Drawer Till", "price": 1.00 }
+      ]
+    },
+
+    {
+      "id": "expo",
+      "name": "Advanced Kitchen",
+      "items": [
+        { "id": "exp-001", "name": "Expo Station HW+SW", "price": 98.00 },
+        { "id": "exp-002", "name": "Heavy Duty Radial Arm Kitchen Mount", "price": 10.00 }
+      ]
+    },
+
+    {
+      "id": "prep",
+      "name": "Basic Kitchen",
+      "items": [
+        { "id": "prp-001", "name": "Prep Station HW+SW", "price": 91.00 },
+        { "id": "prp-002", "name": "Wall Kitchen Mount Bracket", "price": 2.00 },
+        { "id": "prp-003", "name": "Counter Pole Kitchen Mount", "price": 10.00 }
+      ]
+    },
+   
+    {
+      "id": "nss",
+      "name": "Network and Security",
+      "items": [
+        { "id": "net-001", "name": "Network Security", "price": 90.00 },
+        { "id": "net-002", "name": "Aloha Wi-Fi", "price": 100.00 },
+        { "id": "net-003", "name": "Indoor Wireless Access Point-330", "price": 30.00 },
+        { "id": "net-004", "name": "Outdoor Wireless Access Point-332", "price": 40.00 },
+        { "id": "net-005", "name": "Site Shield (Standalone)", "price": 70.00 },
+        { "id": "net-006", "name": "Threat Defender", "price": 12.00 },
+        { "id": "net-007", "name": "NCR Patch Management", "price": 9.00 },
+        { "id": "net-008", "name": "NCR Antivirus", "price": 7.00 },
+        { "id": "net-009", "name": "PCI Compliance Services (ControlScan)", "price": 25.00 },
+        { "id": "net-010", "name": "Internal Network Scanning", "price": 15.00 },
+        { "id": "net-011", "name": "Log Management", "price": 18.00 },
+        { "id": "net-012", "name": "Broadband Failover", "price": 75.00 }
+      ]
+    },
+    
+    {
+      "id": "softwareadd",
+      "name": "Software Add",
+      "items": [
+        { "id": "sa-001", "name": "Consumer Marketing-Core", "price": 50.00 },
+        { "id": "sa-002", "name": "Aloha Insight", "price": 15.00 },
+        { "id": "sa-003", "name": "Aloha Console", "price": 10.00 },
+        { "id": "sa-004", "name": "Aloha Stored Value", "price": 15.00 },
+        { "id": "sa-005", "name": "Aloha API", "price": 50.00 },
+        { "id": "sa-006", "name": "Aloha Restaurant Guard", "price": 125.00 },
+        { "id": "sa-007", "name": "Aloha Delivery", "price": 30.00 },
+        { "id": "sa-008", "name": "Aloha Stored Value-Webstore", "price": 20.00 },
+        { "id": "sa-009", "name": "Enterprise Back Office", "price": 140.00 },
+        { "id": "sa-011", "name": "Axium License-TS", "price": 20.00 },
+        { "id": "sa-012", "name": "Mobile SW License-TS", "price": 30.00 },
+        { "id": "sa-013", "name": "Mobile SW License-QS", "price": 30.00 },
+        { "id": "sa-014", "name": "PMS Interface", "price": 40.00 },
+        { "id": "sa-015", "name": "Aloha Mobile Engage", "price": 0.00 },
+        { "id": "sa-016", "name": "Aloha Connect EIT", "price": 0.00 },
+        { "id": "sa-017", "name": "Aloha Connect EIT", "price": 0.00 },
+        { "id": "sa-018", "name": "Aloha Smart Manager - Starter", "price": 0.00 },
+        { "id": "sa-019", "name": "Biometric License", "price": 0.00 },
+        { "id": "sa-020", "name": "SW ATO with Non-NCR Radiant HW", "price": 0.00 },
+        { "id": "sa-021", "name": "3rd Party Kitchen Integration", "price": 0.00 },
+        { "id": "sa-022", "name": "SBONet", "price": 0.00 }
+      ]
+    }
+  ]
+}
