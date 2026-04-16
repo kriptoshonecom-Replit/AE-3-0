@@ -1158,9 +1158,16 @@ textarea:focus::placeholder {
 }
 
 .pit-right {
-  min-height: 80px;
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
+}
+
+.pit-right-inner {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .pit-placeholder {
@@ -1352,11 +1359,11 @@ textarea:focus::placeholder {
   color: var(--accent);
 }
 
-.pit-yn-toggles {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  border-top: 1px solid var(--border);
+.pit-yn-card {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 .pit-yn-row {

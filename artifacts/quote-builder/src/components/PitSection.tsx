@@ -91,62 +91,65 @@ export default function PitSection({ pitType, onChange }: Props) {
       </div>
 
       <div className="pit-right">
-        {selected ? (
-          <div className="pit-items">
-            <div className="pit-items-header">
-              <span className="pit-col-name">Core Line Items</span>
-              <span className="pit-col-duration">Hrs</span>
-              <span className="pit-col-price">Price</span>
+        <div className="pit-right-inner">
+          {selected ? (
+            <div className="pit-items">
+              <div className="pit-items-header">
+                <span className="pit-col-name">Core Line Items</span>
+                <span className="pit-col-duration">Hrs</span>
+                <span className="pit-col-price">Price</span>
+              </div>
+              <div className="pit-items-list">
+                {selected.lineItems.map((item) => {
+                  const price = item.duration * PIT_HOURLY_RATE;
+                  return (
+                    <div key={item.id} className="pit-item-row">
+                      <span className="pit-item-name">{item.name}</span>
+                      <span className="pit-item-duration">{item.duration} hr{item.duration !== 1 ? "s" : ""}</span>
+                      <span className="pit-item-price">${price.toFixed(2)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="pit-items-total">
+                <span className="pit-col-name">Total</span>
+                <span className="pit-col-duration">
+                  {selected.lineItems.reduce((sum, item) => sum + item.duration, 0)} hrs
+                </span>
+                <span className="pit-col-price">
+                  ${selected.lineItems.reduce((sum, item) => sum + item.duration * PIT_HOURLY_RATE, 0).toFixed(2)}
+                </span>
+              </div>
             </div>
-            <div className="pit-items-list">
-              {selected.lineItems.map((item) => {
-                const price = item.duration * PIT_HOURLY_RATE;
-                return (
-                  <div key={item.id} className="pit-item-row">
-                    <span className="pit-item-name">{item.name}</span>
-                    <span className="pit-item-duration">{item.duration} hr{item.duration !== 1 ? "s" : ""}</span>
-                    <span className="pit-item-price">${price.toFixed(2)}</span>
-                  </div>
-                );
-              })}
+          ) : (
+            <div className="pit-placeholder">
+              Select a PIT Type to see its core line items.
             </div>
-            <div className="pit-items-total">
-              <span className="pit-col-name">Total</span>
-              <span className="pit-col-duration">
-                {selected.lineItems.reduce((sum, item) => sum + item.duration, 0)} hrs
-              </span>
-              <span className="pit-col-price">
-                ${selected.lineItems.reduce((sum, item) => sum + item.duration * PIT_HOURLY_RATE, 0).toFixed(2)}
-              </span>
-            </div>
-            <div className="pit-yn-toggles">
-              {[
-                { id: "connected-payments-yn", label: "Connected Payments" },
-                { id: "online-ordering-yn", label: "Online Ordering" },
-              ].map(({ id, label }) => (
-                <div key={id} className="pit-yn-row">
-                  <span className="pit-yn-label">{label}</span>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={yesNoToggles[id]}
-                    className={`pit-toggle-switch ${yesNoToggles[id] ? "pit-toggle-on" : "pit-toggle-off"}`}
-                    onClick={() => handleYesNoToggle(id)}
-                  >
-                    <span className="pit-toggle-thumb" />
-                  </button>
-                  <span className={`pit-yn-state ${yesNoToggles[id] ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
-                    {yesNoToggles[id] ? "Yes" : "No"}
-                  </span>
-                </div>
-              ))}
-            </div>
+          )}
+
+          <div className="pit-yn-card">
+            {[
+              { id: "connected-payments-yn", label: "Connected Payments" },
+              { id: "online-ordering-yn", label: "Online Ordering" },
+            ].map(({ id, label }) => (
+              <div key={id} className="pit-yn-row">
+                <span className="pit-yn-label">{label}</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={yesNoToggles[id]}
+                  className={`pit-toggle-switch ${yesNoToggles[id] ? "pit-toggle-on" : "pit-toggle-off"}`}
+                  onClick={() => handleYesNoToggle(id)}
+                >
+                  <span className="pit-toggle-thumb" />
+                </button>
+                <span className={`pit-yn-state ${yesNoToggles[id] ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
+                  {yesNoToggles[id] ? "Yes" : "No"}
+                </span>
+              </div>
+            ))}
           </div>
-        ) : (
-          <div className="pit-placeholder">
-            Select a PIT Type to see its core line items.
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
