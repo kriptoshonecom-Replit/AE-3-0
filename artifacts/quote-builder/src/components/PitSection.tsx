@@ -19,9 +19,11 @@ const OPTIONAL_PROGRAMS = [
 interface Props {
   pitType: string;
   onChange: (pitType: string) => void;
+  yesNoToggles: Record<string, boolean>;
+  onYesNoChange: (id: string, value: boolean) => void;
 }
 
-export default function PitSection({ pitType, onChange }: Props) {
+export default function PitSection({ pitType, onChange, yesNoToggles, onYesNoChange }: Props) {
   const selected = pitCategories.find((c) => c.id === pitType) ?? null;
 
   const [toggles, setToggles] = useState<Record<string, boolean>>(
@@ -30,15 +32,6 @@ export default function PitSection({ pitType, onChange }: Props) {
 
   const handleToggle = (id: string) => {
     setToggles((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const [yesNoToggles, setYesNoToggles] = useState<Record<string, boolean>>({
-    "connected-payments-yn": false,
-    "online-ordering-yn": false,
-  });
-
-  const handleYesNoToggle = (id: string) => {
-    setYesNoToggles((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   return (
@@ -139,7 +132,7 @@ export default function PitSection({ pitType, onChange }: Props) {
                   role="switch"
                   aria-checked={yesNoToggles[id]}
                   className={`pit-toggle-switch ${yesNoToggles[id] ? "pit-toggle-on" : "pit-toggle-off"}`}
-                  onClick={() => handleYesNoToggle(id)}
+                  onClick={() => onYesNoChange(id, !yesNoToggles[id])}
                 >
                   <span className="pit-toggle-thumb" />
                 </button>

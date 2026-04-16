@@ -55,6 +55,14 @@ export default function QuoteBuilder() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [qtyMismatch, setQtyMismatch] = useState<QtySyncCheck | null>(null);
   const [pinPadMismatch, setPinPadMismatch] = useState<PinPadSyncCheck | null>(null);
+  const [yesNoToggles, setYesNoToggles] = useState<Record<string, boolean>>({
+    "connected-payments-yn": false,
+    "online-ordering-yn": false,
+  });
+
+  const handleYesNoChange = (id: string, value: boolean) => {
+    setYesNoToggles((prev) => ({ ...prev, [id]: value }));
+  };
   const printAreaRef = useRef<HTMLDivElement>(null);
 
   // Load the correct quote once we know who the user is
@@ -304,13 +312,15 @@ export default function QuoteBuilder() {
               <PitSection
                 pitType={quote.meta.pitType ?? ""}
                 onChange={handlePitTypeChange}
+                yesNoToggles={yesNoToggles}
+                onYesNoChange={handleYesNoChange}
               />
             </section>
 
             {/* Product Related PIT section */}
             <section className="section">
               <h2 className="section-title">Product Related PIT</h2>
-              <ProductRelatedPitSection groups={quote.groups} />
+              <ProductRelatedPitSection groups={quote.groups} yesNoToggles={yesNoToggles} />
             </section>
 
             {/* Groups section */}

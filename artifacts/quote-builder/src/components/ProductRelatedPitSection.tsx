@@ -37,9 +37,7 @@ const PIT_ITEM_MAPPING: Record<string, ProductMapping> = {
   "sta-005": { type: "category", categoryIds: ["expo", "prep"] },
   "sta-006": { type: "category", categoryIds: ["printers"] },
   "sta-007": { type: "category", categoryIds: ["pinpads"] },
-  // Programming
-  "pro-001": { type: "category", categoryIds: ["pinpads"] },
-  "pro-002": { type: "product", productIds: ["sa-015", "sa-016", "sa-017"] },
+  // Programming — pro-001 and pro-002 are toggle-driven (see forcedItemIds below)
   "pro-003": { type: "product", productIds: ["sa-001"] },
   "pro-004": { type: "product", productIds: ["sa-002", "sa-003"] },
   "pro-005": { type: "product", productIds: ["sa-005"] },
@@ -53,6 +51,11 @@ const PIT_ITEM_MAPPING: Record<string, ProductMapping> = {
   "tr-004": { type: "product", productIds: ["sa-015", "sa-016", "sa-017"] },
   "tr-005": { type: "category", categoryIds: ["expo", "prep"] },
   "tr-006": { type: "category", categoryIds: ["handheld"] },
+};
+
+const YES_NO_ITEM_MAP: Record<string, string> = {
+  "connected-payments-yn": "pro-001",
+  "online-ordering-yn": "pro-002",
 };
 
 function computeHours(
@@ -91,15 +94,16 @@ function computeHours(
 interface CategoryTableProps {
   category: PitCategory;
   groups: QuoteGroup[];
+  forcedItemIds: string[];
 }
 
-function CategoryTable({ category, groups }: CategoryTableProps) {
+function CategoryTable({ category, groups, forcedItemIds }: CategoryTableProps) {
   const rows = category.lineItems
-    .map((item) => ({
-      item,
-      hours: computeHours(item, groups),
-      price: computeHours(item, groups) * PIT_HOURLY_RATE,
-    }))
+    .map((item) => {
+      const forced = forcedItemIds.includes(item.id);
+      const hours = forced ? item.duration : computeHours(item, groups);
+      return { item, hours, price: hours * PIT_HOURLY_RATE };
+    })
     .filter((r) => r.hours > 0);
 
   const totalHours = rows.reduce((s, r) => s + r.hours, 0);
@@ -143,21 +147,34 @@ function CategoryTable({ category, groups }: CategoryTableProps) {
 
 interface Props {
   groups: QuoteGroup[];
+  yesNoToggles: Record<string, boolean>;
 }
 
-export default function ProductRelatedPitSection({ groups }: Props) {
+export default function ProductRelatedPitSection({ groups, yesNoToggles }: Props) {
   const hasAnyProducts = groups.some((g) => g.lineItems.length > 0);
+
+  const forcedItemIds = Object.entries(YES_NO_ITEM_MAP)
+    .filter(([toggleId]) => yesNoToggles[toggleId])
+    .map(([, itemId]) => itemId);
+
+  const hasContent =
+    hasAnyProducts || forcedItemIds.length > 0;
 
   return (
     <div className="prpit-card">
-      {!hasAnyProducts ? (
+      {!hasContent ? (
         <div className="prpit-placeholder">
           Add products to the Line Items section to see related PIT services.
         </div>
       ) : (
         <div className="prpit-grid">
           {pitCategories.map((cat) => (
-            <CategoryTable key={cat.id} category={cat} groups={groups} />
+            <CategoryTable
+              key={cat.id}
+              category={cat}
+              groups={groups}
+              forcedItemIds={forcedItemIds}
+            />
           ))}
         </div>
       )}
