@@ -4,14 +4,14 @@
       "id": "programming",
       "name": "Programming",
       "lineItems": [
-        { "id": "pro-001", "name": "Programming Connected Payments", "duration": 2 },
-        { "id": "pro-002", "name": "Programming Online Ordering", "duration": 10 },
-        { "id": "pro-003", "name": "Programming Consumer Marketing", "duration": 2 },
-        { "id": "pro-004", "name": "Programming Insight or Console", "duration": 1 },
-        { "id": "pro-005", "name": "Programming Aloha API's (BSP)", "duration": 2 },
-        { "id": "pro-006", "name": "Programming Kitchen Custom", "duration": 6 },
-        { "id": "pro-007", "name": "Programming OrderPay", "duration": 2 },
-        { "id": "pro-008", "name": "Programming Aloha Delivery", "duration": 2 }
+        { "id": "pro-001", "name": "Programming Connected Payments",  "duration": 2  },
+        { "id": "pro-002", "name": "Programming Online Ordering",     "duration": 10 },
+        { "id": "pro-003", "name": "Programming Consumer Marketing",  "duration": 2  },
+        { "id": "pro-004", "name": "Programming Insight or Console",  "duration": 1  },
+        { "id": "pro-005", "name": "Programming Aloha API's (BSP)",   "duration": 2  },
+        { "id": "pro-006", "name": "Programming Kitchen Custom",      "duration": 6  },
+        { "id": "pro-007", "name": "Programming OrderPay",           "duration": 2  },
+        { "id": "pro-008", "name": "Programming Aloha Delivery",     "duration": 2  }
       ]
     },
 
@@ -19,12 +19,12 @@
       "id": "training",
       "name": "Training",
       "lineItems": [
-        { "id": "tr-001", "name": "Training Connected Payments", "duration": 2 },
-        { "id": "tr-002", "name": "Training Consumer Marketing", "duration": 2 },
-        { "id": "tr-003", "name": "Training Insight or Console", "duration": 1 },
-        { "id": "tr-004", "name": "Training Online Ordering", "duration": 2 },
-        { "id": "tr-005", "name": "Training Aloha Kitchen", "duration": 2 },
-        { "id": "tr-006", "name": "Training OrderPay", "duration": 2 }
+        { "id": "tr-001", "name": "Training Connected Payments",  "duration": 2 },
+        { "id": "tr-002", "name": "Training Consumer Marketing",  "duration": 2 },
+        { "id": "tr-003", "name": "Training Insight or Console",  "duration": 1 },
+        { "id": "tr-004", "name": "Training Online Ordering",     "duration": 2 },
+        { "id": "tr-005", "name": "Training Aloha Kitchen",       "duration": 2 },
+        { "id": "tr-006", "name": "Training OrderPay",            "duration": 2 }
       ]
     },
 
@@ -32,13 +32,14 @@
       "id": "install",
       "name": "Install",
       "lineItems": [
-        { "id": "ins-001", "name": "Install Terminal", "duration": 1 },
-        { "id": "ins-002", "name": "Install Server", "duration": 2 },
-        { "id": "ins-003", "name": "Install Tablet", "duration": 1 },
-        { "id": "ins-004", "name": "Install Displays", "duration": 1 },
-        { "id": "ins-005", "name": "Install KDS", "duration": 1 },
-        { "id": "ins-006", "name": "Install Printers", "duration": 1 },
-        { "id": "ins-007", "name": "Install PinPads", "duration": 1 }
+        { "id": "ins-001", "name": "Install Terminal",  "duration": 1 },
+        { "id": "ins-002", "name": "Install Server",    "duration": 2 },
+        { "id": "ins-003", "name": "Install Tablet",    "duration": 1 },
+        { "id": "ins-004", "name": "Install Displays",  "duration": 1 },
+        { "id": "ins-005", "name": "Install KDS",       "duration": 1 },
+        { "id": "ins-006", "name": "Install Printers",  "duration": 1 },
+        { "id": "ins-007", "name": "Install PinPads",   "duration": 1 },
+        { "id": "ins-008", "name": "Install Handheld",  "duration": 1 }
       ]
     },
 
@@ -46,13 +47,14 @@
       "id": "staging",
       "name": "Staging",
       "lineItems": [
-        { "id": "sta-001", "name": "Staging Terminal", "duration": 1 },
-        { "id": "sta-002", "name": "Staging Server", "duration": 2 },
-        { "id": "sta-003", "name": "Staging Tablet", "duration": 1 },
-        { "id": "sta-004", "name": "Staging Displays", "duration": 1 },
-        { "id": "sta-005", "name": "Staging KDS", "duration": 1 },
-        { "id": "sta-006", "name": "Staging Printers", "duration": 1 },
-        { "id": "sta-007", "name": "Staging PinPads", "duration": 1 }
+        { "id": "sta-001", "name": "Staging Terminal",  "duration": 1 },
+        { "id": "sta-002", "name": "Staging Server",    "duration": 2 },
+        { "id": "sta-003", "name": "Staging Tablet",    "duration": 1 },
+        { "id": "sta-004", "name": "Staging Displays",  "duration": 1 },
+        { "id": "sta-005", "name": "Staging KDS",       "duration": 1 },
+        { "id": "sta-006", "name": "Staging Printers",  "duration": 1 },
+        { "id": "sta-007", "name": "Staging PinPads",   "duration": 1 },
+        { "id": "sta-008", "name": "Staging Handheld",  "duration": 1 }
       ]
     }
   ]
