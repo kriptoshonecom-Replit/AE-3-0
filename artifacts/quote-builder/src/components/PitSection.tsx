@@ -32,6 +32,15 @@ export default function PitSection({ pitType, onChange }: Props) {
     setToggles((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const [yesNoToggles, setYesNoToggles] = useState<Record<string, boolean>>({
+    "connected-payments-yn": false,
+    "online-ordering-yn": false,
+  });
+
+  const handleYesNoToggle = (id: string) => {
+    setYesNoToggles((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
   return (
     <div className="pit-card">
       <div className="pit-left">
@@ -109,6 +118,28 @@ export default function PitSection({ pitType, onChange }: Props) {
               <span className="pit-col-price">
                 ${selected.lineItems.reduce((sum, item) => sum + item.duration * PIT_HOURLY_RATE, 0).toFixed(2)}
               </span>
+            </div>
+            <div className="pit-yn-toggles">
+              {[
+                { id: "connected-payments-yn", label: "Connected Payments" },
+                { id: "online-ordering-yn", label: "Online Ordering" },
+              ].map(({ id, label }) => (
+                <div key={id} className="pit-yn-row">
+                  <span className="pit-yn-label">{label}</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={yesNoToggles[id]}
+                    className={`pit-toggle-switch ${yesNoToggles[id] ? "pit-toggle-on" : "pit-toggle-off"}`}
+                    onClick={() => handleYesNoToggle(id)}
+                  >
+                    <span className="pit-toggle-thumb" />
+                  </button>
+                  <span className={`pit-yn-state ${yesNoToggles[id] ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
+                    {yesNoToggles[id] ? "Yes" : "No"}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         ) : (
