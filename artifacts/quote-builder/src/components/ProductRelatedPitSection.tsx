@@ -53,9 +53,9 @@ const PIT_ITEM_MAPPING: Record<string, ProductMapping> = {
   "tr-006": { type: "category", categoryIds: ["handheld"] },
 };
 
-const YES_NO_ITEM_MAP: Record<string, string> = {
-  "connected-payments-yn": "pro-001",
-  "online-ordering-yn": "pro-002",
+const YES_NO_ITEM_MAP: Record<string, string[]> = {
+  "connected-payments-yn": ["pro-001", "tr-001"],
+  "online-ordering-yn": ["pro-002", "tr-004"],
 };
 
 function computeHours(
@@ -155,7 +155,7 @@ export default function ProductRelatedPitSection({ groups, yesNoToggles }: Props
 
   const forcedItemIds = Object.entries(YES_NO_ITEM_MAP)
     .filter(([toggleId]) => yesNoToggles[toggleId])
-    .map(([, itemId]) => itemId);
+    .flatMap(([, itemIds]) => itemIds);
 
   const hasContent =
     hasAnyProducts || forcedItemIds.length > 0;
