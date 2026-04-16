@@ -6,6 +6,7 @@ import type { Quote, QuoteGroup, QuoteMeta } from "../types";
 import catalog from "../data/products.json";
 import QuoteMetaForm from "../components/QuoteMetaForm";
 import PitSection from "../components/PitSection";
+import ProductRelatedPitSection from "../components/ProductRelatedPitSection";
 import QuoteGroupComponent from "../components/QuoteGroup";
 import QuoteSummary from "../components/QuoteSummary";
 import QuoteList from "../components/QuoteList";
@@ -304,6 +305,12 @@ export default function QuoteBuilder() {
                 pitType={quote.meta.pitType ?? ""}
                 onChange={handlePitTypeChange}
               />
+            </section>
+
+            {/* Product Related PIT section */}
+            <section className="section">
+              <h2 className="section-title">Product Related PIT</h2>
+              <ProductRelatedPitSection groups={quote.groups} />
             </section>
 
             {/* Groups section */}
