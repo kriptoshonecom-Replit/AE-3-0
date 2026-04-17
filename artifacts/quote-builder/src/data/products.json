@@ -151,7 +151,7 @@
         {
           "id": "ta-005",
           "name": "Tablet Extended Battery Pack",
-          "price": 8.00
+          "price": 8.00,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
@@ -324,7 +324,7 @@
         {
           "id": "pi-008",
           "name": "Voyix Pay Equinox 8500i P-USB with Stand",
-          "price": 40.00
+          "price": 40.00,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
@@ -855,15 +855,105 @@
           "stageduration": 0
         },
         
-        { "id": "sa-014", "name": "PMS Interface", "price": 40.00 },
-        { "id": "sa-015", "name": "Aloha Mobile Engage", "price": 0.00 },
-        { "id": "sa-016", "name": "Aloha Connect EIT", "price": 0.00 },
-        { "id": "sa-017", "name": "Aloha Connect EIT", "price": 0.00 },
-        { "id": "sa-018", "name": "Aloha Smart Manager - Starter", "price": 0.00 },
-        { "id": "sa-019", "name": "Biometric License", "price": 0.00 },
-        { "id": "sa-020", "name": "SW ATO with Non-NCR Radiant HW", "price": 0.00 },
-        { "id": "sa-021", "name": "3rd Party Kitchen Integration", "price": 0.00 },
-        { "id": "sa-022", "name": "SBONet", "price": 0.00 }
+        {
+          "id": "sa-014",
+          "name": "PMS Interface",
+          "price": 40.00,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0
+        },
+        
+        {
+          "id": "sa-015",
+          "name": "Aloha Mobile Engage",
+          "price": 0.00,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0
+        },
+        
+        {
+          "id": "sa-016",
+          "name": "Aloha Connect EIT",
+          "price": 0.00,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0
+        },
+        
+        {
+          "id": "sa-017",
+          "name": "Kitchen Operations SW",
+          "price": 25.00,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0
+        },
+        
+        {
+          "id": "sa-018",
+          "name": "Aloha Smart Manager - Starter",
+          "price": 0.00,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0
+        },
+        
+        {
+          "id": "sa-019",
+          "name": "Biometric License",
+          "price": 0.00,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0
+        },
+        
+        {
+          "id": "sa-020",
+          "name": "SW ATO with Non-NCR Radiant HW",
+          "price": 0.00,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0
+        },
+        
+        {
+          "id": "sa-021",
+          "name": "3rd Party Kitchen Integration",
+          "price": 0.00,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0
+        },
+        
+        {
+          "id": "sa-022",
+          "name": "SBONet",
+          "price": 0.00,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0
+        },
+        
+        {
+          "id": "sa-023",
+          "name": "Biometric License",
+          "price": 0.00,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0
+        }
       ]
     }
   ]

@@ -2,6 +2,10 @@ export interface ProductItem {
   id: string;
   name: string;
   price: number;
+  produration?: number;
+  traduration?: number;
+  instaduration?: number;
+  stageduration?: number;
 }
 
 export interface ProductCategory {
