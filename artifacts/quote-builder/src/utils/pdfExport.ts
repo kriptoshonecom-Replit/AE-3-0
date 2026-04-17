@@ -11,6 +11,21 @@ import {
 import pitData from "../data/pit-services.json";
 import { PIT_HOURLY_RATE } from "../data/pit-config";
 import { computeLineItemTotal } from "./quoteLogic";
+import { computeProductRelatedPitTotal } from "../components/ProductRelatedPitSection";
+
+const DEFAULT_YES_NO: Record<string, boolean> = {
+  "connected-payments-yn": false,
+  "online-ordering-yn": false,
+};
+
+const DEFAULT_OPT_PROGRAMS: Record<string, boolean> = {
+  "consumer-marketing": true,
+  "insight-or-console": true,
+  "aloha-api": true,
+  "kitchen": true,
+  "orderpay": true,
+  "aloha-delivery": true,
+};
 
 const pitCategories = pitData.categories as PitCategory[];
 
@@ -206,19 +221,30 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
   }
 
   // ── Totals ──────────────────────────────────────────
-  addPageIfNeeded(40);
+  addPageIfNeeded(56);
   y += 4;
 
   const totalsX = margin + contentWidth - 70;
   const labelX = totalsX;
   const valueX = margin + contentWidth - 3;
 
+  // Compute PIT amounts
+  const pitCatForTotal = pitCategories.find((c) => c.id === (quote.meta.pitType ?? ""));
+  const pitTotal = pitCatForTotal
+    ? pitCatForTotal.lineItems.reduce((s, i) => s + i.duration * PIT_HOURLY_RATE, 0)
+    : 0;
+  const yesNoToggles = { ...DEFAULT_YES_NO, ...(quote.meta.yesNoToggles ?? {}) };
+  const optToggles = { ...DEFAULT_OPT_PROGRAMS, ...(quote.meta.optionalProgramToggles ?? {}) };
+  const productPitTotal = computeProductRelatedPitTotal(quote.groups, yesNoToggles, optToggles);
+  const mrrTotal = quoteTotal(quote);
+  const grandTotal = mrrTotal + pitTotal + productPitTotal;
+
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
 
-  const row = (label: string, value: string, bold = false) => {
+  const row = (label: string, value: string, bold = false, labelColor: [number, number, number] = [100, 116, 139]) => {
     addPageIfNeeded(8);
-    doc.setTextColor(100, 116, 139);
+    doc.setTextColor(...labelColor);
     doc.text(label, labelX, y);
     doc.setTextColor(15, 23, 42);
     if (bold) doc.setFont("helvetica", "bold");
@@ -229,10 +255,30 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
 
   row("Subtotal", formatCurrency(quoteSubtotal(quote)));
   if (quote.meta.discount > 0) {
-    row(`Discount (${quote.meta.discount}%)`, `- ${formatCurrency(quoteDiscount(quote))}`);
+    row(`Discount (${quote.meta.discount}%)`, `- ${formatCurrency(quoteDiscount(quote))}`, false, [34, 197, 94]);
   }
   if (quote.meta.tax > 0) {
     row(`Tax (${quote.meta.tax}%)`, formatCurrency(quoteTax(quote)));
+  }
+
+  // MRR Total divider line + bold row
+  doc.setDrawColor(220, 220, 218);
+  doc.setLineWidth(0.3);
+  doc.line(totalsX - 5, y - 1, margin + contentWidth, y - 1);
+  y += 2;
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(15, 23, 42);
+  doc.text("MRR Total", labelX, y);
+  doc.text(formatCurrency(mrrTotal), valueX, y, { align: "right" });
+  y += 8;
+
+  if (pitTotal > 0) {
+    doc.setFont("helvetica", "normal");
+    row("PIT", formatCurrency(pitTotal));
+  }
+  if (productPitTotal > 0) {
+    doc.setFont("helvetica", "normal");
+    row("Product Related PIT", formatCurrency(productPitTotal));
   }
 
   doc.setDrawColor(124, 58, 237);
@@ -241,7 +287,7 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
   y += 6;
 
   doc.setFontSize(11);
-  row("Total", formatCurrency(quoteTotal(quote)), true);
+  row("Total", formatCurrency(grandTotal), true);
 
   // ── PIT Services ────────────────────────────────────
   const pitCategory = pitCategories.find((c) => c.id === quote.meta.pitType) ?? null;
