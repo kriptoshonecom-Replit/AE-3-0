@@ -27,6 +27,8 @@ const DEFAULT_YES_NO: Record<string, boolean> = {
 };
 
 const DEFAULT_OPT_PROGRAMS: Record<string, boolean> = {
+  "connected-payments": true,
+  "online-ordering": true,
   "consumer-marketing": true,
   "insight-or-console": true,
   "aloha-api": true,
@@ -100,7 +102,7 @@ export default function QuoteBuilder() {
       const q = loadQuote(activeId, userId);
       if (q) {
         setQuote(q);
-        setYesNoToggles({ ...DEFAULT_YES_NO, ...(q.meta.yesNoToggles ?? {}) });
+        if (q.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...q.meta.yesNoToggles });
         setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
         setInitialized(true);
         return;
@@ -110,7 +112,7 @@ export default function QuoteBuilder() {
     if (all.length > 0) {
       const q = all[all.length - 1];
       setQuote(q);
-      setYesNoToggles({ ...DEFAULT_YES_NO, ...(q.meta.yesNoToggles ?? {}) });
+      if (q.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...q.meta.yesNoToggles });
       setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
     }
     setInitialized(true);
@@ -348,10 +350,10 @@ export default function QuoteBuilder() {
               <PitSection
                 pitType={quote.meta.pitType ?? ""}
                 onChange={handlePitTypeChange}
-                optionalProgramToggles={optionalProgramToggles}
-                onOptionalProgramToggle={handleOptionalProgramToggle}
                 yesNoToggles={yesNoToggles}
                 onYesNoChange={handleYesNoChange}
+                optionalProgramToggles={optionalProgramToggles}
+                onOptionalProgramToggle={handleOptionalProgramToggle}
               />
             </section>
 

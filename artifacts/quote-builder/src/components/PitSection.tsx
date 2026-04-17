@@ -5,6 +5,8 @@ import { PIT_HOURLY_RATE } from "../data/pit-config";
 const pitCategories = pitData.categories as PitCategory[];
 
 const OPTIONAL_PROGRAMS = [
+  { id: "connected-payments", label: "Connected Payments" },
+  { id: "online-ordering", label: "Online Ordering" },
   { id: "consumer-marketing", label: "Consumer Marketing" },
   { id: "insight-or-console", label: "Insight or Console" },
   { id: "aloha-api", label: "Aloha API" },
@@ -16,13 +18,13 @@ const OPTIONAL_PROGRAMS = [
 interface Props {
   pitType: string;
   onChange: (pitType: string) => void;
-  optionalProgramToggles: Record<string, boolean>;
-  onOptionalProgramToggle: (id: string) => void;
   yesNoToggles: Record<string, boolean>;
   onYesNoChange: (id: string, value: boolean) => void;
+  optionalProgramToggles: Record<string, boolean>;
+  onOptionalProgramToggle: (id: string) => void;
 }
 
-export default function PitSection({ pitType, onChange, optionalProgramToggles, onOptionalProgramToggle, yesNoToggles, onYesNoChange }: Props) {
+export default function PitSection({ pitType, onChange, yesNoToggles, onYesNoChange, optionalProgramToggles, onOptionalProgramToggle }: Props) {
   const selected = pitCategories.find((c) => c.id === pitType) ?? null;
 
   return (

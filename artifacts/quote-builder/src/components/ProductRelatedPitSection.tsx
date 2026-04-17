@@ -58,10 +58,12 @@ const PIT_ITEM_MAPPING: Record<string, ProductMapping> = {
 
 const YES_NO_ITEM_MAP: Record<string, string[]> = {
   "connected-payments-yn": ["pro-001", "tr-001"],
-  "online-ordering-yn":    ["pro-002", "tr-004"],
+  "online-ordering-yn": ["pro-002", "tr-004"],
 };
 
 const OPTIONAL_PROG_ITEM_MAP: Record<string, string[]> = {
+  "connected-payments": ["pro-001", "tr-001"],
+  "online-ordering":    ["pro-002", "tr-004"],
   "consumer-marketing": ["pro-003", "tr-002"],
   "insight-or-console": ["pro-004", "tr-003"],
   "aloha-api":          ["pro-005"],
@@ -214,6 +216,7 @@ export default function ProductRelatedPitSection({ groups, yesNoToggles, optiona
     .flatMap(([, itemIds]) => itemIds);
 
   const excludedItemIds = buildExcludedItemIds(optionalProgramToggles);
+
   const hasContent = hasAnyProducts || forcedItemIds.length > 0;
 
   return (
