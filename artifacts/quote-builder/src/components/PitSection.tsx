@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { PitCategory } from "../types";
 import pitData from "../data/pit-services.json";
 import { PIT_HOURLY_RATE } from "../data/pit-config";
@@ -21,18 +20,12 @@ interface Props {
   onChange: (pitType: string) => void;
   yesNoToggles: Record<string, boolean>;
   onYesNoChange: (id: string, value: boolean) => void;
+  optionalProgramToggles: Record<string, boolean>;
+  onOptionalProgramToggle: (id: string) => void;
 }
 
-export default function PitSection({ pitType, onChange, yesNoToggles, onYesNoChange }: Props) {
+export default function PitSection({ pitType, onChange, yesNoToggles, onYesNoChange, optionalProgramToggles, onOptionalProgramToggle }: Props) {
   const selected = pitCategories.find((c) => c.id === pitType) ?? null;
-
-  const [toggles, setToggles] = useState<Record<string, boolean>>(
-    Object.fromEntries(OPTIONAL_PROGRAMS.map((p) => [p.id, false]))
-  );
-
-  const handleToggle = (id: string) => {
-    setToggles((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
 
   return (
     <div className="pit-card">
@@ -66,15 +59,15 @@ export default function PitSection({ pitType, onChange, yesNoToggles, onYesNoCha
                   <button
                     type="button"
                     role="switch"
-                    aria-checked={toggles[program.id]}
-                    className={`pit-toggle-switch ${toggles[program.id] ? "pit-toggle-on" : "pit-toggle-off"}`}
-                    onClick={() => handleToggle(program.id)}
+                    aria-checked={optionalProgramToggles[program.id] ?? true}
+                    className={`pit-toggle-switch ${(optionalProgramToggles[program.id] ?? true) ? "pit-toggle-on" : "pit-toggle-off"}`}
+                    onClick={() => onOptionalProgramToggle(program.id)}
                   >
                     <span className="pit-toggle-thumb" />
                   </button>
                   <span className="pit-toggle-label">{program.label}</span>
-                  <span className={`pit-toggle-state ${toggles[program.id] ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
-                    {toggles[program.id] ? "On" : "Off"}
+                  <span className={`pit-toggle-state ${(optionalProgramToggles[program.id] ?? true) ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
+                    {(optionalProgramToggles[program.id] ?? true) ? "On" : "Off"}
                   </span>
                 </div>
               ))}

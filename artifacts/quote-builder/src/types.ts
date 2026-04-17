@@ -47,6 +47,7 @@ export interface QuoteMeta {
   tax: number;
   pitType?: string;
   yesNoToggles?: Record<string, boolean>;
+  optionalProgramToggles?: Record<string, boolean>;
 }
 
 export interface PitLineItem {

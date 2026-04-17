@@ -61,6 +61,17 @@ const YES_NO_ITEM_MAP: Record<string, string[]> = {
   "online-ordering-yn": ["pro-002", "tr-004"],
 };
 
+const OPTIONAL_PROG_ITEM_MAP: Record<string, string[]> = {
+  "connected-payments": ["pro-001", "tr-001"],
+  "online-ordering":    ["pro-002", "tr-004"],
+  "consumer-marketing": ["pro-003", "tr-002"],
+  "insight-or-console": ["pro-004", "tr-003"],
+  "aloha-api":          ["pro-005"],
+  "kitchen":            ["pro-006", "tr-005"],
+  "orderpay":           ["pro-007", "tr-006"],
+  "aloha-delivery":     ["pro-008"],
+};
+
 function computeHours(
   item: PitLineItem,
   groups: QuoteGroup[]
@@ -110,10 +121,12 @@ interface CategoryTableProps {
   category: PitCategory;
   groups: QuoteGroup[];
   forcedItemIds: string[];
+  excludedItemIds: Set<string>;
 }
 
-function CategoryTable({ category, groups, forcedItemIds }: CategoryTableProps) {
+function CategoryTable({ category, groups, forcedItemIds, excludedItemIds }: CategoryTableProps) {
   const rows = category.lineItems
+    .filter((item) => !excludedItemIds.has(item.id))
     .map((item) => {
       const forced = forcedItemIds.includes(item.id);
       const hours = forced ? item.duration : computeHours(item, groups);
@@ -160,15 +173,29 @@ function CategoryTable({ category, groups, forcedItemIds }: CategoryTableProps) 
   );
 }
 
+function buildExcludedItemIds(optionalProgramToggles: Record<string, boolean>): Set<string> {
+  const excluded = new Set<string>();
+  for (const [toggleId, itemIds] of Object.entries(OPTIONAL_PROG_ITEM_MAP)) {
+    if (!(optionalProgramToggles[toggleId] ?? true)) {
+      for (const id of itemIds) excluded.add(id);
+    }
+  }
+  return excluded;
+}
+
 export function computeProductRelatedPitTotal(
   groups: QuoteGroup[],
-  yesNoToggles: Record<string, boolean>
+  yesNoToggles: Record<string, boolean>,
+  optionalProgramToggles: Record<string, boolean> = {}
 ): number {
   const forcedItemIds = Object.entries(YES_NO_ITEM_MAP)
     .filter(([toggleId]) => yesNoToggles[toggleId])
     .flatMap(([, itemIds]) => itemIds);
 
+  const excludedItemIds = buildExcludedItemIds(optionalProgramToggles);
+
   return pitCategories.flatMap((cat) => cat.lineItems).reduce((total, item) => {
+    if (excludedItemIds.has(item.id)) return total;
     const forced = forcedItemIds.includes(item.id);
     const hours = forced ? item.duration : computeHours(item, groups);
     return total + hours * PIT_HOURLY_RATE;
@@ -178,17 +205,19 @@ export function computeProductRelatedPitTotal(
 interface Props {
   groups: QuoteGroup[];
   yesNoToggles: Record<string, boolean>;
+  optionalProgramToggles: Record<string, boolean>;
 }
 
-export default function ProductRelatedPitSection({ groups, yesNoToggles }: Props) {
+export default function ProductRelatedPitSection({ groups, yesNoToggles, optionalProgramToggles }: Props) {
   const hasAnyProducts = groups.some((g) => g.lineItems.length > 0);
 
   const forcedItemIds = Object.entries(YES_NO_ITEM_MAP)
     .filter(([toggleId]) => yesNoToggles[toggleId])
     .flatMap(([, itemIds]) => itemIds);
 
-  const hasContent =
-    hasAnyProducts || forcedItemIds.length > 0;
+  const excludedItemIds = buildExcludedItemIds(optionalProgramToggles);
+
+  const hasContent = hasAnyProducts || forcedItemIds.length > 0;
 
   return (
     <div className="prpit-card">
@@ -204,6 +233,7 @@ export default function ProductRelatedPitSection({ groups, yesNoToggles }: Props
               category={cat}
               groups={groups}
               forcedItemIds={forcedItemIds}
+              excludedItemIds={excludedItemIds}
             />
           ))}
         </div>

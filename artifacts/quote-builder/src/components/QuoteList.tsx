@@ -11,12 +11,24 @@ const DEFAULT_YES_NO: Record<string, boolean> = {
   "online-ordering-yn": false,
 };
 
+const DEFAULT_OPT_PROGRAMS: Record<string, boolean> = {
+  "connected-payments": true,
+  "online-ordering": true,
+  "consumer-marketing": true,
+  "insight-or-console": true,
+  "aloha-api": true,
+  "kitchen": true,
+  "orderpay": true,
+  "aloha-delivery": true,
+};
+
 function quoteGrandTotal(q: Quote): number {
   const productsTotal = quoteTotal(q);
   const pitCat = pitData.categories.find((c) => c.id === (q.meta.pitType ?? ""));
   const pitTotal = pitCat ? pitCat.lineItems.reduce((s, i) => s + i.duration * PIT_HOURLY_RATE, 0) : 0;
-  const toggles = { ...DEFAULT_YES_NO, ...(q.meta.yesNoToggles ?? {}) };
-  const productPitTotal = computeProductRelatedPitTotal(q.groups, toggles);
+  const yesNoToggles = { ...DEFAULT_YES_NO, ...(q.meta.yesNoToggles ?? {}) };
+  const optToggles = { ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) };
+  const productPitTotal = computeProductRelatedPitTotal(q.groups, yesNoToggles, optToggles);
   return productsTotal + pitTotal + productPitTotal;
 }
 

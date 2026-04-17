@@ -26,6 +26,17 @@ const DEFAULT_YES_NO: Record<string, boolean> = {
   "online-ordering-yn": false,
 };
 
+const DEFAULT_OPT_PROGRAMS: Record<string, boolean> = {
+  "connected-payments": true,
+  "online-ordering": true,
+  "consumer-marketing": true,
+  "insight-or-console": true,
+  "aloha-api": true,
+  "kitchen": true,
+  "orderpay": true,
+  "aloha-delivery": true,
+};
+
 function createNewQuote(): Quote {
   return {
     meta: {
@@ -62,10 +73,8 @@ export default function QuoteBuilder() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [qtyMismatch, setQtyMismatch] = useState<QtySyncCheck | null>(null);
   const [pinPadMismatch, setPinPadMismatch] = useState<PinPadSyncCheck | null>(null);
-  const [yesNoToggles, setYesNoToggles] = useState<Record<string, boolean>>({
-    "connected-payments-yn": false,
-    "online-ordering-yn": false,
-  });
+  const [yesNoToggles, setYesNoToggles] = useState<Record<string, boolean>>(DEFAULT_YES_NO);
+  const [optionalProgramToggles, setOptionalProgramToggles] = useState<Record<string, boolean>>(DEFAULT_OPT_PROGRAMS);
 
   const handleYesNoChange = (id: string, value: boolean) => {
     const next = { ...yesNoToggles, [id]: value };
@@ -74,6 +83,15 @@ export default function QuoteBuilder() {
     setQuote(updated);
     autosave(updated);
   };
+
+  const handleOptionalProgramToggle = (id: string) => {
+    const next = { ...optionalProgramToggles, [id]: !optionalProgramToggles[id] };
+    setOptionalProgramToggles(next);
+    const updated = { ...quote, meta: { ...quote.meta, optionalProgramToggles: next } };
+    setQuote(updated);
+    autosave(updated);
+  };
+
   const printAreaRef = useRef<HTMLDivElement>(null);
 
   // Load the correct quote once we know who the user is
@@ -85,6 +103,7 @@ export default function QuoteBuilder() {
       if (q) {
         setQuote(q);
         if (q.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...q.meta.yesNoToggles });
+        setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
         setInitialized(true);
         return;
       }
@@ -94,6 +113,7 @@ export default function QuoteBuilder() {
       const q = all[all.length - 1];
       setQuote(q);
       if (q.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...q.meta.yesNoToggles });
+      setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
     }
     setInitialized(true);
   }, [userId, initialized]);
@@ -208,6 +228,7 @@ export default function QuoteBuilder() {
   const handleSelectQuote = (q: Quote) => {
     setQuote(q);
     setYesNoToggles({ ...DEFAULT_YES_NO, ...(q.meta.yesNoToggles ?? {}) });
+    setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
     setSidebarOpen(false);
   };
 
@@ -331,13 +352,19 @@ export default function QuoteBuilder() {
                 onChange={handlePitTypeChange}
                 yesNoToggles={yesNoToggles}
                 onYesNoChange={handleYesNoChange}
+                optionalProgramToggles={optionalProgramToggles}
+                onOptionalProgramToggle={handleOptionalProgramToggle}
               />
             </section>
 
             {/* Product Related PIT section */}
             <section className="section">
               <h2 className="section-title">Product Related PIT</h2>
-              <ProductRelatedPitSection groups={quote.groups} yesNoToggles={yesNoToggles} />
+              <ProductRelatedPitSection
+                groups={quote.groups}
+                yesNoToggles={yesNoToggles}
+                optionalProgramToggles={optionalProgramToggles}
+              />
             </section>
 
             {/* Groups section */}
@@ -393,7 +420,7 @@ export default function QuoteBuilder() {
                     const cat = pitData.categories.find((c) => c.id === (quote.meta.pitType ?? ""));
                     return cat ? cat.lineItems.reduce((s, i) => s + i.duration * PIT_HOURLY_RATE, 0) : 0;
                   })()}
-                  productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles)}
+                  productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles, optionalProgramToggles)}
                 />
               </section>
             )}
