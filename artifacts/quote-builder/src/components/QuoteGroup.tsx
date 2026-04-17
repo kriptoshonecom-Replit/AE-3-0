@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import type { QuoteGroup as QuoteGroupType, ProductCategory, QuoteLineItem } from "../types";
 import { groupSubtotal, formatCurrency, generateId } from "../utils/calculations";
 import { getAdditionalExcludedIds, computeLineItemTotal, isTieredItem, isTabletItem } from "../utils/quoteLogic";
+import infoPanelData from "../data/infopanel.json";
+
+const INFO_PANEL: Record<string, string> = infoPanelData as Record<string, string>;
 
 interface Props {
   group: QuoteGroupType;
@@ -199,6 +202,8 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
   const allCategoryItems = catalog.find((c) => c.id === groupId)?.items ?? [];
   const categoryItems = allCategoryItems.filter((p) => !usedProductIds.includes(p.id));
 
+  const infoText = item.productId ? INFO_PANEL[item.productId] : undefined;
+
   return (
     <div className="line-item-wrapper">
       <div className="line-row">
@@ -260,6 +265,9 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
           </button>
         </div>
       </div>
+      {infoText && (
+        <div className="line-item-info">{infoText}</div>
+      )}
     </div>
   );
 }
