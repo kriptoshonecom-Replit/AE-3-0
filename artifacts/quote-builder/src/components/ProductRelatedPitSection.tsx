@@ -183,25 +183,15 @@ function buildExcludedItemIds(optionalProgramToggles: Record<string, boolean>): 
   return excluded;
 }
 
-function buildForcedItemIds(
-  yesNoToggles: Record<string, boolean>,
-  optionalProgramToggles: Record<string, boolean>
-): string[] {
-  const fromYesNo = Object.entries(YES_NO_ITEM_MAP)
-    .filter(([id]) => yesNoToggles[id])
-    .flatMap(([, ids]) => ids);
-  const fromOptional = Object.entries(OPTIONAL_PROG_ITEM_MAP)
-    .filter(([id]) => optionalProgramToggles[id] ?? true)
-    .flatMap(([, ids]) => ids);
-  return [...new Set([...fromYesNo, ...fromOptional])];
-}
-
 export function computeProductRelatedPitTotal(
   groups: QuoteGroup[],
   yesNoToggles: Record<string, boolean>,
   optionalProgramToggles: Record<string, boolean> = {}
 ): number {
-  const forcedItemIds = buildForcedItemIds(yesNoToggles, optionalProgramToggles);
+  const forcedItemIds = Object.entries(YES_NO_ITEM_MAP)
+    .filter(([toggleId]) => yesNoToggles[toggleId])
+    .flatMap(([, itemIds]) => itemIds);
+
   const excludedItemIds = buildExcludedItemIds(optionalProgramToggles);
 
   return pitCategories.flatMap((cat) => cat.lineItems).reduce((total, item) => {
@@ -221,7 +211,10 @@ interface Props {
 export default function ProductRelatedPitSection({ groups, yesNoToggles, optionalProgramToggles }: Props) {
   const hasAnyProducts = groups.some((g) => g.lineItems.length > 0);
 
-  const forcedItemIds = buildForcedItemIds(yesNoToggles, optionalProgramToggles);
+  const forcedItemIds = Object.entries(YES_NO_ITEM_MAP)
+    .filter(([toggleId]) => yesNoToggles[toggleId])
+    .flatMap(([, itemIds]) => itemIds);
+
   const excludedItemIds = buildExcludedItemIds(optionalProgramToggles);
 
   const hasContent = hasAnyProducts || forcedItemIds.length > 0;
