@@ -6,9 +6,12 @@ import { computeProductRelatedPitTotal } from "./ProductRelatedPitSection";
 import pitData from "../data/pit-services.json";
 import { PIT_HOURLY_RATE } from "../data/pit-config";
 
+const DEFAULT_YES_NO: Record<string, boolean> = {
+  "connected-payments-yn": false,
+  "online-ordering-yn": false,
+};
+
 const DEFAULT_OPT_PROGRAMS: Record<string, boolean> = {
-  "connected-payments": true,
-  "online-ordering": true,
   "consumer-marketing": true,
   "insight-or-console": true,
   "aloha-api": true,
@@ -21,8 +24,9 @@ function quoteGrandTotal(q: Quote): number {
   const productsTotal = quoteTotal(q);
   const pitCat = pitData.categories.find((c) => c.id === (q.meta.pitType ?? ""));
   const pitTotal = pitCat ? pitCat.lineItems.reduce((s, i) => s + i.duration * PIT_HOURLY_RATE, 0) : 0;
+  const yesNoToggles = { ...DEFAULT_YES_NO, ...(q.meta.yesNoToggles ?? {}) };
   const optToggles = { ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) };
-  const productPitTotal = computeProductRelatedPitTotal(q.groups, optToggles);
+  const productPitTotal = computeProductRelatedPitTotal(q.groups, yesNoToggles, optToggles);
   return productsTotal + pitTotal + productPitTotal;
 }
 
