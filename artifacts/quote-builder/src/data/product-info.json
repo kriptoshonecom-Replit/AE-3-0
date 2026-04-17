@@ -1,4 +1,14 @@
 {
-  "tm-001": { "type": "info",    "text": "1 x CX5 Terminal · 1 x PowerVar 180VA · 1 x Bixolon SRP 350plusV" },
-  "tm-002": { "type": "info",    "text": "1 x CX5 Terminal · 1 x PowerVar 180VA · 1 x Bixolon SRP 350plusV · 1 x Wall Mount Bracket KIT" }
+  "tm-001": {
+    "type": "info",
+    "text": "Subpackage ID: SP100000510"
+  },
+  "tm-002": {
+    "type": "info",
+    "text": "Subpackage ID: SP1000006007"
+  },
+  "co-001": {
+    "type": "warning",
+    "text": "License count matches the total number of devices (Terminals + Tablets) selected"
+  }
 }
