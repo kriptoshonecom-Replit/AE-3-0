@@ -135,7 +135,11 @@ export default function QuoteBuilder() {
   };
 
   const handlePitTypeChange = (pitType: string) => {
-    const updated = { ...quote, meta: { ...quote.meta, pitType } };
+    const nextYesNo = pitType === "refresh"
+      ? { ...yesNoToggles, "connected-payments-yn": false, "online-ordering-yn": false }
+      : { ...yesNoToggles, "connected-payments-yn": true, "online-ordering-yn": true };
+    setYesNoToggles(nextYesNo);
+    const updated = { ...quote, meta: { ...quote.meta, pitType, yesNoToggles: nextYesNo } };
     setQuote(updated);
     autosave(updated);
   };
