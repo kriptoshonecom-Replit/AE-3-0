@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import type { QuoteGroup as QuoteGroupType, ProductCategory, QuoteLineItem } from "../types";
 import { groupSubtotal, formatCurrency, generateId } from "../utils/calculations";
-import { getAdditionalExcludedIds, computeLineItemTotal, isTieredItem } from "../utils/quoteLogic";
+import { getAdditionalExcludedIds, computeLineItemTotal, isTieredItem, isTabletItem } from "../utils/quoteLogic";
 import infoPanelData from "../data/product-info.json";
 
 interface InfoPanelEntry { type: "info" | "warning"; text: string }
@@ -16,6 +16,7 @@ interface Props {
 
 export default function QuoteGroup({ group, catalog, onChange, onRemove }: Props) {
   const [isOpen, setIsOpen] = useState(group.isOpen);
+  const [showTabletInfo, setShowTabletInfo] = useState(false);
 
   const toggle = () => {
     setIsOpen((v) => !v);
@@ -58,6 +59,7 @@ export default function QuoteGroup({ group, catalog, onChange, onRemove }: Props
           productName: found.name,
           unitPrice: found.price,
         });
+        if (isTabletItem(found.id)) setShowTabletInfo(true);
         return;
       }
     }
@@ -67,6 +69,38 @@ export default function QuoteGroup({ group, catalog, onChange, onRemove }: Props
 
   return (
     <div className={`quote-group ${isOpen ? "open" : ""}`}>
+      {showTabletInfo && (
+        <div className="modal-backdrop" onClick={() => setShowTabletInfo(false)}>
+          <div className="modal-box tablet-info-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="qty-sync-icon">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <circle cx="14" cy="14" r="13" stroke="#f59e0b" strokeWidth="1.8" fill="#fef3c7" />
+                <path d="M14 9v6" stroke="#d97706" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="14" cy="19.5" r="1.2" fill="#d97706" />
+              </svg>
+            </div>
+            <h3 className="qty-sync-title">Don't Forget the Accessories</h3>
+            <p className="qty-sync-body">
+              Please note that the following equipment should be added separately, if required:
+            </p>
+            <ul className="tablet-info-list">
+              <li>Charging Station</li>
+              <li>Power Supply</li>
+              <li>Hand Strap <span className="tablet-info-optional">(if needed)</span></li>
+              <li>6200 Mobile <span className="tablet-info-optional">(if needed)</span></li>
+            </ul>
+            <div className="qty-sync-actions">
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => setShowTabletInfo(false)}
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <button className="group-header" onClick={toggle} type="button">
         <div className="group-header-left">
           <span className={`chevron ${isOpen ? "rotated" : ""}`}>

@@ -362,28 +362,6 @@ button {
   background: rgba(0,0,0,0.01);
 }
 
-.btn-add-group-select {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1.5px dashed var(--border-strong);
-  border-radius: var(--radius);
-  color: var(--text-2);
-  font-size: 13px;
-  font-weight: 500;
-  background: transparent;
-  margin-top: 4px;
-  cursor: pointer;
-  appearance: auto;
-  transition: all 0.15s;
-}
-
-.btn-add-group-select:hover,
-.btn-add-group-select:focus {
-  border-color: var(--accent);
-  color: var(--accent);
-  outline: none;
-}
-
 .btn-add-line {
   display: flex;
   align-items: center;
@@ -979,6 +957,158 @@ textarea:focus::placeholder {
 .ql-delete:hover {
   background: var(--danger-light);
   color: var(--danger);
+}
+
+/* ── Add Group Modal ─────────────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(2px);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  backdrop-filter: blur(2px);
+}
+
+.modal-box {
+  background: var(--surface);
+  border-radius: 12px;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  padding: 28px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.qty-sync-icon {
+  margin-bottom: 2px;
+}
+
+.qty-sync-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  text-align: center;
+}
+
+.qty-sync-body {
+  font-size: 13.5px;
+  color: var(--text-2);
+  line-height: 1.6;
+  text-align: center;
+  margin: 0;
+}
+
+.qty-sync-body strong {
+  color: var(--text);
+}
+
+.qty-sync-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.tablet-info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tablet-info-list li {
+  font-size: 13.5px;
+  color: var(--text);
+  padding: 6px 10px;
+  background: var(--surface-subtle);
+  border-radius: 6px;
+  border-left: 3px solid var(--accent);
+}
+
+.tablet-info-optional {
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: 10px;
+  width: 340px;
+  max-width: calc(100vw - 40px);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.modal-empty {
+  padding: 24px 18px;
+  font-size: 13px;
+  color: var(--text-3);
+  text-align: center;
+}
+
+.modal-options {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.modal-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 12px;
+  border-radius: 6px;
+  text-align: left;
+  width: 100%;
+  transition: background 0.12s;
+}
+
+.modal-option:hover {
+  background: var(--surface-subtle);
+}
+
+.modal-option-name {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.modal-option-count {
+  font-size: 12px;
+  color: var(--text-3);
 }
 
 /* ── Empty State ─────────────────────────────────────── */
