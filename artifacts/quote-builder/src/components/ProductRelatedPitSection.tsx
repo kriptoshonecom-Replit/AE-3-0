@@ -1,28 +1,102 @@
 import type { QuoteGroup } from "../types";
-import addPitData from "../data/add-pit-services2.json";
+import productsData from "../data/products.json";
 import { PIT_HOURLY_RATE } from "../data/pit-config";
 
-interface PitLineItem {
-  id: string;
-  name: string;
-  duration: number;
+// ── Product catalog lookup ────────────────────────────────────────────────────
+type DurationField = "instaduration" | "stageduration" | "produration" | "traduration";
+
+const productCatalog = new Map<string, Record<DurationField, number>>();
+for (const cat of productsData.categories) {
+  for (const item of cat.items as Array<{ id: string } & Partial<Record<DurationField, number>>>) {
+    productCatalog.set(item.id, {
+      instaduration: item.instaduration ?? 0,
+      stageduration: item.stageduration ?? 0,
+      produration:   item.produration   ?? 0,
+      traduration:   item.traduration   ?? 0,
+    });
+  }
 }
 
-interface PitCategory {
-  id: string;
-  name: string;
-  lineItems: PitLineItem[];
-}
+const CATEGORY_DURATION_FIELD: Record<string, DurationField> = {
+  install:     "instaduration",
+  staging:     "stageduration",
+  programming: "produration",
+  training:    "traduration",
+};
 
-const pitCategories = addPitData.categories as PitCategory[];
+// ── Static structure (names only — durations come from products.json) ─────────
+const PIT_CATEGORIES = [
+  {
+    id: "programming",
+    name: "Programming",
+    lineItems: [
+      { id: "pro-001", name: "Programming Connected Payments" },
+      { id: "pro-002", name: "Programming Online Ordering" },
+      { id: "pro-003", name: "Programming Consumer Marketing" },
+      { id: "pro-004", name: "Programming Insight or Console" },
+      { id: "pro-005", name: "Programming Aloha API's (BSP)" },
+      { id: "pro-006", name: "Programming Kitchen Custom" },
+      { id: "pro-007", name: "Programming OrderPay" },
+      { id: "pro-008", name: "Programming Aloha Delivery" },
+    ],
+  },
+  {
+    id: "training",
+    name: "Training",
+    lineItems: [
+      { id: "tr-001", name: "Training Connected Payments" },
+      { id: "tr-002", name: "Training Consumer Marketing" },
+      { id: "tr-003", name: "Training Insight or Console" },
+      { id: "tr-004", name: "Training Online Ordering" },
+      { id: "tr-005", name: "Training Aloha Kitchen" },
+      { id: "tr-006", name: "Training OrderPay" },
+    ],
+  },
+  {
+    id: "install",
+    name: "Install",
+    lineItems: [
+      { id: "ins-001", name: "Install Terminal" },
+      { id: "ins-002", name: "Install Server" },
+      { id: "ins-003", name: "Install Tablet" },
+      { id: "ins-004", name: "Install Displays" },
+      { id: "ins-005", name: "Install KDS" },
+      { id: "ins-006", name: "Install Printers" },
+      { id: "ins-007", name: "Install PinPads" },
+      { id: "ins-008", name: "Install Handheld" },
+    ],
+  },
+  {
+    id: "staging",
+    name: "Staging",
+    lineItems: [
+      { id: "sta-001", name: "Staging Terminal" },
+      { id: "sta-002", name: "Staging Server" },
+      { id: "sta-003", name: "Staging Tablet" },
+      { id: "sta-004", name: "Staging Displays" },
+      { id: "sta-005", name: "Staging KDS" },
+      { id: "sta-006", name: "Staging Printers" },
+      { id: "sta-007", name: "Staging PinPads" },
+      { id: "sta-008", name: "Staging Handheld" },
+    ],
+  },
+];
 
+// ── Toggle-driven durations (no product entry in catalog) ─────────────────────
+const TOGGLE_DURATIONS: Record<string, number> = {
+  "pro-001": 2,
+  "pro-002": 10,
+  "tr-001":  2,
+  "tr-004":  2,
+};
+
+// ── Product mappings (unchanged logic; durations now sourced from catalog) ────
 type ProductMapping =
-  | { type: "category"; categoryIds: string[] }        // qty of all products in categories × duration
-  | { type: "product"; productIds: string[] }           // fixed duration once if any product present
-  | { type: "product-qty"; productIds: string[] };      // qty of matching products × duration
+  | { type: "category";    categoryIds: string[] }
+  | { type: "product";     productIds:  string[] }
+  | { type: "product-qty"; productIds:  string[] };
 
 const PIT_ITEM_MAPPING: Record<string, ProductMapping> = {
-  // Install — per quantity
   "ins-001": { type: "product-qty",  productIds:  ["tm-001", "tm-002"] },
   "ins-002": { type: "product-qty",  productIds:  ["se-001", "se-002"] },
   "ins-003": { type: "product-qty",  productIds:  ["ta-001", "ta-002", "ta-003"] },
@@ -31,7 +105,7 @@ const PIT_ITEM_MAPPING: Record<string, ProductMapping> = {
   "ins-006": { type: "product-qty",  productIds:  ["pr-001", "pr-002", "pr-003", "pr-004", "pr-005"] },
   "ins-007": { type: "product-qty",  productIds:  ["pi-001", "pi-002", "pi-003", "pi-004", "pi-005", "pi-006", "pi-008", "pi-009"] },
   "ins-008": { type: "product-qty",  productIds:  ["ha-001", "ha-002"] },
-  // Staging — per quantity
+
   "sta-001": { type: "product-qty",  productIds:  ["tm-001", "tm-002"] },
   "sta-002": { type: "product-qty",  productIds:  ["se-001", "se-002"] },
   "sta-003": { type: "product-qty",  productIds:  ["ta-001", "ta-002", "ta-003"] },
@@ -40,25 +114,23 @@ const PIT_ITEM_MAPPING: Record<string, ProductMapping> = {
   "sta-006": { type: "product-qty",  productIds:  ["pr-001", "pr-002", "pr-003", "pr-004", "pr-005"] },
   "sta-007": { type: "product-qty",  productIds:  ["pi-001", "pi-002", "pi-003", "pi-004", "pi-005", "pi-006", "pi-008", "pi-009"] },
   "sta-008": { type: "product-qty",  productIds:  ["ha-001", "ha-002"] },
-  // Programming — pro-001 and pro-002 are toggle-driven (see forcedItemIds below)
-  "pro-003": { type: "product",      productIds: ["sa-001"] },
-  "pro-004": { type: "product",      productIds: ["sa-002", "sa-003"] },
-  "pro-005": { type: "product",      productIds: ["sa-005"] },
-  "pro-006": { type: "product",      productIds: ["exp-001", "prp-001"] },
-  "pro-007": { type: "product",      productIds: ["ha-001", "ha-002"] },
-  "pro-008": { type: "product",      productIds: ["sa-007"] },
-  // Training
-  "tr-001": { type: "category",      categoryIds: ["pinpads"] },
-  "tr-002": { type: "product",       productIds: ["sa-001"] },
-  "tr-003": { type: "product",       productIds: ["sa-002", "sa-003"] },
-  "tr-004": { type: "product",       productIds: ["sa-015", "sa-016", "sa-017"] },
-  "tr-005": { type: "product",       productIds: ["exp-001", "prp-001"] },
-  "tr-006": { type: "product",       productIds: ["ha-001", "ha-002"] },
+
+  "pro-003": { type: "product",      productIds:  ["sa-001"] },
+  "pro-004": { type: "product",      productIds:  ["sa-002", "sa-003"] },
+  "pro-005": { type: "product",      productIds:  ["sa-005"] },
+  "pro-006": { type: "product",      productIds:  ["exp-001", "prp-001"] },
+  "pro-007": { type: "product",      productIds:  ["ha-001", "ha-002"] },
+  "pro-008": { type: "product",      productIds:  ["sa-007"] },
+
+  "tr-002":  { type: "product",      productIds:  ["sa-001"] },
+  "tr-003":  { type: "product",      productIds:  ["sa-002", "sa-003"] },
+  "tr-005":  { type: "product",      productIds:  ["exp-001", "prp-001"] },
+  "tr-006":  { type: "product",      productIds:  ["ha-001", "ha-002"] },
 };
 
 const YES_NO_ITEM_MAP: Record<string, string[]> = {
   "connected-payments-yn": ["pro-001", "tr-001"],
-  "online-ordering-yn": ["pro-002", "tr-004"],
+  "online-ordering-yn":    ["pro-002", "tr-004"],
 };
 
 const OPTIONAL_PROG_ITEM_MAP: Record<string, string[]> = {
@@ -70,53 +142,93 @@ const OPTIONAL_PROG_ITEM_MAP: Record<string, string[]> = {
   "aloha-delivery":     ["pro-008"],
 };
 
-function computeHours(
-  item: PitLineItem,
-  groups: QuoteGroup[]
-): number {
-  const mapping = PIT_ITEM_MAPPING[item.id];
+// ── Duration computation ──────────────────────────────────────────────────────
+function computeHours(itemId: string, catId: string, groups: QuoteGroup[]): number {
+  const mapping = PIT_ITEM_MAPPING[itemId];
   if (!mapping) return 0;
 
-  if (mapping.type === "category") {
-    let totalQty = 0;
+  const field = CATEGORY_DURATION_FIELD[catId];
+
+  if (mapping.type === "product-qty") {
+    let total = 0;
     for (const group of groups) {
-      if (mapping.categoryIds.includes(group.categoryId)) {
-        for (const li of group.lineItems) {
-          totalQty += li.quantity;
+      for (const li of group.lineItems) {
+        if (mapping.productIds.includes(li.productId)) {
+          total += li.quantity * (productCatalog.get(li.productId)?.[field] ?? 0);
         }
       }
     }
-    return totalQty * item.duration;
+    return total;
   }
 
   if (mapping.type === "product") {
     for (const group of groups) {
       for (const li of group.lineItems) {
-        if (mapping.productIds.includes(li.productId)) {
-          return item.duration;
+        if (mapping.productIds.includes(li.productId) && li.quantity > 0) {
+          return productCatalog.get(li.productId)?.[field] ?? 0;
         }
       }
     }
     return 0;
   }
 
-  if (mapping.type === "product-qty") {
-    let totalQty = 0;
+  if (mapping.type === "category") {
+    let total = 0;
     for (const group of groups) {
-      for (const li of group.lineItems) {
-        if (mapping.productIds.includes(li.productId)) {
-          totalQty += li.quantity;
+      if (mapping.categoryIds.includes(group.categoryId)) {
+        for (const li of group.lineItems) {
+          total += li.quantity * (productCatalog.get(li.productId)?.[field] ?? 0);
         }
       }
     }
-    return totalQty * item.duration;
+    return total;
   }
 
   return 0;
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function buildExcludedItemIds(optionalProgramToggles: Record<string, boolean>): Set<string> {
+  const excluded = new Set<string>();
+  for (const [toggleId, itemIds] of Object.entries(OPTIONAL_PROG_ITEM_MAP)) {
+    if (!(optionalProgramToggles[toggleId] ?? true)) {
+      for (const id of itemIds) excluded.add(id);
+    }
+  }
+  return excluded;
+}
+
+export function computeProductRelatedPitTotal(
+  groups: QuoteGroup[],
+  yesNoToggles: Record<string, boolean>,
+  optionalProgramToggles: Record<string, boolean> = {}
+): number {
+  const forcedItemIds = Object.entries(YES_NO_ITEM_MAP)
+    .filter(([toggleId]) => yesNoToggles[toggleId])
+    .flatMap(([, itemIds]) => itemIds);
+
+  const excludedItemIds = buildExcludedItemIds(optionalProgramToggles);
+
+  let total = 0;
+  for (const cat of PIT_CATEGORIES) {
+    for (const item of cat.lineItems) {
+      if (excludedItemIds.has(item.id)) continue;
+      const forced = forcedItemIds.includes(item.id);
+      const hours = forced
+        ? (TOGGLE_DURATIONS[item.id] ?? 0)
+        : computeHours(item.id, cat.id, groups);
+      total += hours * PIT_HOURLY_RATE;
+    }
+  }
+  return total;
+}
+
+// ── Category table component ──────────────────────────────────────────────────
+interface PitItem { id: string; name: string }
+interface PitCat  { id: string; name: string; lineItems: PitItem[] }
+
 interface CategoryTableProps {
-  category: PitCategory;
+  category: PitCat;
   groups: QuoteGroup[];
   forcedItemIds: string[];
   excludedItemIds: Set<string>;
@@ -127,7 +239,9 @@ function CategoryTable({ category, groups, forcedItemIds, excludedItemIds }: Cat
     .filter((item) => !excludedItemIds.has(item.id))
     .map((item) => {
       const forced = forcedItemIds.includes(item.id);
-      const hours = forced ? item.duration : computeHours(item, groups);
+      const hours = forced
+        ? (TOGGLE_DURATIONS[item.id] ?? 0)
+        : computeHours(item.id, category.id, groups);
       return { item, hours, price: hours * PIT_HOURLY_RATE };
     })
     .filter((r) => r.hours > 0);
@@ -171,35 +285,7 @@ function CategoryTable({ category, groups, forcedItemIds, excludedItemIds }: Cat
   );
 }
 
-function buildExcludedItemIds(optionalProgramToggles: Record<string, boolean>): Set<string> {
-  const excluded = new Set<string>();
-  for (const [toggleId, itemIds] of Object.entries(OPTIONAL_PROG_ITEM_MAP)) {
-    if (!(optionalProgramToggles[toggleId] ?? true)) {
-      for (const id of itemIds) excluded.add(id);
-    }
-  }
-  return excluded;
-}
-
-export function computeProductRelatedPitTotal(
-  groups: QuoteGroup[],
-  yesNoToggles: Record<string, boolean>,
-  optionalProgramToggles: Record<string, boolean> = {}
-): number {
-  const forcedItemIds = Object.entries(YES_NO_ITEM_MAP)
-    .filter(([toggleId]) => yesNoToggles[toggleId])
-    .flatMap(([, itemIds]) => itemIds);
-
-  const excludedItemIds = buildExcludedItemIds(optionalProgramToggles);
-
-  return pitCategories.flatMap((cat) => cat.lineItems).reduce((total, item) => {
-    if (excludedItemIds.has(item.id)) return total;
-    const forced = forcedItemIds.includes(item.id);
-    const hours = forced ? item.duration : computeHours(item, groups);
-    return total + hours * PIT_HOURLY_RATE;
-  }, 0);
-}
-
+// ── Main component ────────────────────────────────────────────────────────────
 interface Props {
   groups: QuoteGroup[];
   yesNoToggles: Record<string, boolean>;
@@ -214,7 +300,6 @@ export default function ProductRelatedPitSection({ groups, yesNoToggles, optiona
     .flatMap(([, itemIds]) => itemIds);
 
   const excludedItemIds = buildExcludedItemIds(optionalProgramToggles);
-
   const hasContent = hasAnyProducts || forcedItemIds.length > 0;
 
   return (
@@ -225,7 +310,7 @@ export default function ProductRelatedPitSection({ groups, yesNoToggles, optiona
         </div>
       ) : (
         <div className="prpit-grid">
-          {pitCategories.map((cat) => (
+          {PIT_CATEGORIES.map((cat) => (
             <CategoryTable
               key={cat.id}
               category={cat}
