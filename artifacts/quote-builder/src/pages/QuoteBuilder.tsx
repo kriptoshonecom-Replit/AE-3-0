@@ -12,12 +12,9 @@ import ProductRelatedPitSection, { computeProductRelatedPitTotal } from "../comp
 import QuoteGroupComponent from "../components/QuoteGroup";
 import QuoteSummary from "../components/QuoteSummary";
 import QuoteList from "../components/QuoteList";
-import AddGroupModal from "../components/AddGroupModal";
 import { saveQuote, loadAllQuotes, getActiveQuoteId, loadQuote } from "../utils/storage";
 import { exportQuoteToPDF } from "../utils/pdfExport";
 import { generateId, todayString, thirtyDaysOut } from "../utils/calculations";
-import { getQtySyncCheck, applyQtySync, getPinPadSyncCheck, applyPinPadSync } from "../utils/quoteLogic";
-import type { QtySyncCheck, PinPadSyncCheck } from "../utils/quoteLogic";
 
 const productCategories = catalog.categories;
 
@@ -64,13 +61,10 @@ export default function QuoteBuilder() {
 
   const [quote, setQuote] = useState<Quote>(createNewQuote);
   const [initialized, setInitialized] = useState(false);
-  const [showAddGroup, setShowAddGroup] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [saved, setSaved] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [qtyMismatch, setQtyMismatch] = useState<QtySyncCheck | null>(null);
-  const [pinPadMismatch, setPinPadMismatch] = useState<PinPadSyncCheck | null>(null);
   const [yesNoToggles, setYesNoToggles] = useState<Record<string, boolean>>(DEFAULT_YES_NO);
   const [optionalProgramToggles, setOptionalProgramToggles] = useState<Record<string, boolean>>(DEFAULT_OPT_PROGRAMS);
 
@@ -138,45 +132,11 @@ export default function QuoteBuilder() {
     autosave(updated);
   };
 
-  const PIN_PAD_IDS = ["pi-001", "pi-002", "pi-005", "pi-006", "pi-008", "pi-009"];
-
   const handleGroupChange = (idx: number, group: QuoteGroup) => {
-    const oldGroup = quote.groups[idx];
     const groups = quote.groups.map((g, i) => (i === idx ? group : g));
     const updated = { ...quote, groups };
     setQuote(updated);
     autosave(updated);
-    const check = getQtySyncCheck(groups);
-    if (check.needed) setQtyMismatch(check);
-
-    const oldPinPadIds = new Set(
-      (oldGroup?.lineItems ?? [])
-        .filter((i) => PIN_PAD_IDS.includes(i.productId))
-        .map((i) => i.productId)
-    );
-    const newlyAddedPinPad = group.lineItems.some(
-      (i) => PIN_PAD_IDS.includes(i.productId) && !oldPinPadIds.has(i.productId)
-    );
-    if (newlyAddedPinPad) {
-      const pinCheck = getPinPadSyncCheck(groups);
-      if (pinCheck.needed) setPinPadMismatch(pinCheck);
-    }
-  };
-
-  const handleQtyAutoMatch = () => {
-    const syncedGroups = applyQtySync(quote.groups);
-    const updated = { ...quote, groups: syncedGroups };
-    setQuote(updated);
-    autosave(updated);
-    setQtyMismatch(null);
-  };
-
-  const handlePinPadAutoMatch = () => {
-    const syncedGroups = applyPinPadSync(quote.groups);
-    const updated = { ...quote, groups: syncedGroups };
-    setQuote(updated);
-    autosave(updated);
-    setPinPadMismatch(null);
   };
 
   const handleGroupRemove = (idx: number) => {
@@ -395,16 +355,19 @@ export default function QuoteBuilder() {
               )}
 
               {!allGroupsAdded && (
-                <button
-                  type="button"
-                  className="btn-add-group"
-                  onClick={() => setShowAddGroup(true)}
+                <select
+                  className="btn-add-group-select"
+                  value=""
+                  onChange={(e) => { if (e.target.value) addGroup(e.target.value); }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                  Add Product Group
-                </button>
+                  <option value="">+ Add Product Group…</option>
+                  {productCategories
+                    .filter((c) => !existingGroupIds.includes(c.id))
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))
+                  }
+                </select>
               )}
             </section>
 
@@ -426,85 +389,6 @@ export default function QuoteBuilder() {
         </div>
       </div>
 
-      {showAddGroup && (
-        <AddGroupModal
-          catalog={productCategories}
-          existingGroupIds={existingGroupIds}
-          onAdd={(id) => { addGroup(id); setShowAddGroup(false); }}
-          onClose={() => setShowAddGroup(false)}
-        />
-      )}
-
-      {pinPadMismatch && (
-        <div className="modal-backdrop" onClick={() => setPinPadMismatch(null)}>
-          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-            <div className="qty-sync-icon">
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <circle cx="14" cy="14" r="13" stroke="#f59e0b" strokeWidth="1.8" fill="#fef3c7" />
-                <path d="M14 9v6" stroke="#d97706" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="14" cy="19.5" r="1.2" fill="#d97706" />
-              </svg>
-            </div>
-            <h3 className="qty-sync-title">Pin Pad Quantity Mismatch</h3>
-            <p className="qty-sync-body">
-              The device count is ({pinPadMismatch.deviceCount}), but it's not matching up with the number of terminals ({pinPadMismatch.pinPadCount} pin pads selected).
-            </p>
-            <div className="qty-sync-actions">
-              <button
-                type="button"
-                className="btn-ghost"
-                onClick={() => setPinPadMismatch(null)}
-              >
-                Keep as is
-              </button>
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={handlePinPadAutoMatch}
-              >
-                Auto-match to {pinPadMismatch.deviceCount}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {qtyMismatch && (
-        <div className="modal-backdrop" onClick={() => setQtyMismatch(null)}>
-          <div className="modal-box qty-sync-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="qty-sync-icon">
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <circle cx="14" cy="14" r="13" stroke="#f59e0b" strokeWidth="1.8" fill="#fef3c7" />
-                <path d="M14 9v6" stroke="#d97706" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="14" cy="19.5" r="1.2" fill="#d97706" />
-              </svg>
-            </div>
-            <h3 className="qty-sync-title">Quantity Mismatch</h3>
-            <p className="qty-sync-body">
-              Total Device quantity ({qtyMismatch.terminalQty}) doesn't match
-              total <strong>Core</strong> quantity ({qtyMismatch.coreQty}).
-              <br />
-              Core licenses must match the number of terminals.
-            </p>
-            <div className="qty-sync-actions">
-              <button
-                type="button"
-                className="btn-ghost"
-                onClick={() => setQtyMismatch(null)}
-              >
-                Keep as is
-              </button>
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={handleQtyAutoMatch}
-              >
-                Auto-match to {qtyMismatch.terminalQty}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
