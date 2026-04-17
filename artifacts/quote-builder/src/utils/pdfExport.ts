@@ -162,9 +162,8 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
     doc.setFontSize(7.5);
     doc.setFont("helvetica", "normal");
     doc.text("ITEM", margin + 3, y + 3.5);
-    doc.text("ID", margin + 85, y + 3.5);
-    doc.text("QTY", margin + 115, y + 3.5, { align: "right" });
-    doc.text("UNIT PRICE", margin + 148, y + 3.5, { align: "right" });
+    doc.text("QTY", margin + 120, y + 3.5, { align: "right" });
+    doc.text("UNIT PRICE", margin + 155, y + 3.5, { align: "right" });
     doc.text("TOTAL", margin + contentWidth - 3, y + 3.5, { align: "right" });
     y += 5;
 
@@ -180,13 +179,11 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
       doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
 
-      const name = item.productName.length > 38 ? item.productName.slice(0, 36) + "…" : item.productName;
+      const name = item.productName.length > 52 ? item.productName.slice(0, 50) + "…" : item.productName;
       doc.text(name, margin + 3, y + 3.5);
-      doc.setTextColor(100, 116, 139);
-      doc.text(item.productId, margin + 85, y + 3.5);
       doc.setTextColor(30, 41, 59);
-      doc.text(String(item.quantity), margin + 115, y + 3.5, { align: "right" });
-      doc.text(formatCurrency(item.unitPrice), margin + 148, y + 3.5, { align: "right" });
+      doc.text(String(item.quantity), margin + 120, y + 3.5, { align: "right" });
+      doc.text(formatCurrency(item.unitPrice), margin + 155, y + 3.5, { align: "right" });
       doc.setFont("helvetica", "bold");
       doc.text(formatCurrency(computeLineItemTotal(item.productId, item.unitPrice, item.quantity)), margin + contentWidth - 3, y + 3.5, { align: "right" });
 
