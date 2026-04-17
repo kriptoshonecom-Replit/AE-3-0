@@ -7,6 +7,10 @@
     "type": "info",
     "text": "Subpackage ID: SP1000006007"
   },
+  "se-001": {
+    "type": "info",
+    "text": "Subpackage ID: SP1000006007"
+  },
   "co-001": {
     "type": "warning",
     "text": "License count matches the total number of devices (Terminals + Tablets) selected"
