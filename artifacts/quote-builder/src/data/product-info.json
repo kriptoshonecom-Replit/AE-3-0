@@ -1,4 +1,26 @@
 {
-  "tm-001": { "type": "info",    "text": "1 x CX5 Terminal · 1 x PowerVar 180VA · 1 x Bixolon SRP 350plusV" },
-  "tm-002": { "type": "info",    "text": "1 x CX5 Terminal · 1 x PowerVar 180VA · 1 x Bixolon SRP 350plusV · 1 x Wall Mount Bracket KIT" }
+  "tm-001": {
+    "type": "info",
+    "text": "1 x CX5 Terminal · 1 x PowerVar 180VA · 1 x Bixolon SRP 350plusV"
+  },
+  "tm-002": {
+    "type": "info",
+    "text": "1 x CX5 Terminal · 1 x PowerVar 180VA · 1 x Bixolon SRP 350plusV · 1 x Wall Mount Bracket KIT"
+  },
+  "se-001": {
+    "type": "info",
+    "text": "1 x N4000 · 1 x Asus 21' · 1 x PowerVar 250VA UPM · 1 x 24 Switch, Mouse, Keyboard"
+  },
+  "se-002": {
+    "type": "info",
+    "text": "1 x N4000 · 1 x Asus 21' · 1 x PowerVar 250VA UPM · 1 x 24 Switch, Mouse, Keyboard"
+  },
+  "co-001": {
+    "type": "warning",
+    "text": "Please ensure the license count matches the total number of devices (Terminals + Tablets)"
+  },
+  "co-002": {
+    "type": "warning",
+    "text": "Please ensure the license count matches the total number of devices (Terminals + Tablets)"
+  }
 }
