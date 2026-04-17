@@ -536,7 +536,7 @@ button {
 
 .line-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) 90px 70px 110px 100px 56px;
+  grid-template-columns: minmax(180px, 1fr) 70px 110px 100px 36px;
   align-items: center;
   border-bottom: 1px solid var(--border);
 }
@@ -1461,7 +1461,7 @@ textarea:focus::placeholder {
   }
 
   .line-row {
-    grid-template-columns: minmax(130px, 1fr) 60px 60px 80px 70px 40px;
+    grid-template-columns: minmax(130px, 1fr) 60px 80px 70px 36px;
   }
 
   .topbar-brand {
@@ -1478,7 +1478,6 @@ textarea:focus::placeholder {
     grid-template-columns: minmax(120px, 1fr) 70px 100px 40px;
   }
 
-  .col-sku,
   .col-price {
     display: none;
   }
