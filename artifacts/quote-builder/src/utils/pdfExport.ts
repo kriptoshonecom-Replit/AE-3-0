@@ -245,27 +245,28 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
   const row = (label: string, value: string, bold = false, labelColor: [number, number, number] = [100, 116, 139]) => {
     addPageIfNeeded(8);
     doc.setTextColor(...labelColor);
-    doc.text(label, labelX, y);
-    doc.setTextColor(15, 23, 42);
     if (bold) doc.setFont("helvetica", "bold");
     else doc.setFont("helvetica", "normal");
+    doc.text(label, labelX, y);
+    doc.setTextColor(15, 23, 42);
     doc.text(value, valueX, y, { align: "right" });
     y += 6;
   };
 
   row("Subtotal", formatCurrency(quoteSubtotal(quote)));
   if (quote.meta.discount > 0) {
-    row(`Discount (${quote.meta.discount}%)`, `- ${formatCurrency(quoteDiscount(quote))}`, false, [34, 197, 94]);
+    row(`Discount (${quote.meta.discount}%)`, `- ${formatCurrency(quoteDiscount(quote))}`, true, [34, 197, 94]);
   }
   if (quote.meta.tax > 0) {
     row(`Tax (${quote.meta.tax}%)`, formatCurrency(quoteTax(quote)));
   }
 
   // MRR Total divider line + bold row
+  y += 3;
   doc.setDrawColor(220, 220, 218);
   doc.setLineWidth(0.3);
   doc.line(totalsX - 5, y - 1, margin + contentWidth, y - 1);
-  y += 2;
+  y += 5;
   doc.setFont("helvetica", "bold");
   doc.setTextColor(15, 23, 42);
   doc.text("MRR Total", labelX, y);
