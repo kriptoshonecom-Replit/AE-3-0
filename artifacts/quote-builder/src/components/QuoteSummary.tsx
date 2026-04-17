@@ -42,7 +42,7 @@ export default function QuoteSummary({ quote, pitTotal, productPitTotal }: Props
           </div>
         )}
 
-        <div className="summary-row">
+        <div className="summary-row mrr-total">
           <span>MRR Total</span>
           <span>{formatCurrency(productsTotal)}</span>
         </div>

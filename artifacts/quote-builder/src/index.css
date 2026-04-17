@@ -732,6 +732,13 @@ button {
   color: var(--success);
 }
 
+.summary-row.mrr-total {
+  font-weight: 600;
+  color: var(--text);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
 .summary-divider {
   height: 1px;
   background: var(--border);
