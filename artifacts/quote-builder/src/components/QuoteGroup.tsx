@@ -4,7 +4,8 @@ import { groupSubtotal, formatCurrency, generateId } from "../utils/calculations
 import { getAdditionalExcludedIds, computeLineItemTotal, isTieredItem, isTabletItem } from "../utils/quoteLogic";
 import infoPanelData from "../data/product-info.json";
 
-const INFO_PANEL: Record<string, string> = infoPanelData as Record<string, string>;
+interface InfoPanelEntry { type: "info" | "warning"; text: string }
+const INFO_PANEL: Record<string, InfoPanelEntry> = infoPanelData as Record<string, InfoPanelEntry>;
 
 interface Props {
   group: QuoteGroupType;
@@ -202,7 +203,7 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
   const allCategoryItems = catalog.find((c) => c.id === groupId)?.items ?? [];
   const categoryItems = allCategoryItems.filter((p) => !usedProductIds.includes(p.id));
 
-  const infoText = item.productId ? INFO_PANEL[item.productId] : undefined;
+  const infoEntry = item.productId ? INFO_PANEL[item.productId] : undefined;
 
   return (
     <div className="line-item-wrapper">
@@ -265,8 +266,10 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
           </button>
         </div>
       </div>
-      {infoText && (
-        <div className="line-item-info">{infoText}</div>
+      {infoEntry && (
+        <div className={infoEntry.type === "warning" ? "line-item-warning" : "line-item-info"}>
+          {infoEntry.text}
+        </div>
       )}
     </div>
   );

@@ -1,4 +1,4 @@
 {
-  "tm-001": "1 x CX5 Terminal · 1 x PowerVar 180VA · 1 x Bixolon SRP 350plusV",
-  "tm-002": "1 x CX5 Terminal · 1 x PowerVar 180VA · 1 x Bixolon SRP 350plusV · 1 x Wall Mount Bracket KIT"
+  "tm-001": { "type": "info",    "text": "1 x CX5 Terminal · 1 x PowerVar 180VA · 1 x Bixolon SRP 350plusV" },
+  "tm-002": { "type": "info",    "text": "1 x CX5 Terminal · 1 x PowerVar 180VA · 1 x Bixolon SRP 350plusV · 1 x Wall Mount Bracket KIT" }
 }

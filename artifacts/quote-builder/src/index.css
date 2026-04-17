@@ -583,6 +583,14 @@ button {
   letter-spacing: 0.01em;
 }
 
+.line-item-warning {
+  font-style: italic;
+  font-size: 0.72rem;
+  color: #ef4444;
+  padding: 0 10px 7px 12px;
+  letter-spacing: 0.01em;
+}
+
 .line-row > div {
   padding: 7px 8px;
   min-width: 0;
