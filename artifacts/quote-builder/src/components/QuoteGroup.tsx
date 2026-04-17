@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import type { QuoteGroup as QuoteGroupType, ProductCategory, QuoteLineItem } from "../types";
 import { groupSubtotal, formatCurrency, generateId } from "../utils/calculations";
 import { getAdditionalExcludedIds, computeLineItemTotal, isTieredItem, isTabletItem } from "../utils/quoteLogic";
-import infoPanelData from "../data/infopanel.json";
+import infoPanelData from "../data/product-info.json";
 
 const INFO_PANEL: Record<string, string> = infoPanelData as Record<string, string>;
 
