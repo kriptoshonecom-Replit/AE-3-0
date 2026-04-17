@@ -130,7 +130,6 @@ export default function QuoteGroup({ group, catalog, onChange, onRemove }: Props
             <div className="line-table">
               <div className="line-row header">
                 <div className="col-product">Product</div>
-                <div className="col-sku">ID</div>
                 <div className="col-qty">Qty</div>
                 <div className="col-price">Unit Price</div>
                 <div className="col-total">Total</div>
@@ -216,10 +215,6 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
               </option>
             ))}
           </select>
-        </div>
-
-        <div className="col-sku">
-          <span className="sku-text">{item.productId || "—"}</span>
         </div>
 
         <div className="col-qty">
