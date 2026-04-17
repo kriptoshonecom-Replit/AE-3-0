@@ -2,6 +2,23 @@ import { useMemo, useState } from "react";
 import type { Quote } from "../types";
 import { formatCurrency, quoteTotal } from "../utils/calculations";
 import { loadAllQuotes, deleteQuote } from "../utils/storage";
+import { computeProductRelatedPitTotal } from "./ProductRelatedPitSection";
+import pitData from "../data/pit-services.json";
+import { PIT_HOURLY_RATE } from "../data/pit-config";
+
+const DEFAULT_YES_NO: Record<string, boolean> = {
+  "connected-payments-yn": false,
+  "online-ordering-yn": false,
+};
+
+function quoteGrandTotal(q: Quote): number {
+  const productsTotal = quoteTotal(q);
+  const pitCat = pitData.categories.find((c) => c.id === (q.meta.pitType ?? ""));
+  const pitTotal = pitCat ? pitCat.lineItems.reduce((s, i) => s + i.duration * PIT_HOURLY_RATE, 0) : 0;
+  const toggles = { ...DEFAULT_YES_NO, ...(q.meta.yesNoToggles ?? {}) };
+  const productPitTotal = computeProductRelatedPitTotal(q.groups, toggles);
+  return productsTotal + pitTotal + productPitTotal;
+}
 
 interface Props {
   currentId: string;
@@ -82,7 +99,7 @@ export default function QuoteList({ currentId, onSelect, onNew, refreshTrigger, 
               <span className="ql-item-date">{q.meta.updatedAt}</span>
             </div>
             <div className="ql-item-right">
-              <span className="ql-item-total">{formatCurrency(quoteTotal(q))}</span>
+              <span className="ql-item-total">{formatCurrency(quoteGrandTotal(q))}</span>
               <button
                 type="button"
                 className="ql-delete"

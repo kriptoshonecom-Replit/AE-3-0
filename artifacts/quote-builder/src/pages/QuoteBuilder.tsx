@@ -21,6 +21,11 @@ import type { QtySyncCheck, PinPadSyncCheck } from "../utils/quoteLogic";
 
 const productCategories = catalog.categories;
 
+const DEFAULT_YES_NO: Record<string, boolean> = {
+  "connected-payments-yn": false,
+  "online-ordering-yn": false,
+};
+
 function createNewQuote(): Quote {
   return {
     meta: {
@@ -63,7 +68,11 @@ export default function QuoteBuilder() {
   });
 
   const handleYesNoChange = (id: string, value: boolean) => {
-    setYesNoToggles((prev) => ({ ...prev, [id]: value }));
+    const next = { ...yesNoToggles, [id]: value };
+    setYesNoToggles(next);
+    const updated = { ...quote, meta: { ...quote.meta, yesNoToggles: next } };
+    setQuote(updated);
+    autosave(updated);
   };
   const printAreaRef = useRef<HTMLDivElement>(null);
 
@@ -75,12 +84,17 @@ export default function QuoteBuilder() {
       const q = loadQuote(activeId, userId);
       if (q) {
         setQuote(q);
+        if (q.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...q.meta.yesNoToggles });
         setInitialized(true);
         return;
       }
     }
     const all = loadAllQuotes(userId);
-    if (all.length > 0) setQuote(all[all.length - 1]);
+    if (all.length > 0) {
+      const q = all[all.length - 1];
+      setQuote(q);
+      if (q.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...q.meta.yesNoToggles });
+    }
     setInitialized(true);
   }, [userId, initialized]);
 
@@ -193,6 +207,7 @@ export default function QuoteBuilder() {
 
   const handleSelectQuote = (q: Quote) => {
     setQuote(q);
+    setYesNoToggles({ ...DEFAULT_YES_NO, ...(q.meta.yesNoToggles ?? {}) });
     setSidebarOpen(false);
   };
 
