@@ -18,13 +18,11 @@ const OPTIONAL_PROGRAMS = [
 interface Props {
   pitType: string;
   onChange: (pitType: string) => void;
-  yesNoToggles: Record<string, boolean>;
-  onYesNoChange: (id: string, value: boolean) => void;
   optionalProgramToggles: Record<string, boolean>;
   onOptionalProgramToggle: (id: string) => void;
 }
 
-export default function PitSection({ pitType, onChange, yesNoToggles, onYesNoChange, optionalProgramToggles, onOptionalProgramToggle }: Props) {
+export default function PitSection({ pitType, onChange, optionalProgramToggles, onOptionalProgramToggle }: Props) {
   const selected = pitCategories.find((c) => c.id === pitType) ?? null;
 
   return (
@@ -113,28 +111,6 @@ export default function PitSection({ pitType, onChange, yesNoToggles, onYesNoCha
             </div>
           )}
 
-          <div className="pit-yn-card">
-            {[
-              { id: "connected-payments-yn", label: "Connected Payments" },
-              { id: "online-ordering-yn", label: "Online Ordering" },
-            ].map(({ id, label }) => (
-              <div key={id} className="pit-yn-row">
-                <span className="pit-yn-label">{label}</span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={yesNoToggles[id]}
-                  className={`pit-toggle-switch ${yesNoToggles[id] ? "pit-toggle-on" : "pit-toggle-off"}`}
-                  onClick={() => onYesNoChange(id, !yesNoToggles[id])}
-                >
-                  <span className="pit-toggle-thumb" />
-                </button>
-                <span className={`pit-yn-state ${yesNoToggles[id] ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
-                  {yesNoToggles[id] ? "Yes" : "No"}
-                </span>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </div>

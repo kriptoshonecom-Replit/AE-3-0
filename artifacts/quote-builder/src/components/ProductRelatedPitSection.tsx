@@ -56,11 +56,6 @@ const PIT_ITEM_MAPPING: Record<string, ProductMapping> = {
   "tr-006": { type: "product",       productIds: ["ha-001", "ha-002"] },
 };
 
-const YES_NO_ITEM_MAP: Record<string, string[]> = {
-  "connected-payments-yn": ["pro-001", "tr-001"],
-  "online-ordering-yn": ["pro-002", "tr-004"],
-};
-
 const OPTIONAL_PROG_ITEM_MAP: Record<string, string[]> = {
   "connected-payments": ["pro-001", "tr-001"],
   "online-ordering":    ["pro-002", "tr-004"],
@@ -185,39 +180,26 @@ function buildExcludedItemIds(optionalProgramToggles: Record<string, boolean>): 
 
 export function computeProductRelatedPitTotal(
   groups: QuoteGroup[],
-  yesNoToggles: Record<string, boolean>,
   optionalProgramToggles: Record<string, boolean> = {}
 ): number {
-  const forcedItemIds = Object.entries(YES_NO_ITEM_MAP)
-    .filter(([toggleId]) => yesNoToggles[toggleId])
-    .flatMap(([, itemIds]) => itemIds);
-
   const excludedItemIds = buildExcludedItemIds(optionalProgramToggles);
 
   return pitCategories.flatMap((cat) => cat.lineItems).reduce((total, item) => {
     if (excludedItemIds.has(item.id)) return total;
-    const forced = forcedItemIds.includes(item.id);
-    const hours = forced ? item.duration : computeHours(item, groups);
+    const hours = computeHours(item, groups);
     return total + hours * PIT_HOURLY_RATE;
   }, 0);
 }
 
 interface Props {
   groups: QuoteGroup[];
-  yesNoToggles: Record<string, boolean>;
   optionalProgramToggles: Record<string, boolean>;
 }
 
-export default function ProductRelatedPitSection({ groups, yesNoToggles, optionalProgramToggles }: Props) {
+export default function ProductRelatedPitSection({ groups, optionalProgramToggles }: Props) {
   const hasAnyProducts = groups.some((g) => g.lineItems.length > 0);
-
-  const forcedItemIds = Object.entries(YES_NO_ITEM_MAP)
-    .filter(([toggleId]) => yesNoToggles[toggleId])
-    .flatMap(([, itemIds]) => itemIds);
-
   const excludedItemIds = buildExcludedItemIds(optionalProgramToggles);
-
-  const hasContent = hasAnyProducts || forcedItemIds.length > 0;
+  const hasContent = hasAnyProducts;
 
   return (
     <div className="prpit-card">
@@ -232,7 +214,7 @@ export default function ProductRelatedPitSection({ groups, yesNoToggles, optiona
               key={cat.id}
               category={cat}
               groups={groups}
-              forcedItemIds={forcedItemIds}
+              forcedItemIds={[]}
               excludedItemIds={excludedItemIds}
             />
           ))}
