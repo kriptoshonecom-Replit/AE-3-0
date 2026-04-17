@@ -55,17 +55,6 @@ export function isTieredItem(productId: string): boolean {
 }
 
 
-// ── Tablet Equipment Reminder ─────────────────────────────────────────────────
-// When ta-001, ta-002, or ta-003 are selected, show an info popup reminding
-// the user to add supporting accessories separately.
-
-const TABLET_INFO_IDS: string[] = ["ta-001", "ta-002", "ta-003"];
-
-export function isTabletItem(productId: string): boolean {
-  return TABLET_INFO_IDS.includes(productId);
-}
-
-
 // ── Pin Pad ↔ Terminal Count Check ────────────────────────────────────────────
 // pi-001, pi-002, pi-005, pi-006, pi-008, pi-009 quantities should match
 // the total terminal/device count (same reference as TERMINAL_SYNC_IDS).
