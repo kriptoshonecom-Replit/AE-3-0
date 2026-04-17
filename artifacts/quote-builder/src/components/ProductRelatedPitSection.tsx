@@ -62,8 +62,6 @@ const YES_NO_ITEM_MAP: Record<string, string[]> = {
 };
 
 const OPTIONAL_PROG_ITEM_MAP: Record<string, string[]> = {
-  "connected-payments": ["pro-001", "tr-001"],
-  "online-ordering":    ["pro-002", "tr-004"],
   "consumer-marketing": ["pro-003", "tr-002"],
   "insight-or-console": ["pro-004", "tr-003"],
   "aloha-api":          ["pro-005"],

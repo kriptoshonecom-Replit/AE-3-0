@@ -5,8 +5,6 @@ import { PIT_HOURLY_RATE } from "../data/pit-config";
 const pitCategories = pitData.categories as PitCategory[];
 
 const OPTIONAL_PROGRAMS = [
-  { id: "connected-payments", label: "Connected Payments" },
-  { id: "online-ordering", label: "Online Ordering" },
   { id: "consumer-marketing", label: "Consumer Marketing" },
   { id: "insight-or-console", label: "Insight or Console" },
   { id: "aloha-api", label: "Aloha API" },

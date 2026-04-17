@@ -12,8 +12,6 @@ const DEFAULT_YES_NO: Record<string, boolean> = {
 };
 
 const DEFAULT_OPT_PROGRAMS: Record<string, boolean> = {
-  "connected-payments": true,
-  "online-ordering": true,
   "consumer-marketing": true,
   "insight-or-console": true,
   "aloha-api": true,
