@@ -4,9 +4,11 @@ import { useLocation } from "wouter";
 import logo from "/logo.png";
 import type { Quote, QuoteGroup, QuoteMeta } from "../types";
 import catalog from "../data/products.json";
+import pitData from "../data/pit-services.json";
+import { PIT_HOURLY_RATE } from "../data/pit-config";
 import QuoteMetaForm from "../components/QuoteMetaForm";
 import PitSection from "../components/PitSection";
-import ProductRelatedPitSection from "../components/ProductRelatedPitSection";
+import ProductRelatedPitSection, { computeProductRelatedPitTotal } from "../components/ProductRelatedPitSection";
 import QuoteGroupComponent from "../components/QuoteGroup";
 import QuoteSummary from "../components/QuoteSummary";
 import QuoteList from "../components/QuoteList";
@@ -370,7 +372,14 @@ export default function QuoteBuilder() {
             {quote.groups.some((g) => g.lineItems.length > 0) && (
               <section className="section summary-section">
                 <h2 className="section-title">Summary</h2>
-                <QuoteSummary quote={quote} />
+                <QuoteSummary
+                  quote={quote}
+                  pitTotal={(() => {
+                    const cat = pitData.categories.find((c) => c.id === (quote.meta.pitType ?? ""));
+                    return cat ? cat.lineItems.reduce((s, i) => s + i.duration * PIT_HOURLY_RATE, 0) : 0;
+                  })()}
+                  productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles)}
+                />
               </section>
             )}
           </div>

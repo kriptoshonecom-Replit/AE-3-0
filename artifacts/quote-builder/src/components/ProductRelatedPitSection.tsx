@@ -160,6 +160,21 @@ function CategoryTable({ category, groups, forcedItemIds }: CategoryTableProps) 
   );
 }
 
+export function computeProductRelatedPitTotal(
+  groups: QuoteGroup[],
+  yesNoToggles: Record<string, boolean>
+): number {
+  const forcedItemIds = Object.entries(YES_NO_ITEM_MAP)
+    .filter(([toggleId]) => yesNoToggles[toggleId])
+    .flatMap(([, itemIds]) => itemIds);
+
+  return pitCategories.flatMap((cat) => cat.lineItems).reduce((total, item) => {
+    const forced = forcedItemIds.includes(item.id);
+    const hours = forced ? item.duration : computeHours(item, groups);
+    return total + hours * PIT_HOURLY_RATE;
+  }, 0);
+}
+
 interface Props {
   groups: QuoteGroup[];
   yesNoToggles: Record<string, boolean>;

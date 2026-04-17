@@ -9,13 +9,16 @@ import {
 
 interface Props {
   quote: Quote;
+  pitTotal: number;
+  productPitTotal: number;
 }
 
-export default function QuoteSummary({ quote }: Props) {
+export default function QuoteSummary({ quote, pitTotal, productPitTotal }: Props) {
   const subtotal = quoteSubtotal(quote);
   const discount = quoteDiscount(quote);
   const tax = quoteTax(quote);
-  const total = quoteTotal(quote);
+  const productsTotal = quoteTotal(quote);
+  const grandTotal = productsTotal + pitTotal + productPitTotal;
 
   return (
     <div className="summary-panel">
@@ -39,11 +42,25 @@ export default function QuoteSummary({ quote }: Props) {
           </div>
         )}
 
+        {pitTotal > 0 && (
+          <div className="summary-row">
+            <span>PIT</span>
+            <span>{formatCurrency(pitTotal)}</span>
+          </div>
+        )}
+
+        {productPitTotal > 0 && (
+          <div className="summary-row">
+            <span>Product Related PIT</span>
+            <span>{formatCurrency(productPitTotal)}</span>
+          </div>
+        )}
+
         <div className="summary-divider" />
 
         <div className="summary-row total">
           <span>Total</span>
-          <span>{formatCurrency(total)}</span>
+          <span>{formatCurrency(grandTotal)}</span>
         </div>
       </div>
     </div>
