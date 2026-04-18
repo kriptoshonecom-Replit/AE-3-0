@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import type { QuoteGroup as QuoteGroupType, ProductCategory, QuoteLineItem } from "../types";
 import { groupSubtotal, formatCurrency, generateId } from "../utils/calculations";
 import { getAdditionalExcludedIds, computeLineItemTotal, isTieredItem } from "../utils/quoteLogic";
@@ -171,19 +171,14 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
   const categoryItems = allCategoryItems.filter((p) => !usedProductIds.includes(p.id));
 
   const infoEntry = item.productId ? INFO_PANEL[item.productId] : undefined;
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const popoverRef = useRef<HTMLDivElement>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
-    if (!popoverOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        setPopoverOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [popoverOpen]);
+    if (!modalOpen) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setModalOpen(false); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [modalOpen]);
 
   return (
     <div className="line-item-wrapper">
@@ -205,25 +200,48 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
 
         <div className="col-info">
           {infoEntry && (
-            <div className="info-icon-wrap" ref={popoverRef}>
+            <>
               <button
                 type="button"
                 className={`info-icon-btn ${infoEntry.type}`}
-                onClick={() => setPopoverOpen((v) => !v)}
+                onClick={() => setModalOpen(true)}
                 title={infoEntry.type === "warning" ? "Warning" : "Info"}
                 aria-label={infoEntry.type === "warning" ? "Warning" : "Info"}
               >
                 {infoEntry.type === "warning" ? "!" : "i"}
               </button>
-              {popoverOpen && (
-                <div className={`info-popover ${infoEntry.type}`}>
-                  <span className="info-popover-label">
-                    {infoEntry.type === "warning" ? "Warning" : "Info"}
-                  </span>
-                  {infoEntry.text}
+              {modalOpen && (
+                <div className="info-modal-backdrop" onMouseDown={() => setModalOpen(false)}>
+                  <div
+                    className={`info-modal ${infoEntry.type}`}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  >
+                    <div className={`info-modal-header ${infoEntry.type}`}>
+                      {infoEntry.type === "warning" ? (
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <circle cx="8" cy="8" r="7.5" fill="#ef4444" />
+                          <text x="8" y="12" textAnchor="middle" fill="white" fontSize="10" fontWeight="700" fontStyle="italic" fontFamily="Georgia, serif">!</text>
+                        </svg>
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <circle cx="8" cy="8" r="7.5" fill="#94a3b8" />
+                          <text x="8" y="12" textAnchor="middle" fill="white" fontSize="10" fontWeight="700" fontStyle="italic" fontFamily="Georgia, serif">i</text>
+                        </svg>
+                      )}
+                      <span>{infoEntry.type === "warning" ? "Warning" : "Info"}</span>
+                    </div>
+                    <p className="info-modal-text">{infoEntry.text}</p>
+                    <button
+                      type="button"
+                      className="info-modal-close"
+                      onClick={() => setModalOpen(false)}
+                    >
+                      Close
+                    </button>
+                  </div>
                 </div>
               )}
-            </div>
+            </>
           )}
         </div>
 
