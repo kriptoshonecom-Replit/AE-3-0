@@ -1587,11 +1587,17 @@ textarea:focus::placeholder {
 
 @media (max-width: 640px) {
   .line-row {
-    grid-template-columns: minmax(120px, 1fr) 70px 100px 40px;
+    grid-template-columns: minmax(120px, 1fr) 22px 70px 100px 40px;
   }
 
   .col-price {
     display: none;
+  }
+
+  .info-icon-btn {
+    width: 13px;
+    height: 13px;
+    font-size: 8px;
   }
 }
 
