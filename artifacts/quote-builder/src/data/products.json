@@ -36,7 +36,7 @@
       "items": [
         {
           "id": "tm-001",
-          "name": "CX5 15 inch 4:3",
+          "name": "CX5 15 inch 4:3 Table top",
           "type": "info",
           "text": "POS Terminal | Thermal Receipt Printers | Power Conditioner 180VA",
           "price": 88.0,
@@ -50,7 +50,7 @@
           "id": "tm-002",
           "name": "CX5 15 inch 4:3 Wall Mount",
           "type": "info",
-          "text": "POS Terminal | Thermal Receipt Printers | Power Conditioner 180VA",
+          "text": "POS Terminal | Thermal Receipt Printers | Power Conditioner 180VA | Mounting KIT",
           "price": 88.0,
           "produration": 0,
           "traduration": 0,
@@ -122,7 +122,7 @@
       "items": [
         {
           "id": "ta-001",
-          "name": "Tablet SmartBack with Equinox 6200 Shoulder Strap PowerPack (Rugged Frame)",
+          "name": "8 Inch Tablet With SmartBack, Equinox 6200, Shoulder Strap, PowerPack (Rugged Frame)",
           "type": "warning",
           "text": "The PinPad, Charging Station, and Power Supply are not Included in the Base Unit and Require Individual Selection",
           "price": 75.0,
@@ -134,7 +134,7 @@
 
         {
           "id": "ta-002",
-          "name": "Tablet MSR PowerPack Shoulder Strap (Rugged Frame)",
+          "name": "8 Inch Tablet With MSR, PowerPack, Shoulder Strap (Rugged Frame)",
           "type": "warning",
           "text": "Charging Station, and Power Supply are not Included in the Base Unit and Require Individual Selection",
           "price": 65.0,
@@ -146,7 +146,7 @@
 
         {
           "id": "ta-003",
-          "name": "Tablet MSR PowerPack Shoulder Strap (Scanner Frame)",
+          "name": "8 Inch Tablet With MSR, PowerPack, Shoulder Strap (Scanner Frame)",
           "type": "warning",
           "text": "Charging Station, and Power Supply are not Included in the Base Unit and Require Individual Selection",
           "price": 70.0,
@@ -188,7 +188,7 @@
 
         {
           "id": "ta-007",
-          "name": "Bay Charger-Single Unit",
+          "name": "Docking Bay Charger-Single Unit",
           "price": 8.0,
           "produration": 0,
           "traduration": 0,
@@ -198,7 +198,7 @@
 
         {
           "id": "ta-008",
-          "name": "Bay Charger-Multi up to 5 Units",
+          "name": "Docking Bay Charger-Multi up to 5 Units",
           "price": 37.0,
           "produration": 0,
           "traduration": 0,
@@ -214,7 +214,7 @@
       "items": [
         {
           "id": "ha-001",
-          "name": "Axium Ex8000 Case with Clip (OrderPay) HW|SW",
+          "name": "Axium Ex8000, Case with Clip (OrderPay) HW|SW",
           "type": "warning",
           "text": "Charging Station is not Included in the Base Unit and Require Individual Selection",
           "price": 57.0,
@@ -226,7 +226,7 @@
 
         {
           "id": "ha-002",
-          "name": "Axium Ex8000 Case with Strap (OrderPay) HW|SW",
+          "name": "Axium Ex8000, Case with Strap (OrderPay) HW|SW",
           "type": "warning",
           "text": "Charging Station is not Included in the Base Unit and Require Individual Selection",
           "price": 57.0,
@@ -238,7 +238,7 @@
 
         {
           "id": "ha-003",
-          "name": "Axium Bay Charger-Single Unit",
+          "name": "Axium Docking Bay Charger-Single Unit",
           "price": 5.0,
           "produration": 0,
           "traduration": 0,
@@ -248,7 +248,7 @@
 
         {
           "id": "ha-004",
-          "name": "Axium Multi-Bay Charging Station",
+          "name": "Axium Multi-Bay Docking Charging Station up to 5 Units",
           "price": 20.0,
           "produration": 0,
           "traduration": 0,

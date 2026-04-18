@@ -563,10 +563,6 @@ button {
   border-right: none;
 }
 
-.line-row.header .col-info {
-  border-right: none;
-}
-
 .line-item-wrapper {
   border-bottom: 1px solid var(--border);
 }
