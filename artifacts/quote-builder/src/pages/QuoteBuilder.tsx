@@ -324,6 +324,7 @@ export default function QuoteBuilder() {
                 groups={quote.groups}
                 yesNoToggles={yesNoToggles}
                 optionalProgramToggles={optionalProgramToggles}
+                pitType={quote.meta.pitType ?? ""}
               />
             </section>
 
@@ -380,7 +381,7 @@ export default function QuoteBuilder() {
                     const cat = pitData.categories.find((c) => c.id === (quote.meta.pitType ?? ""));
                     return cat ? cat.lineItems.reduce((s, i) => s + i.duration * PIT_HOURLY_RATE, 0) : 0;
                   })()}
-                  productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles, optionalProgramToggles)}
+                  productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles, optionalProgramToggles, quote.meta.pitType ?? "")}
                 />
               </section>
             )}

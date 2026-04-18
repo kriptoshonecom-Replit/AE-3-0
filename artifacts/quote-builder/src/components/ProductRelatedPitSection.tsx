@@ -5,16 +5,41 @@ import { PIT_HOURLY_RATE } from "../data/pit-config";
 // ── Product catalog lookup ────────────────────────────────────────────────────
 type DurationField = "instaduration" | "stageduration" | "produration" | "traduration";
 
-const productCatalog = new Map<string, Record<DurationField, number>>();
+type CatalogEntry = Record<DurationField, number> & {
+  sitecopyproduration: number | undefined;
+  sitecopytradiration: number | undefined;
+};
+
+const productCatalog = new Map<string, CatalogEntry>();
 for (const cat of productsData.categories) {
-  for (const item of cat.items as Array<{ id: string } & Partial<Record<DurationField, number>>>) {
+  for (const item of cat.items as Array<{
+    id: string;
+    instaduration?: number;
+    stageduration?: number;
+    produration?: number;
+    traduration?: number;
+    sitecopyproduration?: number;
+    sitecopytradiration?: number;
+  }>) {
     productCatalog.set(item.id, {
       instaduration: item.instaduration ?? 0,
       stageduration: item.stageduration ?? 0,
       produration:   item.produration   ?? 0,
       traduration:   item.traduration   ?? 0,
+      sitecopyproduration: item.sitecopyproduration,
+      sitecopytradiration: item.sitecopytradiration,
     });
   }
+}
+
+function getProductDuration(productId: string, field: DurationField, pitType: string): number {
+  const entry = productCatalog.get(productId);
+  if (!entry) return 0;
+  if (pitType === "site-copy") {
+    if (field === "produration" && entry.sitecopyproduration !== undefined) return entry.sitecopyproduration;
+    if (field === "traduration" && entry.sitecopytradiration !== undefined) return entry.sitecopytradiration;
+  }
+  return entry[field];
 }
 
 const CATEGORY_DURATION_FIELD: Record<string, DurationField> = {
@@ -143,7 +168,7 @@ const OPTIONAL_PROG_ITEM_MAP: Record<string, string[]> = {
 };
 
 // ── Duration computation ──────────────────────────────────────────────────────
-function computeHours(itemId: string, catId: string, groups: QuoteGroup[]): number {
+function computeHours(itemId: string, catId: string, groups: QuoteGroup[], pitType: string): number {
   const mapping = PIT_ITEM_MAPPING[itemId];
   if (!mapping) return 0;
 
@@ -154,7 +179,7 @@ function computeHours(itemId: string, catId: string, groups: QuoteGroup[]): numb
     for (const group of groups) {
       for (const li of group.lineItems) {
         if (mapping.productIds.includes(li.productId)) {
-          total += li.quantity * (productCatalog.get(li.productId)?.[field] ?? 0);
+          total += li.quantity * getProductDuration(li.productId, field, pitType);
         }
       }
     }
@@ -165,7 +190,7 @@ function computeHours(itemId: string, catId: string, groups: QuoteGroup[]): numb
     for (const group of groups) {
       for (const li of group.lineItems) {
         if (mapping.productIds.includes(li.productId) && li.quantity > 0) {
-          return productCatalog.get(li.productId)?.[field] ?? 0;
+          return getProductDuration(li.productId, field, pitType);
         }
       }
     }
@@ -177,7 +202,7 @@ function computeHours(itemId: string, catId: string, groups: QuoteGroup[]): numb
     for (const group of groups) {
       if (mapping.categoryIds.includes(group.categoryId)) {
         for (const li of group.lineItems) {
-          total += li.quantity * (productCatalog.get(li.productId)?.[field] ?? 0);
+          total += li.quantity * getProductDuration(li.productId, field, pitType);
         }
       }
     }
@@ -201,7 +226,8 @@ function buildExcludedItemIds(optionalProgramToggles: Record<string, boolean>): 
 export function computeProductRelatedPitTotal(
   groups: QuoteGroup[],
   yesNoToggles: Record<string, boolean>,
-  optionalProgramToggles: Record<string, boolean> = {}
+  optionalProgramToggles: Record<string, boolean> = {},
+  pitType: string = ""
 ): number {
   const forcedItemIds = Object.entries(YES_NO_ITEM_MAP)
     .filter(([toggleId]) => yesNoToggles[toggleId])
@@ -216,7 +242,7 @@ export function computeProductRelatedPitTotal(
       const forced = forcedItemIds.includes(item.id);
       const hours = forced
         ? (TOGGLE_DURATIONS[item.id] ?? 0)
-        : computeHours(item.id, cat.id, groups);
+        : computeHours(item.id, cat.id, groups, pitType);
       total += hours * PIT_HOURLY_RATE;
     }
   }
@@ -232,16 +258,17 @@ interface CategoryTableProps {
   groups: QuoteGroup[];
   forcedItemIds: string[];
   excludedItemIds: Set<string>;
+  pitType: string;
 }
 
-function CategoryTable({ category, groups, forcedItemIds, excludedItemIds }: CategoryTableProps) {
+function CategoryTable({ category, groups, forcedItemIds, excludedItemIds, pitType }: CategoryTableProps) {
   const rows = category.lineItems
     .filter((item) => !excludedItemIds.has(item.id))
     .map((item) => {
       const forced = forcedItemIds.includes(item.id);
       const hours = forced
         ? (TOGGLE_DURATIONS[item.id] ?? 0)
-        : computeHours(item.id, category.id, groups);
+        : computeHours(item.id, category.id, groups, pitType);
       return { item, hours, price: hours * PIT_HOURLY_RATE };
     })
     .filter((r) => r.hours > 0);
@@ -290,9 +317,10 @@ interface Props {
   groups: QuoteGroup[];
   yesNoToggles: Record<string, boolean>;
   optionalProgramToggles: Record<string, boolean>;
+  pitType: string;
 }
 
-export default function ProductRelatedPitSection({ groups, yesNoToggles, optionalProgramToggles }: Props) {
+export default function ProductRelatedPitSection({ groups, yesNoToggles, optionalProgramToggles, pitType }: Props) {
   const hasAnyProducts = groups.some((g) => g.lineItems.length > 0);
 
   const forcedItemIds = Object.entries(YES_NO_ITEM_MAP)
@@ -317,6 +345,7 @@ export default function ProductRelatedPitSection({ groups, yesNoToggles, optiona
               groups={groups}
               forcedItemIds={forcedItemIds}
               excludedItemIds={excludedItemIds}
+              pitType={pitType}
             />
           ))}
         </div>

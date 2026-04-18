@@ -235,7 +235,7 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
     : 0;
   const yesNoToggles = { ...DEFAULT_YES_NO, ...(quote.meta.yesNoToggles ?? {}) };
   const optToggles = { ...DEFAULT_OPT_PROGRAMS, ...(quote.meta.optionalProgramToggles ?? {}) };
-  const productPitTotal = computeProductRelatedPitTotal(quote.groups, yesNoToggles, optToggles);
+  const productPitTotal = computeProductRelatedPitTotal(quote.groups, yesNoToggles, optToggles, quote.meta.pitType ?? "");
   const mrrTotal = quoteTotal(quote);
   const grandTotal = mrrTotal + pitTotal + productPitTotal;
 

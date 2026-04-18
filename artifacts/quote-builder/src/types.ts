@@ -8,6 +8,8 @@ export interface ProductItem {
   traduration?: number;
   instaduration?: number;
   stageduration?: number;
+  sitecopyproduration?: number;
+  sitecopytradiration?: number;
 }
 
 export interface ProductCategory {
