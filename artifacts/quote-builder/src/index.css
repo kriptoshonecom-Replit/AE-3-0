@@ -1584,8 +1584,8 @@ textarea:focus::placeholder {
   }
 
   .info-icon-img {
-    width: 14px;
-    height: 14px;
+    width: 15px !important;
+    height: 15px !important;
   }
 }
 
