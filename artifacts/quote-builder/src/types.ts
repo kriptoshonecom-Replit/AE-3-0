@@ -60,6 +60,7 @@ export interface QuoteMeta {
   aeCurrentVoyixPaySpend?: string;
   existingHeadlineRate?: string;
   existingInterchangeRate?: string;
+  heatmapToggles?: Record<string, boolean>;
 }
 
 export interface PitLineItem {

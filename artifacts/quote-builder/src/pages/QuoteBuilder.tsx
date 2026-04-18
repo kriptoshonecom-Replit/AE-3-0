@@ -8,6 +8,7 @@ import pitData from "../data/pit-services.json";
 import { PIT_HOURLY_RATE } from "../data/pit-config";
 import QuoteMetaForm from "../components/QuoteMetaForm";
 import CurrentSpendForm from "../components/CurrentSpendForm";
+import HeatmapSection, { computeHeatmapTotal } from "../components/HeatmapSection";
 import PitSection from "../components/PitSection";
 import ProductRelatedPitSection, { computeProductRelatedPitTotal } from "../components/ProductRelatedPitSection";
 import QuoteGroupComponent from "../components/QuoteGroup";
@@ -32,6 +33,12 @@ const DEFAULT_OPT_PROGRAMS: Record<string, boolean> = {
   "kitchen": true,
   "orderpay": true,
   "aloha-delivery": true,
+};
+
+const DEFAULT_HEATMAP_TOGGLES: Record<string, boolean> = {
+  "heat-001": false,
+  "heat-002": false,
+  "heat-003": false,
 };
 
 function createNewQuote(): Quote {
@@ -70,6 +77,7 @@ export default function QuoteBuilder() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [yesNoToggles, setYesNoToggles] = useState<Record<string, boolean>>(DEFAULT_YES_NO);
   const [optionalProgramToggles, setOptionalProgramToggles] = useState<Record<string, boolean>>(DEFAULT_OPT_PROGRAMS);
+  const [heatmapToggles, setHeatmapToggles] = useState<Record<string, boolean>>(DEFAULT_HEATMAP_TOGGLES);
 
   const handleYesNoChange = (id: string, value: boolean) => {
     const next = { ...yesNoToggles, [id]: value };
@@ -87,6 +95,14 @@ export default function QuoteBuilder() {
     autosave(updated);
   };
 
+  const handleHeatmapToggle = (id: string, value: boolean) => {
+    const next = { ...heatmapToggles, [id]: value };
+    setHeatmapToggles(next);
+    const updated = { ...quote, meta: { ...quote.meta, heatmapToggles: next } };
+    setQuote(updated);
+    autosave(updated);
+  };
+
   const printAreaRef = useRef<HTMLDivElement>(null);
 
   // Load the correct quote once we know who the user is
@@ -99,6 +115,7 @@ export default function QuoteBuilder() {
         setQuote(q);
         if (q.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...q.meta.yesNoToggles });
         setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
+        setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });
         setInitialized(true);
         return;
       }
@@ -109,6 +126,7 @@ export default function QuoteBuilder() {
       setQuote(q);
       if (q.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...q.meta.yesNoToggles });
       setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
+      setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });
     }
     setInitialized(true);
   }, [userId, initialized]);
@@ -335,6 +353,15 @@ export default function QuoteBuilder() {
               />
             </section>
 
+            {/* Heatmap & Cabling section */}
+            <section className="section">
+              <h2 className="section-title">Heatmap &amp; Cabling</h2>
+              <HeatmapSection
+                toggles={heatmapToggles}
+                onToggle={handleHeatmapToggle}
+              />
+            </section>
+
             {/* Groups section */}
             <section className="section">
               <div className="section-header">
@@ -389,6 +416,7 @@ export default function QuoteBuilder() {
                     return cat ? cat.lineItems.reduce((s, i) => s + i.duration * PIT_HOURLY_RATE, 0) : 0;
                   })()}
                   productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles, optionalProgramToggles, quote.meta.pitType ?? "")}
+                  heatmapTotal={computeHeatmapTotal(heatmapToggles)}
                 />
               </section>
             )}

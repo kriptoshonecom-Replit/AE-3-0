@@ -236,6 +236,10 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
   const yesNoToggles = { ...DEFAULT_YES_NO, ...(quote.meta.yesNoToggles ?? {}) };
   const optToggles = { ...DEFAULT_OPT_PROGRAMS, ...(quote.meta.optionalProgramToggles ?? {}) };
   const productPitTotal = computeProductRelatedPitTotal(quote.groups, yesNoToggles, optToggles, quote.meta.pitType ?? "");
+  const heatmapItems = (pitCategories as Array<{ id: string; lineItems: Array<{ id: string; price?: number }> }>)
+    .find((c) => c.id === "heatmap")?.lineItems ?? [];
+  const heatmapToggles = quote.meta.heatmapToggles ?? {};
+  const heatmapTotal = heatmapItems.reduce((s, i) => s + (heatmapToggles[i.id] ? (i.price ?? 0) : 0), 0);
   const mrrTotal = quoteTotal(quote);
   const grandTotal = mrrTotal + pitTotal + productPitTotal;
 
@@ -289,6 +293,17 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
 
   doc.setFontSize(11);
   row("Total", formatCurrency(grandTotal), true);
+
+  if (heatmapTotal > 0) {
+    y += 4;
+    doc.setDrawColor(220, 220, 218);
+    doc.setLineWidth(0.3);
+    doc.line(totalsX - 5, y - 1, margin + contentWidth, y - 1);
+    y += 5;
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    row("Heatmap & Cabling (one-time)", formatCurrency(heatmapTotal));
+  }
 
   // ── Notes ──────────────────────────────────────────
   if (quote.meta.notes) {

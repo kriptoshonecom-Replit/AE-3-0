@@ -11,9 +11,10 @@ interface Props {
   quote: Quote;
   pitTotal: number;
   productPitTotal: number;
+  heatmapTotal: number;
 }
 
-export default function QuoteSummary({ quote, pitTotal, productPitTotal }: Props) {
+export default function QuoteSummary({ quote, pitTotal, productPitTotal, heatmapTotal }: Props) {
   const subtotal = quoteSubtotal(quote);
   const discount = quoteDiscount(quote);
   const tax = quoteTax(quote);
@@ -67,6 +68,16 @@ export default function QuoteSummary({ quote, pitTotal, productPitTotal }: Props
           <span>Total</span>
           <span>{formatCurrency(grandTotal)}</span>
         </div>
+
+        {heatmapTotal > 0 && (
+          <>
+            <div className="summary-divider" />
+            <div className="summary-row heatmap-row">
+              <span>Heatmap &amp; Cabling (one-time)</span>
+              <span>{formatCurrency(heatmapTotal)}</span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
