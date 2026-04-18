@@ -990,7 +990,42 @@
           "stageduration": 0
         }
       ]
+    },
+
+    {
+      "id": "olo",
+      "name": "Online Ordering package",
+      "items": [
+        {
+          "id": "olo-001",
+          "name": "Online Ordering Fixed 500",
+          "price": 60.0,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0
+        },
+
+        {
+          "id": "olo-002",
+          "name": "Online Ordering Fixed 1000",
+          "price": 80.0,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0
+        },
+
+        {
+          "id": "olo-003",
+          "name": "Online Ordering (NCR Pay Variable)",
+          "price": 0.0,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0
+        }
+      ]
     }
   ]
 }
-  
