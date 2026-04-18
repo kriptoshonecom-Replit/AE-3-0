@@ -10,6 +10,7 @@ import QuoteMetaForm from "../components/QuoteMetaForm";
 import CurrentSpendForm from "../components/CurrentSpendForm";
 import HeatmapSection, { computeHeatmapTotal } from "../components/HeatmapSection";
 import PaymentsConfigPanel from "../components/PaymentsConfigPanel";
+import UnsavedChangesModal from "../components/UnsavedChangesModal";
 import PitSection from "../components/PitSection";
 import ProductRelatedPitSection, { computeProductRelatedPitTotal } from "../components/ProductRelatedPitSection";
 import QuoteGroupComponent from "../components/QuoteGroup";
@@ -79,6 +80,8 @@ export default function QuoteBuilder() {
   const [yesNoToggles, setYesNoToggles] = useState<Record<string, boolean>>(DEFAULT_YES_NO);
   const [optionalProgramToggles, setOptionalProgramToggles] = useState<Record<string, boolean>>(DEFAULT_OPT_PROGRAMS);
   const [heatmapToggles, setHeatmapToggles] = useState<Record<string, boolean>>(DEFAULT_HEATMAP_TOGGLES);
+  const isDirtyRef = useRef(false);
+  const [pendingAction, setPendingAction] = useState<null | "export" | "new">(null);
 
   const handleYesNoChange = (id: string, value: boolean) => {
     const next = { ...yesNoToggles, [id]: value };
@@ -133,11 +136,12 @@ export default function QuoteBuilder() {
   }, [userId, initialized]);
 
   const autosave = useCallback(
-    (q: Quote) => {
+    (q: Quote, markDirty = true) => {
       if (!userId) return;
       const updated = { ...q, meta: { ...q.meta, updatedAt: todayString() } };
       saveQuote(updated, userId);
       setRefreshTrigger((n) => n + 1);
+      if (markDirty) isDirtyRef.current = true;
     },
     [userId]
   );
@@ -184,12 +188,13 @@ export default function QuoteBuilder() {
   };
 
   const handleSave = () => {
-    autosave(quote);
+    autosave(quote, false);
+    isDirtyRef.current = false;
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const handleExportPDF = async () => {
+  const executeExportPDF = async () => {
     setExporting(true);
     try {
       await exportQuoteToPDF(quote);
@@ -198,12 +203,50 @@ export default function QuoteBuilder() {
     }
   };
 
-  const handleNewQuote = () => {
+  const executeNewQuote = () => {
     const newQ = createNewQuote();
     setQuote(newQ);
-    autosave(newQ);
+    setYesNoToggles(DEFAULT_YES_NO);
+    setOptionalProgramToggles(DEFAULT_OPT_PROGRAMS);
+    setHeatmapToggles(DEFAULT_HEATMAP_TOGGLES);
+    autosave(newQ, false);
+    isDirtyRef.current = false;
     setSidebarOpen(false);
   };
+
+  const handleExportPDF = () => {
+    if (isDirtyRef.current) { setPendingAction("export"); return; }
+    executeExportPDF();
+  };
+
+  const handleNewQuote = () => {
+    if (isDirtyRef.current) { setPendingAction("new"); return; }
+    executeNewQuote();
+  };
+
+  const handleUnsavedYes = async () => {
+    handleSave();
+    if (pendingAction === "export") await executeExportPDF();
+    if (pendingAction === "new") executeNewQuote();
+    setPendingAction(null);
+  };
+
+  const handleUnsavedNo = async () => {
+    if (pendingAction === "export") await executeExportPDF();
+    if (pendingAction === "new") executeNewQuote();
+    setPendingAction(null);
+  };
+
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirtyRef.current) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, []);
 
   const handleSelectQuote = (q: Quote) => {
     setQuote(q);
@@ -217,6 +260,11 @@ export default function QuoteBuilder() {
 
   return (
     <div className="app-shell">
+      {/* Unsaved changes modal */}
+      {pendingAction && (
+        <UnsavedChangesModal onYes={handleUnsavedYes} onNo={handleUnsavedNo} />
+      )}
+
       {/* Sidebar */}
       <div className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
         <div className="sidebar-inner">

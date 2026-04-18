@@ -669,6 +669,77 @@ button {
   background: var(--border);
 }
 
+.unsaved-modal {
+  background: var(--surface);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  padding: 24px 28px;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.unsaved-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+
+.unsaved-modal-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  margin: 0;
+}
+
+.unsaved-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.unsaved-btn-no {
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 22px;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.unsaved-btn-no:hover {
+  background: var(--border);
+}
+
+.unsaved-btn-yes {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 7px 22px;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.unsaved-btn-yes:hover {
+  opacity: 0.88;
+}
+
 .line-row > div {
   padding: 7px 8px;
   min-width: 0;
