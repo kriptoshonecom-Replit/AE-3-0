@@ -36,7 +36,7 @@ export default function PitSection({ pitType, onChange, yesNoToggles, onYesNoCha
             onChange={(e) => onChange(e.target.value)}
           >
             <option value="">— Select a PIT Type —</option>
-            {pitCategories.map((cat) => (
+            {pitCategories.filter((cat) => cat.id !== "heatmap").map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.name}
               </option>
