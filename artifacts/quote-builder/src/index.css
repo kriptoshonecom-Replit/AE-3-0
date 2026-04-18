@@ -15,7 +15,7 @@
 }
 
 :root {
-  --bg: #f8f8f7;
+  --bg: #f5f5f5;
   --surface: #ffffff;
   --surface-subtle: #f4f4f3;
   --border: #e5e5e3;
@@ -462,7 +462,7 @@ button {
   padding: 14px 16px;
   width: 100%;
   text-align: left;
-  background: transparent;
+  background: var(--surface-subtle);
   transition: background 0.12s;
 }
 
@@ -599,9 +599,18 @@ button {
 }
 
 .info-icon-img {
-  width: 25px;
-  height: 25px;
+  width: 16px;
+  height: 16px;
   display: block;
+  object-fit: contain;
+}
+
+.info-modal-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  flex-shrink: 0;
+  object-fit: contain;
 }
 
 .info-modal-backdrop {
@@ -642,13 +651,6 @@ button {
 
 .info-modal-header.warning {
   color: #ef4444;
-}
-
-.info-modal-icon {
-  width: 22px;
-  height: 22px;
-  display: block;
-  flex-shrink: 0;
 }
 
 .info-modal-text {
