@@ -66,6 +66,10 @@ export interface QuoteMeta {
   contractBuyOut?: boolean;
   costOfBuyOut?: string;
   numberOfSites?: string;
+  basisPoint?: string;
+  voyixPayTransactionFee?: string;
+  requestedSubscriptionAmount?: string;
+  requestedUpfrontAmount?: string;
 }
 
 export interface PitLineItem {

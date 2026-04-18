@@ -102,6 +102,66 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
           />
         </div>
 
+        {/* 6 — Basis Point */}
+        <div className="field-group">
+          <label>Basis Point</label>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            value={meta.basisPoint ?? ""}
+            onChange={set("basisPoint")}
+            placeholder="Enter Whole Number"
+            onFocus={(e) => e.target.select()}
+          />
+        </div>
+
+        {/* 7 — Voyix Pay Transaction Fee */}
+        <div className="field-group">
+          <label>Voyix Pay Transaction Fee</label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={meta.voyixPayTransactionFee ?? ""}
+            onChange={set("voyixPayTransactionFee")}
+            placeholder="example 0.06"
+            onFocus={(e) => e.target.select()}
+          />
+        </div>
+
+        {/* 8 — Requested Subscription Amount */}
+        <div className="field-group">
+          <label>Requested Subscription Amount</label>
+          <div className="price-input-wrap">
+            <span className="price-prefix">$</span>
+            <input
+              type="text"
+              className="price-input"
+              style={{ textAlign: "left", paddingLeft: "2px" }}
+              value={meta.requestedSubscriptionAmount ?? ""}
+              onChange={set("requestedSubscriptionAmount")}
+              placeholder="Aloha Essentials"
+            />
+          </div>
+        </div>
+
+        {/* 9 — Requested Upfront Amount */}
+        <div className="field-group">
+          <label>Requested Upfront Amount</label>
+          <div className="price-input-wrap">
+            <span className="price-prefix">$</span>
+            <input
+              type="text"
+              className="price-input"
+              style={{ textAlign: "left", paddingLeft: "2px" }}
+              value={meta.requestedUpfrontAmount ?? ""}
+              onChange={set("requestedUpfrontAmount")}
+              placeholder="Aloha Essentials"
+            />
+          </div>
+        </div>
+
       </div>
     </div>
   );
