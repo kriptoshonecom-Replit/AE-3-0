@@ -61,6 +61,11 @@ export interface QuoteMeta {
   existingHeadlineRate?: string;
   existingInterchangeRate?: string;
   heatmapToggles?: Record<string, boolean>;
+  annualStoreRevenue?: string;
+  averageTicketAmount?: string;
+  contractBuyOut?: boolean;
+  costOfBuyOut?: string;
+  numberOfSites?: string;
 }
 
 export interface PitLineItem {

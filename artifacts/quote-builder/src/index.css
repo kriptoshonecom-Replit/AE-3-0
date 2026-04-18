@@ -1501,6 +1501,13 @@ textarea:focus::placeholder {
   text-align: right;
 }
 
+.payments-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+}
+
 .heatmap-item-price {
   font-size: 12px;
   font-weight: 600;

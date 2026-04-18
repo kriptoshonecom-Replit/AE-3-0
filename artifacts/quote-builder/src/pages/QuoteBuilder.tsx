@@ -9,6 +9,7 @@ import { PIT_HOURLY_RATE } from "../data/pit-config";
 import QuoteMetaForm from "../components/QuoteMetaForm";
 import CurrentSpendForm from "../components/CurrentSpendForm";
 import HeatmapSection, { computeHeatmapTotal } from "../components/HeatmapSection";
+import PaymentsConfigPanel from "../components/PaymentsConfigPanel";
 import PitSection from "../components/PitSection";
 import ProductRelatedPitSection, { computeProductRelatedPitTotal } from "../components/ProductRelatedPitSection";
 import QuoteGroupComponent from "../components/QuoteGroup";
@@ -360,6 +361,12 @@ export default function QuoteBuilder() {
                 toggles={heatmapToggles}
                 onToggle={handleHeatmapToggle}
               />
+            </section>
+
+            {/* Payments Configuration Panel */}
+            <section className="section">
+              <h2 className="section-title">Payments Configuration Panel</h2>
+              <PaymentsConfigPanel meta={quote.meta} onChange={handleMetaChange} />
             </section>
 
             {/* Groups section */}
