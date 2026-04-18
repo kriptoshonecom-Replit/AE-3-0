@@ -316,7 +316,7 @@ button {
 .btn-icon {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: right;
   width: 28px;
   height: 28px;
   border-radius: var(--radius);
@@ -560,6 +560,10 @@ button {
 }
 
 .line-row.header > div:last-child {
+  border-right: none;
+}
+
+.line-row.header .col-info {
   border-right: none;
 }
 
