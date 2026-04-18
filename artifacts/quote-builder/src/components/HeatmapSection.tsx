@@ -48,6 +48,9 @@ export default function HeatmapSection({ toggles, onToggle }: Props) {
             </div>
           );
         })}
+        <div style={{ padding: "10px 12px", fontSize: "12px", fontStyle: "italic", textAlign: "center", color: "var(--text-2)", borderTop: "1px solid var(--border)" }}>
+          These products are highly recommended for devices communicating over a Wi-Fi network (e.g., Windows tablets, handhelds, and mobile PIN pads).
+        </div>
       </div>
     </div>
   );
