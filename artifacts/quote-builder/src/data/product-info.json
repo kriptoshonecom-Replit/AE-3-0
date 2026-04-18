@@ -13,6 +13,6 @@
   },
   "co-001": {
     "type": "warning",
-    "text": "License count matches the total number of devices (Terminals + Tablets) selected"
+    "text": "License count must matche the total number of devices (Terminals + Tablets)"
   }
 }
