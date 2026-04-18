@@ -2,10 +2,6 @@ import React, { useState, useEffect } from "react";
 import type { QuoteGroup as QuoteGroupType, ProductCategory, QuoteLineItem } from "../types";
 import { groupSubtotal, formatCurrency, generateId } from "../utils/calculations";
 import { getAdditionalExcludedIds, computeLineItemTotal, isTieredItem } from "../utils/quoteLogic";
-import infoPanelData from "../data/product-info.json";
-
-interface InfoPanelEntry { type: "info" | "warning"; text: string }
-const INFO_PANEL: Record<string, InfoPanelEntry> = infoPanelData as Record<string, InfoPanelEntry>;
 
 interface Props {
   group: QuoteGroupType;
@@ -170,7 +166,8 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
   const allCategoryItems = catalog.find((c) => c.id === groupId)?.items ?? [];
   const categoryItems = allCategoryItems.filter((p) => !usedProductIds.includes(p.id));
 
-  const infoEntry = item.productId ? INFO_PANEL[item.productId] : undefined;
+  const product = allCategoryItems.find((p) => p.id === item.productId);
+  const infoEntry = product?.type && product?.text ? { type: product.type, text: product.text } : undefined;
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {

@@ -2,6 +2,8 @@ export interface ProductItem {
   id: string;
   name: string;
   price: number;
+  type?: "info" | "warning";
+  text?: string;
   produration?: number;
   traduration?: number;
   instaduration?: number;
