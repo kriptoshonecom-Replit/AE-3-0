@@ -53,22 +53,19 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
           </div>
         </div>
 
-        {/* 3 — Contract BuyOut toggle */}
+        {/* 3 — Requested Upfront Amount */}
         <div className="field-group">
-          <label>Contract BuyOut</label>
-          <div className="payments-toggle-row">
-            <button
-              type="button"
-              role="switch"
-              aria-checked={on}
-              className={`pit-toggle-switch ${on ? "pit-toggle-on" : "pit-toggle-off"}`}
-              onClick={toggleBuyOut}
-            >
-              <span className="pit-toggle-thumb" />
-            </button>
-            <span className={`pit-yn-state ${on ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
-              {on ? "Yes" : "No"}
-            </span>
+          <label>Requested Upfront Amount</label>
+          <div className="price-input-wrap">
+            <span className="price-prefix">$</span>
+            <input
+              type="text"
+              className="price-input"
+              style={{ textAlign: "left", paddingLeft: "2px" }}
+              value={meta.requestedUpfrontAmount ?? ""}
+              onChange={set("requestedUpfrontAmount")}
+              placeholder="Aloha Essentials"
+            />
           </div>
         </div>
 
@@ -146,19 +143,22 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
           </div>
         </div>
 
-        {/* 9 — Requested Upfront Amount */}
+        {/* 9 — Contract BuyOut toggle */}
         <div className="field-group">
-          <label>Requested Upfront Amount</label>
-          <div className="price-input-wrap">
-            <span className="price-prefix">$</span>
-            <input
-              type="text"
-              className="price-input"
-              style={{ textAlign: "left", paddingLeft: "2px" }}
-              value={meta.requestedUpfrontAmount ?? ""}
-              onChange={set("requestedUpfrontAmount")}
-              placeholder="Aloha Essentials"
-            />
+          <label>Contract BuyOut</label>
+          <div className="payments-toggle-row">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={on}
+              className={`pit-toggle-switch ${on ? "pit-toggle-on" : "pit-toggle-off"}`}
+              onClick={toggleBuyOut}
+            >
+              <span className="pit-toggle-thumb" />
+            </button>
+            <span className={`pit-yn-state ${on ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
+              {on ? "Yes" : "No"}
+            </span>
           </div>
         </div>
 
