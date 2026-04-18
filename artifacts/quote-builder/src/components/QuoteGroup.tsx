@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import type { QuoteGroup as QuoteGroupType, ProductCategory, QuoteLineItem } from "../types";
 import { groupSubtotal, formatCurrency, generateId } from "../utils/calculations";
 import { getAdditionalExcludedIds, computeLineItemTotal, isTieredItem } from "../utils/quoteLogic";
@@ -100,6 +100,7 @@ export default function QuoteGroup({ group, catalog, onChange, onRemove }: Props
             <div className="line-table">
               <div className="line-row header">
                 <div className="col-product">Product</div>
+                <div className="col-info" />
                 <div className="col-qty">Qty</div>
                 <div className="col-price">Unit Price</div>
                 <div className="col-total">Total</div>
@@ -170,6 +171,19 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
   const categoryItems = allCategoryItems.filter((p) => !usedProductIds.includes(p.id));
 
   const infoEntry = item.productId ? INFO_PANEL[item.productId] : undefined;
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!popoverOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setPopoverOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [popoverOpen]);
 
   return (
     <div className="line-item-wrapper">
@@ -187,6 +201,30 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="col-info">
+          {infoEntry && (
+            <div className="info-icon-wrap" ref={popoverRef}>
+              <button
+                type="button"
+                className={`info-icon-btn ${infoEntry.type}`}
+                onClick={() => setPopoverOpen((v) => !v)}
+                title={infoEntry.type === "warning" ? "Warning" : "Info"}
+                aria-label={infoEntry.type === "warning" ? "Warning" : "Info"}
+              >
+                {infoEntry.type === "warning" ? "!" : "i"}
+              </button>
+              {popoverOpen && (
+                <div className={`info-popover ${infoEntry.type}`}>
+                  <span className="info-popover-label">
+                    {infoEntry.type === "warning" ? "Warning" : "Info"}
+                  </span>
+                  {infoEntry.text}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="col-qty">
@@ -232,11 +270,6 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
           </button>
         </div>
       </div>
-      {infoEntry && (
-        <div className={infoEntry.type === "warning" ? "line-item-warning" : "line-item-info"}>
-          {infoEntry.text}
-        </div>
-      )}
     </div>
   );
 }
