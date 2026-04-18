@@ -7,7 +7,7 @@
 }
 
 .auth-clerk-root {
-  display: contents;
+  display: contents!important;
 }
 
 .cl-internal-h6x482 {
@@ -599,8 +599,8 @@ button {
 }
 
 .info-icon-img {
-  width: 18px;
-  height: 18px;
+  width: 25px;
+  height: 25px;
   display: block;
 }
 
@@ -642,6 +642,13 @@ button {
 
 .info-modal-header.warning {
   color: #ef4444;
+}
+
+.info-modal-icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+  flex-shrink: 0;
 }
 
 .info-modal-text {

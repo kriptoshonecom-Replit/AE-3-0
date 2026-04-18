@@ -218,17 +218,11 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
                     onMouseDown={(e) => e.stopPropagation()}
                   >
                     <div className={`info-modal-header ${infoEntry.type}`}>
-                      {infoEntry.type === "warning" ? (
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <circle cx="8" cy="8" r="7.5" fill="#ef4444" />
-                          <text x="8" y="12" textAnchor="middle" fill="white" fontSize="10" fontWeight="700" fontStyle="italic" fontFamily="Georgia, serif">!</text>
-                        </svg>
-                      ) : (
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <circle cx="8" cy="8" r="7.5" fill="#94a3b8" />
-                          <text x="8" y="12" textAnchor="middle" fill="white" fontSize="10" fontWeight="700" fontStyle="italic" fontFamily="Georgia, serif">i</text>
-                        </svg>
-                      )}
+                      <img
+                        src={infoEntry.type === "warning" ? "/warning-btn.png" : "/info-btn.png"}
+                        alt={infoEntry.type === "warning" ? "Warning" : "Info"}
+                        className="info-modal-icon"
+                      />
                       <span>{infoEntry.type === "warning" ? "Warning" : "Info"}</span>
                     </div>
                     <p className="info-modal-text">{infoEntry.text}</p>
