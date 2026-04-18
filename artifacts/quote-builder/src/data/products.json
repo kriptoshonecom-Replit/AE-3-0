@@ -587,7 +587,9 @@
           "produration": 6,
           "traduration": 2,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "sitecopytradiration": 0,
+          "sitecopyproduration": 0
         },
 
         {
@@ -597,9 +599,7 @@
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0,
-          "sitecopytradiration": 0,
-          "sitecopyproduration": 0
+          "stageduration": 0
         }
       ]
     },

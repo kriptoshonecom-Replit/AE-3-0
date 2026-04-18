@@ -7,6 +7,7 @@ import catalog from "../data/products.json";
 import pitData from "../data/pit-services.json";
 import { PIT_HOURLY_RATE } from "../data/pit-config";
 import QuoteMetaForm from "../components/QuoteMetaForm";
+import CurrentSpendForm from "../components/CurrentSpendForm";
 import PitSection from "../components/PitSection";
 import ProductRelatedPitSection, { computeProductRelatedPitTotal } from "../components/ProductRelatedPitSection";
 import QuoteGroupComponent from "../components/QuoteGroup";
@@ -302,6 +303,12 @@ export default function QuoteBuilder() {
             <section className="section">
               <h2 className="section-title">Quote Details</h2>
               <QuoteMetaForm meta={quote.meta} onChange={handleMetaChange} />
+            </section>
+
+            {/* Current Aloha Essential Spend section */}
+            <section className="section">
+              <h2 className="section-title">Current Aloha Essential Spend</h2>
+              <CurrentSpendForm meta={quote.meta} onChange={handleMetaChange} />
             </section>
 
             {/* PIT section */}

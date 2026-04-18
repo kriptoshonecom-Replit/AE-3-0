@@ -56,6 +56,10 @@ export interface QuoteMeta {
   pitType?: string;
   yesNoToggles?: Record<string, boolean>;
   optionalProgramToggles?: Record<string, boolean>;
+  aeCurrentMonthlySpend?: string;
+  aeCurrentVoyixPaySpend?: string;
+  existingHeadlineRate?: string;
+  existingInterchangeRate?: string;
 }
 
 export interface PitLineItem {
