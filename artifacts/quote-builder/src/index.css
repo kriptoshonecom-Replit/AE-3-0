@@ -599,18 +599,9 @@ button {
 }
 
 .info-icon-img {
-  width: 16px;
-  height: 16px;
+  width: 25px;
+  height: 25px;
   display: block;
-  object-fit: contain;
-}
-
-.info-modal-icon {
-  width: 18px;
-  height: 18px;
-  display: block;
-  flex-shrink: 0;
-  object-fit: contain;
 }
 
 .info-modal-backdrop {

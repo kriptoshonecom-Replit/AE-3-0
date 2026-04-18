@@ -209,6 +209,7 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
                   src={infoEntry.type === "warning" ? "/warning-btn.png" : "/info-btn.png"}
                   alt={infoEntry.type === "warning" ? "Warning" : "Info"}
                   className="info-icon-img"
+                  style={{ width: 16, height: 16 }}
                 />
               </button>
               {modalOpen && (
@@ -222,6 +223,7 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
                         src={infoEntry.type === "warning" ? "/warning-btn.png" : "/info-btn.png"}
                         alt={infoEntry.type === "warning" ? "Warning" : "Info"}
                         className="info-modal-icon"
+                        style={{ width: 18, height: 18 }}
                       />
                       <span>{infoEntry.type === "warning" ? "Warning" : "Info"}</span>
                     </div>
