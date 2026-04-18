@@ -200,12 +200,16 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
             <>
               <button
                 type="button"
-                className={`info-icon-btn ${infoEntry.type}`}
+                className="info-icon-btn"
                 onClick={() => setModalOpen(true)}
                 title={infoEntry.type === "warning" ? "Warning" : "Info"}
                 aria-label={infoEntry.type === "warning" ? "Warning" : "Info"}
               >
-                {infoEntry.type === "warning" ? "!" : "i"}
+                <img
+                  src={infoEntry.type === "warning" ? "/warning-btn.png" : "/info-btn.png"}
+                  alt={infoEntry.type === "warning" ? "Warning" : "Info"}
+                  className="info-icon-img"
+                />
               </button>
               {modalOpen && (
                 <div className="info-modal-backdrop" onMouseDown={() => setModalOpen(false)}>
