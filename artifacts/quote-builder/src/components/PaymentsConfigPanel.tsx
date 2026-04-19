@@ -20,6 +20,28 @@ function stripFormat(value: string): string {
   return value.replace(/[^0-9.]/g, "");
 }
 
+function usePercentField(
+  value: string,
+  onChange: (val: string) => void
+) {
+  const [focused, setFocused] = useState(false);
+  const raw = value.replace(/[^0-9.]/g, "");
+  const display = !focused && raw !== "" ? `${raw}%` : raw;
+
+  return {
+    value: display,
+    onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
+      setFocused(true);
+      onChange(e.target.value.replace(/[^0-9.]/g, ""));
+    },
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
+    onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
+      setFocused(false);
+      onChange(e.target.value.replace(/[^0-9.]/g, ""));
+    },
+  };
+}
+
 function useCurrencyField(
   value: string,
   onChange: (val: string) => void
@@ -53,6 +75,7 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
   const averageTicketAmount = useCurrencyField(meta.averageTicketAmount ?? "", set("averageTicketAmount"));
   const requestedUpfrontAmount = useCurrencyField(meta.requestedUpfrontAmount ?? "", set("requestedUpfrontAmount"));
   const requestedSubscriptionAmount = useCurrencyField(meta.requestedSubscriptionAmount ?? "", set("requestedSubscriptionAmount"));
+  const voyixPayFee = usePercentField(meta.voyixPayTransactionFee ?? "", set("voyixPayTransactionFee"));
 
   const toggleBuyOut = () => {
     onChange({ ...meta, contractBuyOut: !meta.contractBuyOut });
@@ -130,15 +153,7 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
         {/* 8 — Voyix Pay Transaction Fee */}
         <div className="field-group">
           <label>Voyix Pay Transaction Fee</label>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={meta.voyixPayTransactionFee ?? ""}
-            onChange={setRaw("voyixPayTransactionFee")}
-            placeholder="example 0.06"
-            onFocus={(e) => e.target.select()}
-          />
+          <input type="text" placeholder="example 0.06" {...voyixPayFee} />
         </div>
 
         {/* 9 — Basis Point */}

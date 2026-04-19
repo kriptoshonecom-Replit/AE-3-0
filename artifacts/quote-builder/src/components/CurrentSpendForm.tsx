@@ -20,10 +20,29 @@ function stripFormat(value: string): string {
   return value.replace(/[^0-9.]/g, "");
 }
 
-function useCurrencyField(
+function usePercentField(
   value: string,
   onChange: (val: string) => void
 ) {
+  const [focused, setFocused] = useState(false);
+  const raw = value.replace(/[^0-9.]/g, "");
+  const display = !focused && raw !== "" ? `${raw}%` : raw;
+
+  return {
+    value: display,
+    onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
+      setFocused(true);
+      onChange(e.target.value.replace(/[^0-9.]/g, ""));
+    },
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
+    onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
+      setFocused(false);
+      onChange(e.target.value.replace(/[^0-9.]/g, ""));
+    },
+  };
+}
+
+function useCurrencyField(value: string, onChange: (val: string) => void) {
   const [focused, setFocused] = useState(false);
   const display = !focused && value !== "" ? formatUSD(value) : value;
 
@@ -33,7 +52,8 @@ function useCurrencyField(
       setFocused(true);
       onChange(stripFormat(e.target.value));
     },
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+      onChange(e.target.value),
     onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
       setFocused(false);
       onChange(stripFormat(e.target.value));
@@ -45,34 +65,40 @@ export default function CurrentSpendForm({ meta, onChange }: Props) {
   const set = (key: keyof QuoteMeta) => (val: string) =>
     onChange({ ...meta, [key]: val });
 
-  const monthly = useCurrencyField(meta.aeCurrentMonthlySpend ?? "", set("aeCurrentMonthlySpend"));
-  const voyix = useCurrencyField(meta.aeCurrentVoyixPaySpend ?? "", set("aeCurrentVoyixPaySpend"));
+  const monthly = useCurrencyField(
+    meta.aeCurrentMonthlySpend ?? "",
+    set("aeCurrentMonthlySpend"),
+  );
+  const voyix = useCurrencyField(
+    meta.aeCurrentVoyixPaySpend ?? "",
+    set("aeCurrentVoyixPaySpend"),
+  );
+  const headlineRate = usePercentField(meta.existingHeadlineRate ?? "", set("existingHeadlineRate"));
 
-  const setRaw = (key: keyof QuoteMeta) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    onChange({ ...meta, [key]: e.target.value });
+  const setRaw =
+    (key: keyof QuoteMeta) => (e: React.ChangeEvent<HTMLInputElement>) =>
+      onChange({ ...meta, [key]: e.target.value });
 
   return (
     <div className="quote-meta-form">
       <div className="meta-grid">
-
         <div className="field-group">
           <label>Aloha Essentials Current Monthly Spend</label>
-          <input type="text" placeholder="Type 1 if New Customer" {...monthly} />
+          <input
+            type="text"
+            placeholder="Type $1 if New Customer"
+            {...monthly}
+          />
         </div>
 
         <div className="field-group">
           <label>Aloha Essentials Current Voyix Pay Spend</label>
-          <input type="text" placeholder="Type 1 if New Customer" {...voyix} />
+          <input type="text" placeholder="Type $1 if New Customer" {...voyix} />
         </div>
 
         <div className="field-group">
           <label>Existing Headline Rate</label>
-          <input
-            type="text"
-            value={meta.existingHeadlineRate ?? ""}
-            onChange={setRaw("existingHeadlineRate")}
-            placeholder="If Applicable"
-          />
+          <input type="text" placeholder="If Applicable" {...headlineRate} />
         </div>
 
         <div className="field-group">
@@ -84,7 +110,6 @@ export default function CurrentSpendForm({ meta, onChange }: Props) {
             placeholder="If Applicable"
           />
         </div>
-
       </div>
     </div>
   );
