@@ -20,6 +20,30 @@ function stripFormat(value: string): string {
   return value.replace(/[^0-9.]/g, "");
 }
 
+function useBpsField(
+  value: string,
+  onChange: (val: string) => void
+) {
+  const [focused, setFocused] = useState(false);
+  const raw = value.replace(/[^0-9.]/g, "");
+  const display = !focused && raw !== ""
+    ? `${(parseFloat(raw) / 100).toFixed(2)}%`
+    : raw;
+
+  return {
+    value: display,
+    onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
+      setFocused(true);
+      onChange(e.target.value.replace(/[^0-9.]/g, ""));
+    },
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
+    onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
+      setFocused(false);
+      onChange(e.target.value.replace(/[^0-9.]/g, ""));
+    },
+  };
+}
+
 function usePercentField(
   value: string,
   onChange: (val: string) => void
@@ -76,6 +100,7 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
   const requestedUpfrontAmount = useCurrencyField(meta.requestedUpfrontAmount ?? "", set("requestedUpfrontAmount"));
   const requestedSubscriptionAmount = useCurrencyField(meta.requestedSubscriptionAmount ?? "", set("requestedSubscriptionAmount"));
   const voyixPayFee = usePercentField(meta.voyixPayTransactionFee ?? "", set("voyixPayTransactionFee"));
+  const basisPoint = useBpsField(meta.basisPoint ?? "", set("basisPoint"));
 
   const toggleBuyOut = () => {
     onChange({ ...meta, contractBuyOut: !meta.contractBuyOut });
@@ -159,15 +184,7 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
         {/* 9 — Basis Point */}
         <div className="field-group">
           <label>Basis Point</label>
-          <input
-            type="number"
-            min="0"
-            step="1"
-            value={meta.basisPoint ?? ""}
-            onChange={setRaw("basisPoint")}
-            placeholder="Enter Whole Number"
-            onFocus={(e) => e.target.select()}
-          />
+          <input type="text" placeholder="Enter Whole Number" {...basisPoint} />
         </div>
 
         {/* 10 — Payments Specialist */}

@@ -20,6 +20,30 @@ function stripFormat(value: string): string {
   return value.replace(/[^0-9.]/g, "");
 }
 
+function useBpsField(
+  value: string,
+  onChange: (val: string) => void
+) {
+  const [focused, setFocused] = useState(false);
+  const raw = value.replace(/[^0-9.]/g, "");
+  const display = !focused && raw !== ""
+    ? `${(parseFloat(raw) / 100).toFixed(2)}%`
+    : raw;
+
+  return {
+    value: display,
+    onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
+      setFocused(true);
+      onChange(e.target.value.replace(/[^0-9.]/g, ""));
+    },
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
+    onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
+      setFocused(false);
+      onChange(e.target.value.replace(/[^0-9.]/g, ""));
+    },
+  };
+}
+
 function usePercentField(
   value: string,
   onChange: (val: string) => void
@@ -74,6 +98,7 @@ export default function CurrentSpendForm({ meta, onChange }: Props) {
     set("aeCurrentVoyixPaySpend"),
   );
   const headlineRate = usePercentField(meta.existingHeadlineRate ?? "", set("existingHeadlineRate"));
+  const interchangeRate = useBpsField(meta.existingInterchangeRate ?? "", set("existingInterchangeRate"));
 
   const setRaw =
     (key: keyof QuoteMeta) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -103,12 +128,7 @@ export default function CurrentSpendForm({ meta, onChange }: Props) {
 
         <div className="field-group">
           <label>Existing Interchange Rate</label>
-          <input
-            type="text"
-            value={meta.existingInterchangeRate ?? ""}
-            onChange={setRaw("existingInterchangeRate")}
-            placeholder="If Applicable"
-          />
+          <input type="text" placeholder="If Applicable" {...interchangeRate} />
         </div>
       </div>
     </div>
