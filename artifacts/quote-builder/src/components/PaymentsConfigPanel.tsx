@@ -162,6 +162,17 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
           />
         </div>
 
+        {/* 10 — Payments Specialist */}
+        <div className="field-group">
+          <label>Payments Specialist</label>
+          <input
+            type="text"
+            value={meta.paymentsSpecialist ?? ""}
+            onChange={set("paymentsSpecialist")}
+            placeholder="First Name Last"
+          />
+        </div>
+
       </div>
     </div>
   );

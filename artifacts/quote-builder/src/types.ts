@@ -68,6 +68,7 @@ export interface QuoteMeta {
   numberOfSites?: string;
   basisPoint?: string;
   voyixPayTransactionFee?: string;
+  paymentsSpecialist?: string;
   requestedSubscriptionAmount?: string;
   requestedUpfrontAmount?: string;
 }
