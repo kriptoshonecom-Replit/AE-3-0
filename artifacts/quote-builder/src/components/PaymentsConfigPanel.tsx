@@ -7,9 +7,10 @@ interface Props {
 }
 
 export default function PaymentsConfigPanel({ meta, onChange }: Props) {
-  const set = (key: keyof QuoteMeta) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...meta, [key]: e.target.value });
-  };
+  const set =
+    (key: keyof QuoteMeta) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      onChange({ ...meta, [key]: e.target.value });
+    };
 
   const toggleBuyOut = () => {
     onChange({ ...meta, contractBuyOut: !meta.contractBuyOut });
@@ -20,7 +21,6 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
   return (
     <div className="quote-meta-form">
       <div className="meta-grid">
-
         {/* 1 — Contract BuyOut toggle */}
         <div className="field-group">
           <label>Contract BuyOut</label>
@@ -34,7 +34,9 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
             >
               <span className="pit-toggle-thumb" />
             </button>
-            <span className={`pit-yn-state ${on ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
+            <span
+              className={`pit-yn-state ${on ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}
+            >
               {on ? "Yes" : "No"}
             </span>
           </div>
@@ -58,7 +60,7 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
             type="text"
             value={meta.annualStoreRevenue ?? ""}
             onChange={set("annualStoreRevenue")}
-            placeholder="Card Transaction Dollar Value"
+            placeholder="Card Transaction $ Value"
           />
         </div>
 
@@ -69,13 +71,13 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
             type="text"
             value={meta.averageTicketAmount ?? ""}
             onChange={set("averageTicketAmount")}
-            placeholder="Check Receipt Dollar Value"
+            placeholder="Check Receipt $ Value"
           />
         </div>
 
         {/* 5 — Requested Upfront Amount */}
         <div className="field-group">
-          <label>Requested Upfront Amount</label>
+          <label>Requested Upfront Cost</label>
           <input
             type="text"
             value={meta.requestedUpfrontAmount ?? ""}
@@ -147,7 +149,6 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
             placeholder="First Name Last"
           />
         </div>
-
       </div>
     </div>
   );
