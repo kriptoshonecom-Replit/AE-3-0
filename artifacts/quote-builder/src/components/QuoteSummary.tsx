@@ -20,6 +20,7 @@ export default function QuoteSummary({ quote, pitTotal, productPitTotal, heatmap
   const tax = quoteTax(quote);
   const productsTotal = quoteTotal(quote);
   const grandTotal = productsTotal + pitTotal + productPitTotal;
+  const buyoutAmount = parseFloat((quote.meta.costOfBuyOut ?? "").replace(/[^0-9.]/g, "")) || 0;
 
   return (
     <div className="summary-panel">
@@ -75,6 +76,16 @@ export default function QuoteSummary({ quote, pitTotal, productPitTotal, heatmap
             <div className="summary-row heatmap-row">
               <span>Heatmap &amp; Cabling (one-time)</span>
               <span>{formatCurrency(heatmapTotal)}</span>
+            </div>
+          </>
+        )}
+
+        {buyoutAmount > 0 && (
+          <>
+            <div className="summary-divider" />
+            <div className="summary-row heatmap-row">
+              <span>Cost of BuyOut (one-time)</span>
+              <span>{formatCurrency(buyoutAmount)}</span>
             </div>
           </>
         )}
