@@ -22,8 +22,8 @@ const DEFAULT_OPT_PROGRAMS: Record<string, boolean> = {
   "consumer-marketing": true,
   "insight-or-console": true,
   "aloha-api": true,
-  "kitchen": true,
-  "orderpay": true,
+  kitchen: true,
+  orderpay: true,
   "aloha-delivery": true,
 };
 
@@ -97,7 +97,9 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
     doc.setFont("helvetica", "normal");
     doc.setTextColor(120, 120, 118);
     const dateLine = `Created: ${quote.meta.createdAt}  |  Valid Until: ${quote.meta.validUntil}`;
-    doc.text(dateLine, pageWidth - margin, logoTopY + logoHeightMm + 4.5, { align: "right" });
+    doc.text(dateLine, pageWidth - margin, logoTopY + logoHeightMm + 4.5, {
+      align: "right",
+    });
   } catch {
     // Fallback: just write app name if logo fails
     doc.setFontSize(11);
@@ -106,7 +108,7 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
     doc.text("Aloha Essential CPQ 3.0", margin, bannerHeight / 2 + 2);
   }
 
-  y = bannerHeight + 10;
+  y = bannerHeight + 6;
 
   // ── Quote info (left) + Customer info (right) ───────
   const startY = y;
@@ -130,8 +132,8 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
   };
 
   if (quote.meta.quoteNumber) leftRow("Quote Number:", quote.meta.quoteNumber);
-  if (quote.meta.oppNumber)    leftRow("Opp Number:",   quote.meta.oppNumber);
-  if (quote.meta.salesRep)     leftRow("Sales Rep:",    quote.meta.salesRep);
+  if (quote.meta.oppNumber) leftRow("Opp Number:", quote.meta.oppNumber);
+  if (quote.meta.salesRep) leftRow("Sales Rep:", quote.meta.salesRep);
 
   // Right: Company Name, Customer Name, Customer Email
   // Labels at mid-page, values right-aligned — wide enough to never overlap
@@ -150,9 +152,12 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
     rightY += 5.5;
   };
 
-  if (quote.meta.companyName)  rightRow("Company Name:",  quote.meta.companyName, true);
-  if (quote.meta.customerName) rightRow("Customer Name:", quote.meta.customerName);
-  if (quote.meta.customerEmail) rightRow("Customer Email:", quote.meta.customerEmail);
+  if (quote.meta.companyName)
+    rightRow("Company Name:", quote.meta.companyName, true);
+  if (quote.meta.customerName)
+    rightRow("Customer Name:", quote.meta.customerName);
+  if (quote.meta.customerEmail)
+    rightRow("Customer Email:", quote.meta.customerEmail);
 
   y = Math.max(leftY, rightY) + 4;
 
@@ -169,7 +174,12 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
     doc.text(group.categoryName, margin + 3, y + 4.5);
-    doc.text(formatCurrency(groupSubtotal(group)), margin + contentWidth - 3, y + 4.5, { align: "right" });
+    doc.text(
+      formatCurrency(groupSubtotal(group)),
+      margin + contentWidth - 3,
+      y + 4.5,
+      { align: "right" },
+    );
     y += 7;
 
     // Column headers
@@ -194,13 +204,27 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
       doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
 
-      const name = item.productName.length > 52 ? item.productName.slice(0, 50) + "…" : item.productName;
+      const name =
+        item.productName.length > 52
+          ? item.productName.slice(0, 50) + "…"
+          : item.productName;
       doc.text(name, margin + 3, y + 3.5);
       doc.setTextColor(30, 41, 59);
-      doc.text(String(item.quantity), margin + 120, y + 3.5, { align: "right" });
-      doc.text(formatCurrency(item.unitPrice), margin + 155, y + 3.5, { align: "right" });
+      doc.text(String(item.quantity), margin + 120, y + 3.5, {
+        align: "right",
+      });
+      doc.text(formatCurrency(item.unitPrice), margin + 155, y + 3.5, {
+        align: "right",
+      });
       doc.setFont("helvetica", "bold");
-      doc.text(formatCurrency(computeLineItemTotal(item.productId, item.unitPrice, item.quantity)), margin + contentWidth - 3, y + 3.5, { align: "right" });
+      doc.text(
+        formatCurrency(
+          computeLineItemTotal(item.productId, item.unitPrice, item.quantity),
+        ),
+        margin + contentWidth - 3,
+        y + 3.5,
+        { align: "right" },
+      );
 
       if (item.note) {
         y += 5;
@@ -229,24 +253,53 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
   const valueX = margin + contentWidth - 3;
 
   // Compute PIT amounts
-  const pitCatForTotal = pitCategories.find((c) => c.id === (quote.meta.pitType ?? ""));
+  const pitCatForTotal = pitCategories.find(
+    (c) => c.id === (quote.meta.pitType ?? ""),
+  );
   const pitTotal = pitCatForTotal
-    ? pitCatForTotal.lineItems.reduce((s, i) => s + i.duration * PIT_HOURLY_RATE, 0)
+    ? pitCatForTotal.lineItems.reduce(
+        (s, i) => s + i.duration * PIT_HOURLY_RATE,
+        0,
+      )
     : 0;
-  const yesNoToggles = { ...DEFAULT_YES_NO, ...(quote.meta.yesNoToggles ?? {}) };
-  const optToggles = { ...DEFAULT_OPT_PROGRAMS, ...(quote.meta.optionalProgramToggles ?? {}) };
-  const productPitTotal = computeProductRelatedPitTotal(quote.groups, yesNoToggles, optToggles, quote.meta.pitType ?? "");
-  const heatmapItems = (pitCategories as Array<{ id: string; lineItems: Array<{ id: string; price?: number }> }>)
-    .find((c) => c.id === "heatmap")?.lineItems ?? [];
+  const yesNoToggles = {
+    ...DEFAULT_YES_NO,
+    ...(quote.meta.yesNoToggles ?? {}),
+  };
+  const optToggles = {
+    ...DEFAULT_OPT_PROGRAMS,
+    ...(quote.meta.optionalProgramToggles ?? {}),
+  };
+  const productPitTotal = computeProductRelatedPitTotal(
+    quote.groups,
+    yesNoToggles,
+    optToggles,
+    quote.meta.pitType ?? "",
+  );
+  const heatmapItems =
+    (
+      pitCategories as Array<{
+        id: string;
+        lineItems: Array<{ id: string; price?: number }>;
+      }>
+    ).find((c) => c.id === "heatmap")?.lineItems ?? [];
   const heatmapToggles = quote.meta.heatmapToggles ?? {};
-  const heatmapTotal = heatmapItems.reduce((s, i) => s + (heatmapToggles[i.id] ? (i.price ?? 0) : 0), 0);
+  const heatmapTotal = heatmapItems.reduce(
+    (s, i) => s + (heatmapToggles[i.id] ? (i.price ?? 0) : 0),
+    0,
+  );
   const mrrTotal = quoteTotal(quote);
   const grandTotal = mrrTotal + pitTotal + productPitTotal;
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
 
-  const row = (label: string, value: string, bold = false, labelColor: [number, number, number] = [100, 116, 139]) => {
+  const row = (
+    label: string,
+    value: string,
+    bold = false,
+    labelColor: [number, number, number] = [100, 116, 139],
+  ) => {
     addPageIfNeeded(8);
     doc.setTextColor(...labelColor);
     if (bold) doc.setFont("helvetica", "bold");
@@ -259,18 +312,23 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
 
   row("Subtotal", formatCurrency(quoteSubtotal(quote)));
   if (quote.meta.discount > 0) {
-    row(`Discount (${quote.meta.discount}%)`, `- ${formatCurrency(quoteDiscount(quote))}`, true, [34, 197, 94]);
+    row(
+      `Discount (${quote.meta.discount}%)`,
+      `- ${formatCurrency(quoteDiscount(quote))}`,
+      true,
+      [34, 197, 94],
+    );
   }
   if (quote.meta.tax > 0) {
     row(`Tax (${quote.meta.tax}%)`, formatCurrency(quoteTax(quote)));
   }
 
   // MRR Total divider line + bold row
-  y += 3;
+  y += 1;
   doc.setDrawColor(220, 220, 218);
   doc.setLineWidth(0.3);
   doc.line(totalsX - 5, y - 1, margin + contentWidth, y - 1);
-  y += 5;
+  y += 3;
   doc.setFont("helvetica", "bold");
   doc.setTextColor(15, 23, 42);
   doc.text("MRR Total", labelX, y);
@@ -289,29 +347,30 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
   doc.setDrawColor(124, 58, 237);
   doc.setLineWidth(0.5);
   doc.line(totalsX - 5, y - 1, margin + contentWidth, y - 1);
-  y += 6;
+  y += 3;
 
   doc.setFontSize(11);
   row("Total", formatCurrency(grandTotal), true);
 
   if (heatmapTotal > 0) {
-    y += 4;
+    y += 2;
     doc.setDrawColor(220, 220, 218);
     doc.setLineWidth(0.3);
     doc.line(totalsX - 5, y - 1, margin + contentWidth, y - 1);
-    y += 5;
+    y += 3;
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     row("Heatmap & Cabling", formatCurrency(heatmapTotal));
   }
 
-  const buyoutAmount = parseFloat((quote.meta.costOfBuyOut ?? "").replace(/[^0-9.]/g, "")) || 0;
+  const buyoutAmount =
+    parseFloat((quote.meta.costOfBuyOut ?? "").replace(/[^0-9.]/g, "")) || 0;
   if (buyoutAmount > 0) {
-    y += 4;
+    y += 2;
     doc.setDrawColor(220, 220, 218);
     doc.setLineWidth(0.3);
     doc.line(totalsX - 5, y - 1, margin + contentWidth, y - 1);
-    y += 5;
+    y += 3;
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     row("Cost of BuyOut", formatCurrency(buyoutAmount));
@@ -356,7 +415,9 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
     doc.setFontSize(7);
     doc.setTextColor(148, 163, 184);
     doc.setFont("helvetica", "normal");
-    doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, 292, { align: "center" });
+    doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, 292, {
+      align: "center",
+    });
   }
 
   const filename = `${(quote.meta.quoteNumber || "quote").replace(/\s+/g, "-").toLowerCase()}.pdf`;
