@@ -20,16 +20,36 @@ function stripFormat(value: string): string {
   return value.replace(/[^0-9.]/g, "");
 }
 
-export default function CurrentSpendForm({ meta, onChange }: Props) {
-  const [monthlyFocused, setMonthlyFocused] = useState(false);
+function useCurrencyField(
+  value: string,
+  onChange: (val: string) => void
+) {
+  const [focused, setFocused] = useState(false);
+  const display = !focused && value !== "" ? formatUSD(value) : value;
 
-  const set = (key: keyof QuoteMeta) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...meta, [key]: e.target.value });
+  return {
+    value: display,
+    onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
+      setFocused(true);
+      onChange(stripFormat(e.target.value));
+    },
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
+    onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
+      setFocused(false);
+      onChange(stripFormat(e.target.value));
+    },
   };
+}
 
-  const rawMonthly = meta.aeCurrentMonthlySpend ?? "";
-  const displayMonthly =
-    !monthlyFocused && rawMonthly !== "" ? formatUSD(rawMonthly) : rawMonthly;
+export default function CurrentSpendForm({ meta, onChange }: Props) {
+  const set = (key: keyof QuoteMeta) => (val: string) =>
+    onChange({ ...meta, [key]: val });
+
+  const monthly = useCurrencyField(meta.aeCurrentMonthlySpend ?? "", set("aeCurrentMonthlySpend"));
+  const voyix = useCurrencyField(meta.aeCurrentVoyixPaySpend ?? "", set("aeCurrentVoyixPaySpend"));
+
+  const setRaw = (key: keyof QuoteMeta) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    onChange({ ...meta, [key]: e.target.value });
 
   return (
     <div className="quote-meta-form">
@@ -37,32 +57,12 @@ export default function CurrentSpendForm({ meta, onChange }: Props) {
 
         <div className="field-group">
           <label>Aloha Essentials Current Monthly Spend</label>
-          <input
-            type="text"
-            value={displayMonthly}
-            placeholder="Type 1 if New Customer"
-            onFocus={(e) => {
-              setMonthlyFocused(true);
-              const stripped = stripFormat(e.target.value);
-              onChange({ ...meta, aeCurrentMonthlySpend: stripped });
-            }}
-            onChange={(e) => onChange({ ...meta, aeCurrentMonthlySpend: e.target.value })}
-            onBlur={(e) => {
-              setMonthlyFocused(false);
-              const stripped = stripFormat(e.target.value);
-              onChange({ ...meta, aeCurrentMonthlySpend: stripped });
-            }}
-          />
+          <input type="text" placeholder="Type 1 if New Customer" {...monthly} />
         </div>
 
         <div className="field-group">
           <label>Aloha Essentials Current Voyix Pay Spend</label>
-          <input
-            type="text"
-            value={meta.aeCurrentVoyixPaySpend ?? ""}
-            onChange={set("aeCurrentVoyixPaySpend")}
-            placeholder="Type 1 if New Customer"
-          />
+          <input type="text" placeholder="Type 1 if New Customer" {...voyix} />
         </div>
 
         <div className="field-group">
@@ -70,7 +70,7 @@ export default function CurrentSpendForm({ meta, onChange }: Props) {
           <input
             type="text"
             value={meta.existingHeadlineRate ?? ""}
-            onChange={set("existingHeadlineRate")}
+            onChange={setRaw("existingHeadlineRate")}
             placeholder="If Applicable"
           />
         </div>
@@ -80,7 +80,7 @@ export default function CurrentSpendForm({ meta, onChange }: Props) {
           <input
             type="text"
             value={meta.existingInterchangeRate ?? ""}
-            onChange={set("existingInterchangeRate")}
+            onChange={setRaw("existingInterchangeRate")}
             placeholder="If Applicable"
           />
         </div>

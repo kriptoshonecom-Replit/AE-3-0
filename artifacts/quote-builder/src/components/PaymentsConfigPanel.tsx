@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import type { QuoteMeta } from "../types";
 
 interface Props {
@@ -6,11 +6,53 @@ interface Props {
   onChange: (meta: QuoteMeta) => void;
 }
 
+function formatUSD(raw: string): string {
+  const num = parseFloat(raw.replace(/[^0-9.]/g, ""));
+  if (isNaN(num)) return raw;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+  }).format(num);
+}
+
+function stripFormat(value: string): string {
+  return value.replace(/[^0-9.]/g, "");
+}
+
+function useCurrencyField(
+  value: string,
+  onChange: (val: string) => void
+) {
+  const [focused, setFocused] = useState(false);
+  const display = !focused && value !== "" ? formatUSD(value) : value;
+
+  return {
+    value: display,
+    onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
+      setFocused(true);
+      onChange(stripFormat(e.target.value));
+    },
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
+    onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
+      setFocused(false);
+      onChange(stripFormat(e.target.value));
+    },
+  };
+}
+
 export default function PaymentsConfigPanel({ meta, onChange }: Props) {
-  const set =
-    (key: keyof QuoteMeta) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange({ ...meta, [key]: e.target.value });
-    };
+  const set = (key: keyof QuoteMeta) => (val: string) =>
+    onChange({ ...meta, [key]: val });
+
+  const setRaw = (key: keyof QuoteMeta) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    onChange({ ...meta, [key]: e.target.value });
+
+  const costOfBuyOut = useCurrencyField(meta.costOfBuyOut ?? "", set("costOfBuyOut"));
+  const annualStoreRevenue = useCurrencyField(meta.annualStoreRevenue ?? "", set("annualStoreRevenue"));
+  const averageTicketAmount = useCurrencyField(meta.averageTicketAmount ?? "", set("averageTicketAmount"));
+  const requestedUpfrontAmount = useCurrencyField(meta.requestedUpfrontAmount ?? "", set("requestedUpfrontAmount"));
+  const requestedSubscriptionAmount = useCurrencyField(meta.requestedSubscriptionAmount ?? "", set("requestedSubscriptionAmount"));
 
   const toggleBuyOut = () => {
     onChange({ ...meta, contractBuyOut: !meta.contractBuyOut });
@@ -21,6 +63,7 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
   return (
     <div className="quote-meta-form">
       <div className="meta-grid">
+
         {/* 1 — Contract BuyOut toggle */}
         <div className="field-group">
           <label>Contract BuyOut</label>
@@ -34,9 +77,7 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
             >
               <span className="pit-toggle-thumb" />
             </button>
-            <span
-              className={`pit-yn-state ${on ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}
-            >
+            <span className={`pit-yn-state ${on ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
               {on ? "Yes" : "No"}
             </span>
           </div>
@@ -45,56 +86,31 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
         {/* 2 — Cost of BuyOut */}
         <div className="field-group">
           <label>Cost of BuyOut</label>
-          <input
-            type="text"
-            value={meta.costOfBuyOut ?? ""}
-            onChange={set("costOfBuyOut")}
-            placeholder="Enter amount"
-          />
+          <input type="text" placeholder="Enter amount" {...costOfBuyOut} />
         </div>
 
         {/* 3 — Annual Store Revenue */}
         <div className="field-group">
           <label>Annual Store Revenue</label>
-          <input
-            type="text"
-            value={meta.annualStoreRevenue ?? ""}
-            onChange={set("annualStoreRevenue")}
-            placeholder="Card Transaction $ Value"
-          />
+          <input type="text" placeholder="Card Transaction Dollar Value" {...annualStoreRevenue} />
         </div>
 
         {/* 4 — Average Ticket Amount */}
         <div className="field-group">
           <label>Average Ticket Amount</label>
-          <input
-            type="text"
-            value={meta.averageTicketAmount ?? ""}
-            onChange={set("averageTicketAmount")}
-            placeholder="Check Receipt $ Value"
-          />
+          <input type="text" placeholder="Check Receipt Dollar Value" {...averageTicketAmount} />
         </div>
 
         {/* 5 — Requested Upfront Amount */}
         <div className="field-group">
-          <label>Requested Upfront Cost</label>
-          <input
-            type="text"
-            value={meta.requestedUpfrontAmount ?? ""}
-            onChange={set("requestedUpfrontAmount")}
-            placeholder="Aloha Essentials"
-          />
+          <label>Requested Upfront Amount</label>
+          <input type="text" placeholder="Aloha Essentials" {...requestedUpfrontAmount} />
         </div>
 
         {/* 6 — Requested Subscription Amount */}
         <div className="field-group">
           <label>Requested Subscription Amount</label>
-          <input
-            type="text"
-            value={meta.requestedSubscriptionAmount ?? ""}
-            onChange={set("requestedSubscriptionAmount")}
-            placeholder="Aloha Essentials"
-          />
+          <input type="text" placeholder="Aloha Essentials" {...requestedSubscriptionAmount} />
         </div>
 
         {/* 7 — Number of Sites */}
@@ -105,7 +121,7 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
             min="1"
             step="1"
             value={meta.numberOfSites ?? ""}
-            onChange={set("numberOfSites")}
+            onChange={setRaw("numberOfSites")}
             placeholder="Enter number of sites"
             onFocus={(e) => e.target.select()}
           />
@@ -119,7 +135,7 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
             min="0"
             step="0.01"
             value={meta.voyixPayTransactionFee ?? ""}
-            onChange={set("voyixPayTransactionFee")}
+            onChange={setRaw("voyixPayTransactionFee")}
             placeholder="example 0.06"
             onFocus={(e) => e.target.select()}
           />
@@ -133,7 +149,7 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
             min="0"
             step="1"
             value={meta.basisPoint ?? ""}
-            onChange={set("basisPoint")}
+            onChange={setRaw("basisPoint")}
             placeholder="Enter Whole Number"
             onFocus={(e) => e.target.select()}
           />
@@ -145,10 +161,11 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
           <input
             type="text"
             value={meta.paymentsSpecialist ?? ""}
-            onChange={set("paymentsSpecialist")}
+            onChange={setRaw("paymentsSpecialist")}
             placeholder="First Name Last"
           />
         </div>
+
       </div>
     </div>
   );
