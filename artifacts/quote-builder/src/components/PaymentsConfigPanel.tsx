@@ -43,81 +43,56 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
         {/* 2 — Cost of BuyOut */}
         <div className="field-group">
           <label>Cost of BuyOut</label>
-          <div className="price-input-wrap">
-            <span className="price-prefix">$</span>
-            <input
-              type="text"
-              className="price-input"
-              style={{ textAlign: "left", paddingLeft: "2px" }}
-              value={meta.costOfBuyOut ?? ""}
-              onChange={set("costOfBuyOut")}
-              placeholder="Enter amount"
-            />
-          </div>
+          <input
+            type="text"
+            value={meta.costOfBuyOut ?? ""}
+            onChange={set("costOfBuyOut")}
+            placeholder="Enter amount"
+          />
         </div>
 
         {/* 3 — Annual Store Revenue */}
         <div className="field-group">
           <label>Annual Store Revenue</label>
-          <div className="price-input-wrap">
-            <span className="price-prefix">$</span>
-            <input
-              type="text"
-              className="price-input"
-              style={{ textAlign: "left", paddingLeft: "2px" }}
-              value={meta.annualStoreRevenue ?? ""}
-              onChange={set("annualStoreRevenue")}
-              placeholder="Card Transaction Dollar Value"
-            />
-          </div>
+          <input
+            type="text"
+            value={meta.annualStoreRevenue ?? ""}
+            onChange={set("annualStoreRevenue")}
+            placeholder="Card Transaction Dollar Value"
+          />
         </div>
 
         {/* 4 — Average Ticket Amount */}
         <div className="field-group">
           <label>Average Ticket Amount</label>
-          <div className="price-input-wrap">
-            <span className="price-prefix">$</span>
-            <input
-              type="text"
-              className="price-input"
-              style={{ textAlign: "left", paddingLeft: "2px" }}
-              value={meta.averageTicketAmount ?? ""}
-              onChange={set("averageTicketAmount")}
-              placeholder="Check Receipt Dollar Value"
-            />
-          </div>
+          <input
+            type="text"
+            value={meta.averageTicketAmount ?? ""}
+            onChange={set("averageTicketAmount")}
+            placeholder="Check Receipt Dollar Value"
+          />
         </div>
 
         {/* 5 — Requested Upfront Amount */}
         <div className="field-group">
           <label>Requested Upfront Amount</label>
-          <div className="price-input-wrap">
-            <span className="price-prefix">$</span>
-            <input
-              type="text"
-              className="price-input"
-              style={{ textAlign: "left", paddingLeft: "2px" }}
-              value={meta.requestedUpfrontAmount ?? ""}
-              onChange={set("requestedUpfrontAmount")}
-              placeholder="Aloha Essentials"
-            />
-          </div>
+          <input
+            type="text"
+            value={meta.requestedUpfrontAmount ?? ""}
+            onChange={set("requestedUpfrontAmount")}
+            placeholder="Aloha Essentials"
+          />
         </div>
 
         {/* 6 — Requested Subscription Amount */}
         <div className="field-group">
           <label>Requested Subscription Amount</label>
-          <div className="price-input-wrap">
-            <span className="price-prefix">$</span>
-            <input
-              type="text"
-              className="price-input"
-              style={{ textAlign: "left", paddingLeft: "2px" }}
-              value={meta.requestedSubscriptionAmount ?? ""}
-              onChange={set("requestedSubscriptionAmount")}
-              placeholder="Aloha Essentials"
-            />
-          </div>
+          <input
+            type="text"
+            value={meta.requestedSubscriptionAmount ?? ""}
+            onChange={set("requestedSubscriptionAmount")}
+            placeholder="Aloha Essentials"
+          />
         </div>
 
         {/* 7 — Number of Sites */}
