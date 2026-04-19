@@ -74,7 +74,7 @@ export default function QuoteSummary({ quote, pitTotal, productPitTotal, heatmap
           <>
             <div className="summary-divider" />
             <div className="summary-row heatmap-row">
-              <span>Heatmap &amp; Cabling (one-time)</span>
+              <span>Heatmap &amp; Cabling</span>
               <span>{formatCurrency(heatmapTotal)}</span>
             </div>
           </>
@@ -84,7 +84,7 @@ export default function QuoteSummary({ quote, pitTotal, productPitTotal, heatmap
           <>
             <div className="summary-divider" />
             <div className="summary-row heatmap-row">
-              <span>Cost of BuyOut (one-time)</span>
+              <span>Cost of BuyOut</span>
               <span>{formatCurrency(buyoutAmount)}</span>
             </div>
           </>

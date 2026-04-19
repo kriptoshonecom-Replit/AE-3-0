@@ -302,7 +302,19 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
     y += 5;
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    row("Heatmap & Cabling (one-time)", formatCurrency(heatmapTotal));
+    row("Heatmap & Cabling", formatCurrency(heatmapTotal));
+  }
+
+  const buyoutAmount = parseFloat((quote.meta.costOfBuyOut ?? "").replace(/[^0-9.]/g, "")) || 0;
+  if (buyoutAmount > 0) {
+    y += 4;
+    doc.setDrawColor(220, 220, 218);
+    doc.setLineWidth(0.3);
+    doc.line(totalsX - 5, y - 1, margin + contentWidth, y - 1);
+    y += 5;
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    row("Cost of BuyOut", formatCurrency(buyoutAmount));
   }
 
   // ── Notes ──────────────────────────────────────────
