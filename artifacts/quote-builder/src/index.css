@@ -1672,6 +1672,15 @@ textarea:focus::placeholder {
   .content {
     padding: 20px 12px;
   }
+
+  .summary-section {
+    align-items: stretch;
+  }
+
+  .summary-panel {
+    min-width: 0;
+    width: 100%;
+  }
 }
 
 @media (max-width: 640px) {
