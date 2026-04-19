@@ -20,15 +20,11 @@ function stripFormat(value: string): string {
   return value.replace(/[^0-9.]/g, "");
 }
 
-function useBpsField(
-  value: string,
-  onChange: (val: string) => void
-) {
+function useBpsField(value: string, onChange: (val: string) => void) {
   const [focused, setFocused] = useState(false);
   const raw = value.replace(/[^0-9.]/g, "");
-  const display = !focused && raw !== ""
-    ? `${(parseFloat(raw) / 100).toFixed(2)}%`
-    : raw;
+  const display =
+    !focused && raw !== "" ? `${(parseFloat(raw) / 100).toFixed(2)}%` : raw;
 
   return {
     value: display,
@@ -36,7 +32,8 @@ function useBpsField(
       setFocused(true);
       onChange(e.target.value.replace(/[^0-9.]/g, ""));
     },
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+      onChange(e.target.value),
     onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
       setFocused(false);
       onChange(e.target.value.replace(/[^0-9.]/g, ""));
@@ -44,10 +41,7 @@ function useBpsField(
   };
 }
 
-function usePercentField(
-  value: string,
-  onChange: (val: string) => void
-) {
+function usePercentField(value: string, onChange: (val: string) => void) {
   const [focused, setFocused] = useState(false);
   const raw = value.replace(/[^0-9.]/g, "");
   const display = !focused && raw !== "" ? `${raw}%` : raw;
@@ -58,7 +52,8 @@ function usePercentField(
       setFocused(true);
       onChange(e.target.value.replace(/[^0-9.]/g, ""));
     },
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+      onChange(e.target.value),
     onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
       setFocused(false);
       onChange(e.target.value.replace(/[^0-9.]/g, ""));
@@ -97,8 +92,14 @@ export default function CurrentSpendForm({ meta, onChange }: Props) {
     meta.aeCurrentVoyixPaySpend ?? "",
     set("aeCurrentVoyixPaySpend"),
   );
-  const headlineRate = usePercentField(meta.existingHeadlineRate ?? "", set("existingHeadlineRate"));
-  const interchangeRate = useBpsField(meta.existingInterchangeRate ?? "", set("existingInterchangeRate"));
+  const headlineRate = usePercentField(
+    meta.existingHeadlineRate ?? "",
+    set("existingHeadlineRate"),
+  );
+  const interchangeRate = useBpsField(
+    meta.existingInterchangeRate ?? "",
+    set("existingInterchangeRate"),
+  );
 
   const setRaw =
     (key: keyof QuoteMeta) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -123,12 +124,16 @@ export default function CurrentSpendForm({ meta, onChange }: Props) {
 
         <div className="field-group">
           <label>Existing Headline Rate</label>
-          <input type="text" placeholder="If Applicable" {...headlineRate} />
+          <input type="text" placeholder="example 0.06" {...headlineRate} />
         </div>
 
         <div className="field-group">
           <label>Existing Interchange Rate</label>
-          <input type="text" placeholder="If Applicable" {...interchangeRate} />
+          <input
+            type="text"
+            placeholder="Enter Whole Number"
+            {...interchangeRate}
+          />
         </div>
       </div>
     </div>
