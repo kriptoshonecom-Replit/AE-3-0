@@ -134,7 +134,13 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
         {/* 2 — Cost of BuyOut */}
         <div className="field-group">
           <label>Cost of BuyOut</label>
-          <input type="text" placeholder="Enter amount" {...costOfBuyOut} />
+          <input
+            type="text"
+            placeholder="Enter amount"
+            disabled={!on}
+            style={!on ? { opacity: 0.4, cursor: "not-allowed", pointerEvents: "none" } : undefined}
+            {...costOfBuyOut}
+          />
         </div>
 
         {/* 3 — Annual Store Revenue */}
