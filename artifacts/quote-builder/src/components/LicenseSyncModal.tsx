@@ -32,16 +32,11 @@ export default function LicenseSyncModal({
         style={{ maxWidth: 400 }}
       >
         <div className="unsaved-modal-header">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <circle cx="10" cy="10" r="9" stroke="#f59e0b" strokeWidth="1.5" />
-            <path
-              d="M10 5.5v5"
-              stroke="#f59e0b"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-            />
-            <circle cx="10" cy="13.5" r="0.9" fill="#f59e0b" />
-          </svg>
+          <img
+            src="/warning-btn.png"
+            alt="Warning"
+            style={{ width: 22, height: 22, flexShrink: 0 }}
+          />
           License Quantity Mismatch
         </div>
 
