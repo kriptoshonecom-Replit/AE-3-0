@@ -56,3 +56,20 @@ export function deviceQtyChanged(
   }
   return false;
 }
+
+/**
+ * Returns true if a terminal/tablet product was newly assigned to a line item
+ * (productId changed from a non-device value to a device ID).
+ */
+export function deviceProductSelected(
+  oldGroup: QuoteGroup,
+  newGroup: QuoteGroup,
+): boolean {
+  for (const newItem of newGroup.lineItems) {
+    if (!DEVICE_IDS.includes(newItem.productId)) continue;
+    const oldItem = oldGroup.lineItems.find((i) => i.id === newItem.id);
+    const wasDevice = oldItem ? DEVICE_IDS.includes(oldItem.productId) : false;
+    if (!wasDevice) return true;
+  }
+  return false;
+}

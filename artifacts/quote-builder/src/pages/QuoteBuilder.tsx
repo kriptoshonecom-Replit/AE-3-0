@@ -15,6 +15,7 @@ import UnsavedChangesModal from "../components/UnsavedChangesModal";
 import LicenseSyncModal from "../components/LicenseSyncModal";
 import {
   deviceQtyChanged,
+  deviceProductSelected,
   computeTotalDeviceCount,
   findLicenseItem,
 } from "../utils/licenseSync";
@@ -120,6 +121,17 @@ export default function QuoteBuilder() {
     itemIdx: number;
   }>(null);
 
+  // Refs so timer callbacks always read the freshest groups state
+  const latestGroupsRef = useRef(quote.groups);
+  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear timer on unmount
+  useEffect(() => {
+    return () => {
+      if (syncTimerRef.current !== null) clearTimeout(syncTimerRef.current);
+    };
+  }, []);
+
   const handleYesNoChange = (id: string, value: boolean) => {
     const next = { ...yesNoToggles, [id]: value };
     setYesNoToggles(next);
@@ -215,6 +227,23 @@ export default function QuoteBuilder() {
     autosave(updated);
   };
 
+  // Shared helper — reads freshest groups from ref and shows modal if mismatched
+  const tryShowLicenseSyncModal = useCallback((groups: QuoteGroup[]) => {
+    const license = findLicenseItem(groups);
+    if (!license) return;
+    const deviceCount = computeTotalDeviceCount(groups);
+    if (deviceCount === license.currentQty) return;
+    const licenseName =
+      groups[license.groupIdx]?.lineItems[license.itemIdx]?.productName ??
+      license.productId;
+    setLicenseSyncState({
+      deviceCount,
+      licenseProductName: licenseName,
+      groupIdx: license.groupIdx,
+      itemIdx: license.itemIdx,
+    });
+  }, []);
+
   const handleGroupChange = (idx: number, group: QuoteGroup) => {
     const oldGroup = quote.groups[idx];
     const groups = quote.groups.map((g, i) => (i === idx ? group : g));
@@ -222,23 +251,25 @@ export default function QuoteBuilder() {
     setQuote(updated);
     autosave(updated);
 
-    // License sync check — only when a terminal/tablet qty actually changed
-    if (oldGroup && deviceQtyChanged(oldGroup, group)) {
-      const license = findLicenseItem(groups);
-      if (license) {
-        const deviceCount = computeTotalDeviceCount(groups);
-        if (deviceCount !== license.currentQty) {
-          const licenseName =
-            groups[license.groupIdx]?.lineItems[license.itemIdx]?.productName ??
-            license.productId;
-          setLicenseSyncState({
-            deviceCount,
-            licenseProductName: licenseName,
-            groupIdx: license.groupIdx,
-            itemIdx: license.itemIdx,
-          });
-        }
+    // Keep ref fresh so timer callbacks read the latest state
+    latestGroupsRef.current = groups;
+
+    if (!oldGroup) return;
+
+    if (deviceQtyChanged(oldGroup, group)) {
+      // Qty explicitly changed — cancel any pending timer and check immediately
+      if (syncTimerRef.current !== null) {
+        clearTimeout(syncTimerRef.current);
+        syncTimerRef.current = null;
       }
+      tryShowLicenseSyncModal(groups);
+    } else if (deviceProductSelected(oldGroup, group)) {
+      // New device product selected — start 5-second countdown at default qty=1
+      if (syncTimerRef.current !== null) clearTimeout(syncTimerRef.current);
+      syncTimerRef.current = setTimeout(() => {
+        syncTimerRef.current = null;
+        tryShowLicenseSyncModal(latestGroupsRef.current);
+      }, 5000);
     }
   };
 
