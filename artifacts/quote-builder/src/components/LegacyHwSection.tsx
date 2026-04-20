@@ -5,7 +5,6 @@ interface LegacyItem {
   id: string;
   name: string;
   price?: number;
-  duration?: number;
 }
 
 const legacyCat = (
@@ -20,30 +19,32 @@ const LEGACY_ITEMS: LegacyItem[] = legacyCat ? legacyCat.lineItems : [];
 interface Props {
   toggles: Record<string, boolean>;
   onToggle: (id: string, value: boolean) => void;
+  quantities: Record<string, number>;
+  onQuantityChange: (id: string, qty: number) => void;
 }
 
-export function computeLegacyTotal(toggles: Record<string, boolean>): number {
+export function computeLegacyTotal(
+  toggles: Record<string, boolean>,
+  quantities: Record<string, number>,
+): number {
   return LEGACY_ITEMS.reduce(
-    (sum, item) => sum + (toggles[item.id] && item.price ? item.price : 0),
+    (sum, item) =>
+      sum + (toggles[item.id] && item.price ? item.price * (quantities[item.id] ?? 1) : 0),
     0,
   );
 }
 
-export default function LegacyHwSection({ toggles, onToggle }: Props) {
+export default function LegacyHwSection({ toggles, onToggle, quantities, onQuantityChange }: Props) {
   return (
     <div className="prpit-card">
       <div className="pit-yn-card" style={{ marginTop: 0 }}>
-        {LEGACY_ITEMS.map(({ id, name, price, duration }) => {
+        {LEGACY_ITEMS.map(({ id, name, price }) => {
           const on = toggles[id] ?? false;
           return (
             <div key={id} className="pit-yn-row">
               <span className="pit-yn-label">{name}</span>
               <span className="heatmap-item-price">
-                {price !== undefined
-                  ? formatCurrency(price)
-                  : duration !== undefined
-                  ? `${duration} hrs`
-                  : ""}
+                {price !== undefined ? formatCurrency(price) : ""}
               </span>
               <button
                 type="button"
@@ -59,6 +60,20 @@ export default function LegacyHwSection({ toggles, onToggle }: Props) {
               >
                 {on ? "Yes" : "No"}
               </span>
+              {on && (
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={quantities[id] ?? 1}
+                  onChange={(e) =>
+                    onQuantityChange(id, Math.max(1, parseInt(e.target.value) || 1))
+                  }
+                  onFocus={(e) => e.target.select()}
+                  className="qty-input"
+                  style={{ marginLeft: "8px" }}
+                />
+              )}
             </div>
           );
         })}
