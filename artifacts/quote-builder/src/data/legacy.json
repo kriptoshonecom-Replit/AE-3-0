@@ -1,0 +1,57 @@
+{
+  "categories": [
+    {
+      "id": "aloha20",
+      "name": "Aloha Essential 2.0 HW",
+      "lineItems": [
+        {
+          "id": "boh-001",
+          "name": "BOH Server S600",
+          "price": 85.0
+        },
+
+        {
+          "id": "fox-001",
+          "name": "FOH CX3 Terminal",
+          "price": 70.0
+        },
+
+        {
+          "id": "fox-002",
+          "name": "FOH CX3 Terminal APA 2x20 ",
+          "price": 75.0
+        },
+
+        {
+          "id": "km-001",
+          "name": "Short Pole Ceiling Kitchen Mount",
+          "duration": 14.0
+        },
+
+        {
+          "id": "boh-002",
+          "name": "N4000 Wall and Rack Mount",
+          "duration": 5.0
+        },
+
+        {
+          "id": "xl-001",
+          "name": "XL10 Touch USB-C Display with MSR",
+          "duration": 25.0
+        },
+
+        {
+          "id": "pay-001",
+          "name": "Voyix Pay Equinox 6200m Mobile with Printer",
+          "duration": 35.0
+        },
+
+        {
+          "id": "pay-002",
+          "name": "6200m Mobile Charging Stand",
+          "duration": 2.0
+        }
+      ]
+    }
+  ]
+}
