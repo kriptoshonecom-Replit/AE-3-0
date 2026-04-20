@@ -377,6 +377,7 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
   }
 
   const legacyToggles = quote.meta.legacyToggles ?? {};
+  const legacyQuantities = quote.meta.legacyQuantities ?? {};
   const legacyItems: Array<{ id: string; price: number }> = [
     { id: "boh-001", price: 85 },
     { id: "fox-001", price: 70 },
@@ -388,7 +389,7 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
     { id: "pay-002", price: 2 },
   ];
   const legacyTotal = legacyItems.reduce(
-    (s, i) => s + (legacyToggles[i.id] && i.price ? i.price : 0),
+    (s, i) => s + (legacyToggles[i.id] ? i.price * (legacyQuantities[i.id] ?? 1) : 0),
     0,
   );
   if (legacyTotal > 0) {

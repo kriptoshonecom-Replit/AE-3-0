@@ -55,6 +55,17 @@ const DEFAULT_LEGACY_TOGGLES: Record<string, boolean> = {
   "pay-002": false,
 };
 
+const DEFAULT_LEGACY_QUANTITIES: Record<string, number> = {
+  "boh-001": 1,
+  "fox-001": 1,
+  "fox-002": 1,
+  "km-001": 1,
+  "boh-002": 1,
+  "xl-001": 1,
+  "pay-001": 1,
+  "pay-002": 1,
+};
+
 function createNewQuote(): Quote {
   return {
     meta: {
@@ -93,6 +104,7 @@ export default function QuoteBuilder() {
   const [optionalProgramToggles, setOptionalProgramToggles] = useState<Record<string, boolean>>(DEFAULT_OPT_PROGRAMS);
   const [heatmapToggles, setHeatmapToggles] = useState<Record<string, boolean>>(DEFAULT_HEATMAP_TOGGLES);
   const [legacyToggles, setLegacyToggles] = useState<Record<string, boolean>>(DEFAULT_LEGACY_TOGGLES);
+  const [legacyQuantities, setLegacyQuantities] = useState<Record<string, number>>(DEFAULT_LEGACY_QUANTITIES);
   const isDirtyRef = useRef(false);
   const [pendingAction, setPendingAction] = useState<null | "export" | "new">(null);
 
@@ -128,6 +140,14 @@ export default function QuoteBuilder() {
     autosave(updated);
   };
 
+  const handleLegacyQuantityChange = (id: string, qty: number) => {
+    const next = { ...legacyQuantities, [id]: qty };
+    setLegacyQuantities(next);
+    const updated = { ...quote, meta: { ...quote.meta, legacyQuantities: next } };
+    setQuote(updated);
+    autosave(updated);
+  };
+
   const printAreaRef = useRef<HTMLDivElement>(null);
 
   // Load the correct quote once we know who the user is
@@ -142,6 +162,7 @@ export default function QuoteBuilder() {
         setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
         setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });
         setLegacyToggles({ ...DEFAULT_LEGACY_TOGGLES, ...(q.meta.legacyToggles ?? {}) });
+        setLegacyQuantities({ ...DEFAULT_LEGACY_QUANTITIES, ...(q.meta.legacyQuantities ?? {}) });
         setInitialized(true);
         return;
       }
@@ -154,6 +175,7 @@ export default function QuoteBuilder() {
       setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
       setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });
       setLegacyToggles({ ...DEFAULT_LEGACY_TOGGLES, ...(q.meta.legacyToggles ?? {}) });
+      setLegacyQuantities({ ...DEFAULT_LEGACY_QUANTITIES, ...(q.meta.legacyQuantities ?? {}) });
     }
     setInitialized(true);
   }, [userId, initialized]);
@@ -233,6 +255,7 @@ export default function QuoteBuilder() {
     setOptionalProgramToggles(DEFAULT_OPT_PROGRAMS);
     setHeatmapToggles(DEFAULT_HEATMAP_TOGGLES);
     setLegacyToggles(DEFAULT_LEGACY_TOGGLES);
+    setLegacyQuantities(DEFAULT_LEGACY_QUANTITIES);
     autosave(newQ, false);
     isDirtyRef.current = false;
     setSidebarOpen(false);
@@ -278,6 +301,7 @@ export default function QuoteBuilder() {
     setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
     setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });
     setLegacyToggles({ ...DEFAULT_LEGACY_TOGGLES, ...(q.meta.legacyToggles ?? {}) });
+    setLegacyQuantities({ ...DEFAULT_LEGACY_QUANTITIES, ...(q.meta.legacyQuantities ?? {}) });
     setSidebarOpen(false);
   };
 
@@ -449,6 +473,8 @@ export default function QuoteBuilder() {
               <LegacyHwSection
                 toggles={legacyToggles}
                 onToggle={handleLegacyToggle}
+                quantities={legacyQuantities}
+                onQuantityChange={handleLegacyQuantityChange}
               />
             </section>
 
@@ -507,7 +533,7 @@ export default function QuoteBuilder() {
                   })()}
                   productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles, optionalProgramToggles, quote.meta.pitType ?? "")}
                   heatmapTotal={computeHeatmapTotal(heatmapToggles)}
-                  legacyTotal={computeLegacyTotal(legacyToggles)}
+                  legacyTotal={computeLegacyTotal(legacyToggles, legacyQuantities)}
                 />
               </section>
             )}
