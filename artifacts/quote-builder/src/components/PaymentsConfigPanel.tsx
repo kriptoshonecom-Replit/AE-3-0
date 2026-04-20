@@ -20,15 +20,11 @@ function stripFormat(value: string): string {
   return value.replace(/[^0-9.]/g, "");
 }
 
-function useBpsField(
-  value: string,
-  onChange: (val: string) => void
-) {
+function useBpsField(value: string, onChange: (val: string) => void) {
   const [focused, setFocused] = useState(false);
   const raw = value.replace(/[^0-9.]/g, "");
-  const display = !focused && raw !== ""
-    ? `${(parseFloat(raw) / 100).toFixed(2)}%`
-    : raw;
+  const display =
+    !focused && raw !== "" ? `${(parseFloat(raw) / 100).toFixed(2)}%` : raw;
 
   return {
     value: display,
@@ -36,7 +32,8 @@ function useBpsField(
       setFocused(true);
       onChange(e.target.value.replace(/[^0-9.]/g, ""));
     },
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+      onChange(e.target.value),
     onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
       setFocused(false);
       onChange(e.target.value.replace(/[^0-9.]/g, ""));
@@ -44,10 +41,7 @@ function useBpsField(
   };
 }
 
-function usePercentField(
-  value: string,
-  onChange: (val: string) => void
-) {
+function usePercentField(value: string, onChange: (val: string) => void) {
   const [focused, setFocused] = useState(false);
   const raw = value.replace(/[^0-9.]/g, "");
   const display = !focused && raw !== "" ? `${raw}%` : raw;
@@ -58,7 +52,8 @@ function usePercentField(
       setFocused(true);
       onChange(e.target.value.replace(/[^0-9.]/g, ""));
     },
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+      onChange(e.target.value),
     onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
       setFocused(false);
       onChange(e.target.value.replace(/[^0-9.]/g, ""));
@@ -66,10 +61,7 @@ function usePercentField(
   };
 }
 
-function useCurrencyField(
-  value: string,
-  onChange: (val: string) => void
-) {
+function useCurrencyField(value: string, onChange: (val: string) => void) {
   const [focused, setFocused] = useState(false);
   const display = !focused && value !== "" ? formatUSD(value) : value;
 
@@ -79,7 +71,8 @@ function useCurrencyField(
       setFocused(true);
       onChange(stripFormat(e.target.value));
     },
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+      onChange(e.target.value),
     onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
       setFocused(false);
       onChange(stripFormat(e.target.value));
@@ -91,15 +84,34 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
   const set = (key: keyof QuoteMeta) => (val: string) =>
     onChange({ ...meta, [key]: val });
 
-  const setRaw = (key: keyof QuoteMeta) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    onChange({ ...meta, [key]: e.target.value });
+  const setRaw =
+    (key: keyof QuoteMeta) => (e: React.ChangeEvent<HTMLInputElement>) =>
+      onChange({ ...meta, [key]: e.target.value });
 
-  const costOfBuyOut = useCurrencyField(meta.costOfBuyOut ?? "", set("costOfBuyOut"));
-  const annualStoreRevenue = useCurrencyField(meta.annualStoreRevenue ?? "", set("annualStoreRevenue"));
-  const averageTicketAmount = useCurrencyField(meta.averageTicketAmount ?? "", set("averageTicketAmount"));
-  const requestedUpfrontAmount = useCurrencyField(meta.requestedUpfrontAmount ?? "", set("requestedUpfrontAmount"));
-  const requestedSubscriptionAmount = useCurrencyField(meta.requestedSubscriptionAmount ?? "", set("requestedSubscriptionAmount"));
-  const voyixPayFee = usePercentField(meta.voyixPayTransactionFee ?? "", set("voyixPayTransactionFee"));
+  const costOfBuyOut = useCurrencyField(
+    meta.costOfBuyOut ?? "",
+    set("costOfBuyOut"),
+  );
+  const annualStoreRevenue = useCurrencyField(
+    meta.annualStoreRevenue ?? "",
+    set("annualStoreRevenue"),
+  );
+  const averageTicketAmount = useCurrencyField(
+    meta.averageTicketAmount ?? "",
+    set("averageTicketAmount"),
+  );
+  const requestedUpfrontAmount = useCurrencyField(
+    meta.requestedUpfrontAmount ?? "",
+    set("requestedUpfrontAmount"),
+  );
+  const requestedSubscriptionAmount = useCurrencyField(
+    meta.requestedSubscriptionAmount ?? "",
+    set("requestedSubscriptionAmount"),
+  );
+  const voyixPayFee = usePercentField(
+    meta.voyixPayTransactionFee ?? "",
+    set("voyixPayTransactionFee"),
+  );
   const basisPoint = useBpsField(meta.basisPoint ?? "", set("basisPoint"));
 
   const toggleBuyOut = () => {
@@ -111,7 +123,6 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
   return (
     <div className="quote-meta-form">
       <div className="meta-grid">
-
         {/* 1 — Contract BuyOut toggle */}
         <div className="field-group">
           <label>Contract BuyOut</label>
@@ -125,7 +136,9 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
             >
               <span className="pit-toggle-thumb" />
             </button>
-            <span className={`pit-yn-state ${on ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
+            <span
+              className={`pit-yn-state ${on ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}
+            >
               {on ? "Yes" : "No"}
             </span>
           </div>
@@ -138,7 +151,11 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
             type="text"
             placeholder="Enter amount"
             disabled={!on}
-            style={!on ? { opacity: 0.4, cursor: "not-allowed", pointerEvents: "none" } : undefined}
+            style={
+              !on
+                ? { opacity: 0.4, cursor: "not-allowed", pointerEvents: "none" }
+                : undefined
+            }
             {...costOfBuyOut}
           />
         </div>
@@ -146,25 +163,41 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
         {/* 3 — Annual Store Revenue */}
         <div className="field-group">
           <label>Annual Store Revenue</label>
-          <input type="text" placeholder="Card Transaction Dollar Value" {...annualStoreRevenue} />
+          <input
+            type="text"
+            placeholder="Card Transaction Dollar Value"
+            {...annualStoreRevenue}
+          />
         </div>
 
         {/* 4 — Average Ticket Amount */}
         <div className="field-group">
           <label>Average Ticket Amount</label>
-          <input type="text" placeholder="Check Receipt Dollar Value" {...averageTicketAmount} />
+          <input
+            type="text"
+            placeholder="Check Receipt Dollar Value"
+            {...averageTicketAmount}
+          />
         </div>
 
         {/* 5 — Requested Upfront Amount */}
         <div className="field-group">
-          <label>Requested Upfront Amount</label>
-          <input type="text" placeholder="Aloha Essentials" {...requestedUpfrontAmount} />
+          <label>Requested Upfront Amount ( PIT Related )</label>
+          <input
+            type="text"
+            placeholder="Aloha Essentials"
+            {...requestedUpfrontAmount}
+          />
         </div>
 
         {/* 6 — Requested Subscription Amount */}
         <div className="field-group">
           <label>Requested Subscription Amount</label>
-          <input type="text" placeholder="Aloha Essentials" {...requestedSubscriptionAmount} />
+          <input
+            type="text"
+            placeholder="Aloha Essentials"
+            {...requestedSubscriptionAmount}
+          />
         </div>
 
         {/* 7 — Number of Sites */}
@@ -203,7 +236,6 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
             placeholder="First Name Last"
           />
         </div>
-
       </div>
     </div>
   );
