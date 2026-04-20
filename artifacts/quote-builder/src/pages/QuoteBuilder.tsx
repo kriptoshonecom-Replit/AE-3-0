@@ -10,6 +10,7 @@ import QuoteMetaForm from "../components/QuoteMetaForm";
 import CurrentSpendForm from "../components/CurrentSpendForm";
 import HeatmapSection, { computeHeatmapTotal } from "../components/HeatmapSection";
 import PaymentsConfigPanel from "../components/PaymentsConfigPanel";
+import LegacyHwSection, { computeLegacyTotal } from "../components/LegacyHwSection";
 import UnsavedChangesModal from "../components/UnsavedChangesModal";
 import PitSection from "../components/PitSection";
 import ProductRelatedPitSection, { computeProductRelatedPitTotal } from "../components/ProductRelatedPitSection";
@@ -41,6 +42,17 @@ const DEFAULT_HEATMAP_TOGGLES: Record<string, boolean> = {
   "heat-001": false,
   "heat-002": false,
   "heat-003": false,
+};
+
+const DEFAULT_LEGACY_TOGGLES: Record<string, boolean> = {
+  "boh-001": false,
+  "fox-001": false,
+  "fox-002": false,
+  "km-001": false,
+  "boh-002": false,
+  "xl-001": false,
+  "pay-001": false,
+  "pay-002": false,
 };
 
 function createNewQuote(): Quote {
@@ -80,6 +92,7 @@ export default function QuoteBuilder() {
   const [yesNoToggles, setYesNoToggles] = useState<Record<string, boolean>>(DEFAULT_YES_NO);
   const [optionalProgramToggles, setOptionalProgramToggles] = useState<Record<string, boolean>>(DEFAULT_OPT_PROGRAMS);
   const [heatmapToggles, setHeatmapToggles] = useState<Record<string, boolean>>(DEFAULT_HEATMAP_TOGGLES);
+  const [legacyToggles, setLegacyToggles] = useState<Record<string, boolean>>(DEFAULT_LEGACY_TOGGLES);
   const isDirtyRef = useRef(false);
   const [pendingAction, setPendingAction] = useState<null | "export" | "new">(null);
 
@@ -107,6 +120,14 @@ export default function QuoteBuilder() {
     autosave(updated);
   };
 
+  const handleLegacyToggle = (id: string, value: boolean) => {
+    const next = { ...legacyToggles, [id]: value };
+    setLegacyToggles(next);
+    const updated = { ...quote, meta: { ...quote.meta, legacyToggles: next } };
+    setQuote(updated);
+    autosave(updated);
+  };
+
   const printAreaRef = useRef<HTMLDivElement>(null);
 
   // Load the correct quote once we know who the user is
@@ -120,6 +141,7 @@ export default function QuoteBuilder() {
         if (q.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...q.meta.yesNoToggles });
         setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
         setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });
+        setLegacyToggles({ ...DEFAULT_LEGACY_TOGGLES, ...(q.meta.legacyToggles ?? {}) });
         setInitialized(true);
         return;
       }
@@ -131,6 +153,7 @@ export default function QuoteBuilder() {
       if (q.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...q.meta.yesNoToggles });
       setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
       setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });
+      setLegacyToggles({ ...DEFAULT_LEGACY_TOGGLES, ...(q.meta.legacyToggles ?? {}) });
     }
     setInitialized(true);
   }, [userId, initialized]);
@@ -209,6 +232,7 @@ export default function QuoteBuilder() {
     setYesNoToggles(DEFAULT_YES_NO);
     setOptionalProgramToggles(DEFAULT_OPT_PROGRAMS);
     setHeatmapToggles(DEFAULT_HEATMAP_TOGGLES);
+    setLegacyToggles(DEFAULT_LEGACY_TOGGLES);
     autosave(newQ, false);
     isDirtyRef.current = false;
     setSidebarOpen(false);
@@ -252,6 +276,8 @@ export default function QuoteBuilder() {
     setQuote(q);
     setYesNoToggles({ ...DEFAULT_YES_NO, ...(q.meta.yesNoToggles ?? {}) });
     setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
+    setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });
+    setLegacyToggles({ ...DEFAULT_LEGACY_TOGGLES, ...(q.meta.legacyToggles ?? {}) });
     setSidebarOpen(false);
   };
 
@@ -415,6 +441,15 @@ export default function QuoteBuilder() {
             <section className="section">
               <h2 className="section-title">Payments Configuration Panel</h2>
               <PaymentsConfigPanel meta={quote.meta} onChange={handleMetaChange} />
+            </section>
+
+            {/* Aloha Essential 2.0 HW */}
+            <section className="section">
+              <h2 className="section-title">Aloha Essential 2.0 HW</h2>
+              <LegacyHwSection
+                toggles={legacyToggles}
+                onToggle={handleLegacyToggle}
+              />
             </section>
 
             {/* Groups section */}
