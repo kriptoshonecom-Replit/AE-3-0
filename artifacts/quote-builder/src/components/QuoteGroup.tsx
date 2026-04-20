@@ -184,26 +184,11 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
     <div className="line-item-wrapper">
       <div className="line-row">
         <div className="col-product">
-          <select
-            value={item.productId}
-            onChange={(e) => onProductChange(e.target.value)}
-            className={!item.productId ? "placeholder" : ""}
-          >
-            <option value="">Select product…</option>
-            {categoryItems.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="col-info">
           {product?.image && (
             <>
               <button
                 type="button"
-                className="info-icon-btn"
+                className="info-icon-btn product-img-btn"
                 onClick={() => setImageModalOpen(true)}
                 title="View product image"
                 aria-label="View product image"
@@ -260,6 +245,21 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
               )}
             </>
           )}
+          <select
+            value={item.productId}
+            onChange={(e) => onProductChange(e.target.value)}
+            className={!item.productId ? "placeholder" : ""}
+          >
+            <option value="">Select product…</option>
+            {categoryItems.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="col-info">
           {infoEntry && (
             <>
               <button
