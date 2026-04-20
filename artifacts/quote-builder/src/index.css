@@ -536,7 +536,7 @@ button {
 
 .line-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) 28px 70px 110px 100px 36px;
+  grid-template-columns: minmax(180px, 1fr) 58px 70px 110px 100px 36px;
   align-items: center;
   border-bottom: 1px solid var(--border);
 }
@@ -579,6 +579,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   padding: 0 2px;
 }
 
@@ -1662,7 +1663,7 @@ textarea:focus::placeholder {
   }
 
   .line-row {
-    grid-template-columns: minmax(130px, 1fr) 60px 80px 70px 36px;
+    grid-template-columns: minmax(130px, 1fr) 58px 60px 80px 70px 36px;
   }
 
   .topbar-brand {
@@ -1685,7 +1686,7 @@ textarea:focus::placeholder {
 
 @media (max-width: 640px) {
   .line-row {
-    grid-template-columns: minmax(100px, 1fr) 22px 55px 70px 30px;
+    grid-template-columns: minmax(100px, 1fr) 52px 55px 70px 30px;
   }
 
   .col-price {

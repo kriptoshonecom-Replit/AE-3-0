@@ -4,6 +4,7 @@ export interface ProductItem {
   price: number;
   type?: "info" | "warning";
   text?: string;
+  image?: string;
   produration?: number;
   traduration?: number;
   instaduration?: number;

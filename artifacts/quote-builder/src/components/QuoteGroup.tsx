@@ -169,13 +169,16 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
   const product = allCategoryItems.find((p) => p.id === item.productId);
   const infoEntry = product?.type && product?.text ? { type: product.type, text: product.text } : undefined;
   const [modalOpen, setModalOpen] = useState(false);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
 
   useEffect(() => {
-    if (!modalOpen) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setModalOpen(false); };
+    if (!modalOpen && !imageModalOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { setModalOpen(false); setImageModalOpen(false); }
+    };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [modalOpen]);
+  }, [modalOpen, imageModalOpen]);
 
   return (
     <div className="line-item-wrapper">
@@ -196,6 +199,67 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
         </div>
 
         <div className="col-info">
+          {product?.image && (
+            <>
+              <button
+                type="button"
+                className="info-icon-btn"
+                onClick={() => setImageModalOpen(true)}
+                title="View product image"
+                aria-label="View product image"
+              >
+                <img
+                  src="/product-btn.png"
+                  alt="View product"
+                  className="info-icon-img"
+                  style={{ width: 25, height: 25 }}
+                />
+              </button>
+              {imageModalOpen && (
+                <div
+                  className="info-modal-backdrop"
+                  onMouseDown={(e) =>
+                    e.target === e.currentTarget && setImageModalOpen(false)
+                  }
+                >
+                  <div
+                    className="info-modal"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    style={{ maxWidth: 480 }}
+                  >
+                    <div className="info-modal-header info" style={{ marginBottom: 12 }}>
+                      <img
+                        src="/product-btn.png"
+                        alt="Product"
+                        className="info-modal-icon"
+                        style={{ width: 28, height: 28 }}
+                      />
+                      <span>{product.name}</span>
+                    </div>
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      style={{
+                        width: "100%",
+                        borderRadius: 8,
+                        objectFit: "contain",
+                        maxHeight: 320,
+                        background: "var(--surface-subtle)",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="info-modal-close"
+                      onClick={() => setImageModalOpen(false)}
+                      style={{ marginTop: 12 }}
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
           {infoEntry && (
             <>
               <button
