@@ -62,6 +62,18 @@ export default function LegacyHwSection({ toggles, onToggle }: Props) {
             </div>
           );
         })}
+        <div
+          style={{
+            padding: "10px 12px",
+            fontSize: "12px",
+            fontStyle: "italic",
+            textAlign: "center",
+            color: "var(--danger)",
+            borderTop: "1px solid var(--border)",
+          }}
+        >
+          These will not affect PIT in this calculator, but there will be a PIT component in Sales Force CPQ
+        </div>
       </div>
     </div>
   );
