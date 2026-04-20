@@ -302,6 +302,7 @@
         {
           "id": "pi-003",
           "name": "Voyix Pay Equinox 6200m Mobile without Printer",
+          "image": "/products/6200m.png",
           "type": "warning",
           "text": "Weighted Base and Mobile Charging Stand is not Included in the Base Unit and Require Individual Selection",
           "price": 35.0,
