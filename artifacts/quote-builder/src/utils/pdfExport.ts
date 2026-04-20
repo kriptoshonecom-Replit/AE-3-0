@@ -377,15 +377,15 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
   }
 
   const legacyToggles = quote.meta.legacyToggles ?? {};
-  const legacyItems: Array<{ id: string; price?: number }> = [
+  const legacyItems: Array<{ id: string; price: number }> = [
     { id: "boh-001", price: 85 },
     { id: "fox-001", price: 70 },
     { id: "fox-002", price: 75 },
-    { id: "km-001" },
-    { id: "boh-002" },
-    { id: "xl-001" },
-    { id: "pay-001" },
-    { id: "pay-002" },
+    { id: "km-001", price: 14 },
+    { id: "boh-002", price: 5 },
+    { id: "xl-001", price: 25 },
+    { id: "pay-001", price: 35 },
+    { id: "pay-002", price: 2 },
   ];
   const legacyTotal = legacyItems.reduce(
     (s, i) => s + (legacyToggles[i.id] && i.price ? i.price : 0),
