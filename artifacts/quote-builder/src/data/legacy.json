@@ -25,31 +25,31 @@
         {
           "id": "km-001",
           "name": "Short Pole Ceiling Kitchen Mount",
-          "duration": 14.0
+          "price": 14.0
         },
 
         {
           "id": "boh-002",
           "name": "N4000 Wall and Rack Mount",
-          "duration": 5.0
+          "price": 5.0
         },
 
         {
           "id": "xl-001",
           "name": "XL10 Touch USB-C Display with MSR",
-          "duration": 25.0
+          "price": 25.0
         },
 
         {
           "id": "pay-001",
           "name": "Voyix Pay Equinox 6200m Mobile with Printer",
-          "duration": 35.0
+          "price": 35.0
         },
 
         {
           "id": "pay-002",
           "name": "6200m Mobile Charging Stand",
-          "duration": 2.0
+          "price": 2.0
         }
       ]
     }

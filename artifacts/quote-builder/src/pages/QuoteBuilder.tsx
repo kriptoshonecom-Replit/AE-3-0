@@ -507,6 +507,7 @@ export default function QuoteBuilder() {
                   })()}
                   productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles, optionalProgramToggles, quote.meta.pitType ?? "")}
                   heatmapTotal={computeHeatmapTotal(heatmapToggles)}
+                  legacyTotal={computeLegacyTotal(legacyToggles)}
                 />
               </section>
             )}

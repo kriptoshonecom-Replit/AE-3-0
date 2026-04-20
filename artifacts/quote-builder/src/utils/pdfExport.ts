@@ -376,6 +376,32 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
     row("Cost of BuyOut", formatCurrency(buyoutAmount));
   }
 
+  const legacyToggles = quote.meta.legacyToggles ?? {};
+  const legacyItems: Array<{ id: string; price?: number }> = [
+    { id: "boh-001", price: 85 },
+    { id: "fox-001", price: 70 },
+    { id: "fox-002", price: 75 },
+    { id: "km-001" },
+    { id: "boh-002" },
+    { id: "xl-001" },
+    { id: "pay-001" },
+    { id: "pay-002" },
+  ];
+  const legacyTotal = legacyItems.reduce(
+    (s, i) => s + (legacyToggles[i.id] && i.price ? i.price : 0),
+    0,
+  );
+  if (legacyTotal > 0) {
+    y += 2;
+    doc.setDrawColor(220, 220, 218);
+    doc.setLineWidth(0.3);
+    doc.line(totalsX - 5, y - 1, margin + contentWidth, y - 1);
+    y += 3;
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    row("Legacy HW Added", formatCurrency(legacyTotal));
+  }
+
   // ── Notes ──────────────────────────────────────────
   if (quote.meta.notes) {
     const noteLines = doc.splitTextToSize(quote.meta.notes, contentWidth - 10);
