@@ -9,6 +9,7 @@ import {
   quoteTotal,
 } from "./calculations";
 import pitData from "../data/pit-services.json";
+import legacyData from "../data/legacy.json";
 import { PIT_HOURLY_RATE } from "../data/pit-config";
 import { computeLineItemTotal } from "./quoteLogic";
 import { computeProductRelatedPitTotal } from "../components/ProductRelatedPitSection";
@@ -434,6 +435,92 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
     doc.text(noteLines, margin + notePad, y + 1);
     y += noteLines.length * 5 + notePad;
   }
+
+  // ── Helper: boxy item table (matches product group style) ──
+  type TableRow = { name: string; qty: number; price: number };
+
+  const drawItemsTable = (title: string, rows: TableRow[], showQty: boolean) => {
+    if (rows.length === 0) return;
+    const sectionTotal = rows.reduce((s, r) => s + r.price * r.qty, 0);
+
+    addPageIfNeeded(20 + rows.length * 7);
+    y += 6;
+
+    // Header band
+    doc.setFillColor(241, 245, 249);
+    doc.rect(margin, y, contentWidth, 7, "F");
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text(title, margin + 3, y + 4.5);
+    doc.text(formatCurrency(sectionTotal), margin + contentWidth - 3, y + 4.5, { align: "right" });
+    y += 7;
+
+    // Column headers
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(7.5);
+    doc.setFont("helvetica", "normal");
+    doc.text("ITEM", margin + 3, y + 3.5);
+    if (showQty) {
+      doc.text("QTY", margin + 120, y + 3.5, { align: "right" });
+    }
+    doc.text("PRICE", margin + contentWidth - 3, y + 3.5, { align: "right" });
+    y += 5;
+
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y, margin + contentWidth, y);
+    y += 0.5;
+
+    // Rows
+    for (const row of rows) {
+      addPageIfNeeded(7);
+      doc.setTextColor(30, 41, 59);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      const label = row.name.length > 55 ? row.name.slice(0, 53) + "…" : row.name;
+      doc.text(label, margin + 3, y + 3.5);
+      if (showQty) {
+        doc.text(String(row.qty), margin + 120, y + 3.5, { align: "right" });
+      }
+      doc.setFont("helvetica", "bold");
+      doc.text(formatCurrency(row.price * row.qty), margin + contentWidth - 3, y + 3.5, { align: "right" });
+      y += 6;
+      doc.setDrawColor(241, 245, 249);
+      doc.setLineWidth(0.2);
+      doc.line(margin, y, margin + contentWidth, y);
+      y += 0.5;
+    }
+    y += 3;
+  };
+
+  // ── Heatmap & Cabling breakdown ─────────────────────
+  const heatmapFullCat = (
+    pitData.categories as Array<{
+      id: string;
+      lineItems: Array<{ id: string; name: string; price?: number }>;
+    }>
+  ).find((c) => c.id === "heatmap");
+
+  const activeHeatmapRows: TableRow[] = (heatmapFullCat?.lineItems ?? [])
+    .filter((i) => heatmapToggles[i.id])
+    .map((i) => ({ name: i.name, qty: 1, price: i.price ?? 0 }));
+
+  drawItemsTable("Heatmap & Cabling", activeHeatmapRows, false);
+
+  // ── Aloha Essential 2.0 HW breakdown ────────────────
+  const legacyFullItems = (
+    legacyData.categories as Array<{
+      id: string;
+      lineItems: Array<{ id: string; name: string; price: number }>;
+    }>
+  ).find((c) => c.id === "aloha20")?.lineItems ?? [];
+
+  const activeLegacyRows: TableRow[] = legacyFullItems
+    .filter((i) => legacyToggles[i.id])
+    .map((i) => ({ name: i.name, qty: legacyQuantities[i.id] ?? 1, price: i.price }));
+
+  drawItemsTable("Aloha Essential 2.0 HW", activeLegacyRows, true);
 
   // ── Footer ──────────────────────────────────────────
   const totalPages = doc.getNumberOfPages();
