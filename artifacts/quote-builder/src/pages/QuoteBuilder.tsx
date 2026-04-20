@@ -12,6 +12,12 @@ import HeatmapSection, { computeHeatmapTotal } from "../components/HeatmapSectio
 import PaymentsConfigPanel from "../components/PaymentsConfigPanel";
 import LegacyHwSection, { computeLegacyTotal } from "../components/LegacyHwSection";
 import UnsavedChangesModal from "../components/UnsavedChangesModal";
+import LicenseSyncModal from "../components/LicenseSyncModal";
+import {
+  deviceQtyChanged,
+  computeTotalDeviceCount,
+  findLicenseItem,
+} from "../utils/licenseSync";
 import PitSection from "../components/PitSection";
 import ProductRelatedPitSection, { computeProductRelatedPitTotal } from "../components/ProductRelatedPitSection";
 import QuoteGroupComponent from "../components/QuoteGroup";
@@ -107,6 +113,12 @@ export default function QuoteBuilder() {
   const [legacyQuantities, setLegacyQuantities] = useState<Record<string, number>>(DEFAULT_LEGACY_QUANTITIES);
   const isDirtyRef = useRef(false);
   const [pendingAction, setPendingAction] = useState<null | "export" | "new">(null);
+  const [licenseSyncState, setLicenseSyncState] = useState<null | {
+    deviceCount: number;
+    licenseProductName: string;
+    groupIdx: number;
+    itemIdx: number;
+  }>(null);
 
   const handleYesNoChange = (id: string, value: boolean) => {
     const next = { ...yesNoToggles, [id]: value };
@@ -204,11 +216,49 @@ export default function QuoteBuilder() {
   };
 
   const handleGroupChange = (idx: number, group: QuoteGroup) => {
+    const oldGroup = quote.groups[idx];
     const groups = quote.groups.map((g, i) => (i === idx ? group : g));
     const updated = { ...quote, groups };
     setQuote(updated);
     autosave(updated);
+
+    // License sync check — only when a terminal/tablet qty actually changed
+    if (oldGroup && deviceQtyChanged(oldGroup, group)) {
+      const license = findLicenseItem(groups);
+      if (license) {
+        const deviceCount = computeTotalDeviceCount(groups);
+        if (deviceCount !== license.currentQty) {
+          const licenseName =
+            groups[license.groupIdx]?.lineItems[license.itemIdx]?.productName ??
+            license.productId;
+          setLicenseSyncState({
+            deviceCount,
+            licenseProductName: licenseName,
+            groupIdx: license.groupIdx,
+            itemIdx: license.itemIdx,
+          });
+        }
+      }
+    }
   };
+
+  const handleLicenseAutoAdjust = () => {
+    if (!licenseSyncState) return;
+    const { deviceCount, groupIdx, itemIdx } = licenseSyncState;
+    const groups = quote.groups.map((g, gi) => {
+      if (gi !== groupIdx) return g;
+      const lineItems = g.lineItems.map((item, li) =>
+        li === itemIdx ? { ...item, quantity: deviceCount } : item,
+      );
+      return { ...g, lineItems };
+    });
+    const updated = { ...quote, groups };
+    setQuote(updated);
+    autosave(updated);
+    setLicenseSyncState(null);
+  };
+
+  const handleLicenseKeep = () => setLicenseSyncState(null);
 
   const handleGroupRemove = (idx: number) => {
     const groups = quote.groups.filter((_, i) => i !== idx);
@@ -313,6 +363,16 @@ export default function QuoteBuilder() {
       {/* Unsaved changes modal */}
       {pendingAction && (
         <UnsavedChangesModal onYes={handleUnsavedYes} onNo={handleUnsavedNo} />
+      )}
+
+      {/* License sync modal */}
+      {licenseSyncState && (
+        <LicenseSyncModal
+          deviceCount={licenseSyncState.deviceCount}
+          licenseProductName={licenseSyncState.licenseProductName}
+          onAutoAdjust={handleLicenseAutoAdjust}
+          onKeep={handleLicenseKeep}
+        />
       )}
 
       {/* Sidebar */}
