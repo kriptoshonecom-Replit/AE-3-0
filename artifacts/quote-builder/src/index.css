@@ -2107,3 +2107,39 @@ textarea:focus::placeholder {
 .auth-pw-eye:hover {
   color: var(--text-2);
 }
+
+/* ── Password strength rules ─────────────────────────── */
+
+.auth-pw-rules {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.auth-pw-rules li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+
+.auth-pw-rules li svg {
+  flex-shrink: 0;
+}
+
+.pw-ok {
+  color: #16a34a;
+}
+
+.pw-fail {
+  color: var(--text-3);
+}
+
+.pw-fail svg path {
+  stroke: var(--text-3);
+}

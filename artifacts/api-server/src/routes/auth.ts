@@ -1,26 +1,33 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
 import { db } from "@workspace/db";
-import { usersTable, verificationCodesTable } from "@workspace/db/schema";
-import { eq, and, gt } from "drizzle-orm";
-import { signToken, verifyToken, generateVerificationCode } from "../lib/auth";
-import { sendVerificationEmail } from "../lib/email";
+import { usersTable } from "@workspace/db/schema";
+import { eq } from "drizzle-orm";
+import { signToken } from "../lib/auth";
 import { requireAuth } from "../middlewares/requireAuth";
 import { logger } from "../lib/logger";
 
 const router = Router();
 
 const BCRYPT_ROUNDS = 10;
-const CODE_TTL_MINUTES = 10;
 
 function cookieOptions() {
   return {
     httpOnly: true,
     sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: 7 * 24 * 60 * 60 * 1000,
     path: "/",
   };
+}
+
+function isStrongPassword(pw: string): boolean {
+  return (
+    pw.length >= 8 &&
+    /[A-Za-z]/.test(pw) &&
+    /[0-9]/.test(pw) &&
+    /[^A-Za-z0-9]/.test(pw)
+  );
 }
 
 router.post("/register", async (req, res) => {
@@ -33,6 +40,13 @@ router.post("/register", async (req, res) => {
 
     if (!email || !password || !fullName) {
       res.status(400).json({ error: "email, password, and fullName are required" });
+      return;
+    }
+
+    if (!isStrongPassword(password)) {
+      res.status(400).json({
+        error: "Password must be at least 8 characters and include a letter, a number, and a special character",
+      });
       return;
     }
 
@@ -51,26 +65,12 @@ router.post("/register", async (req, res) => {
 
     const [user] = await db
       .insert(usersTable)
-      .values({
-        email: email.toLowerCase().trim(),
-        passwordHash,
-        fullName: fullName.trim(),
-      })
+      .values({ email: email.toLowerCase().trim(), passwordHash, fullName: fullName.trim() })
       .returning();
 
-    const code = generateVerificationCode();
-    const expiresAt = new Date(Date.now() + CODE_TTL_MINUTES * 60 * 1000);
-
-    await db.insert(verificationCodesTable).values({
-      userId: user.id,
-      code,
-      type: "register",
-      expiresAt,
-    });
-
-    await sendVerificationEmail(user.email, code, "register");
-
-    res.json({ step: "verify", email: user.email });
+    const token = signToken({ userId: user.id, email: user.email, fullName: user.fullName });
+    res.cookie("session", token, cookieOptions());
+    res.json({ user: { id: user.id, email: user.email, fullName: user.fullName, createdAt: user.createdAt } });
   } catch (err) {
     logger.error(err, "register error");
     res.status(500).json({ error: "Registration failed" });
@@ -95,103 +95,17 @@ router.post("/login", async (req, res) => {
       .where(eq(usersTable.email, email.toLowerCase().trim()))
       .limit(1);
 
-    if (!user) {
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       res.status(401).json({ error: "Invalid email or password" });
       return;
     }
 
-    const passwordMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!passwordMatch) {
-      res.status(401).json({ error: "Invalid email or password" });
-      return;
-    }
-
-    const code = generateVerificationCode();
-    const expiresAt = new Date(Date.now() + CODE_TTL_MINUTES * 60 * 1000);
-
-    await db.insert(verificationCodesTable).values({
-      userId: user.id,
-      code,
-      type: "login",
-      expiresAt,
-    });
-
-    await sendVerificationEmail(user.email, code, "login");
-
-    res.json({ step: "verify", email: user.email });
+    const token = signToken({ userId: user.id, email: user.email, fullName: user.fullName });
+    res.cookie("session", token, cookieOptions());
+    res.json({ user: { id: user.id, email: user.email, fullName: user.fullName, createdAt: user.createdAt } });
   } catch (err) {
     logger.error(err, "login error");
     res.status(500).json({ error: "Login failed" });
-  }
-});
-
-router.post("/verify", async (req, res) => {
-  try {
-    const { email, code, type } = req.body as {
-      email?: string;
-      code?: string;
-      type?: string;
-    };
-
-    if (!email || !code || !type) {
-      res.status(400).json({ error: "email, code, and type are required" });
-      return;
-    }
-
-    const [user] = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.email, email.toLowerCase().trim()))
-      .limit(1);
-
-    if (!user) {
-      res.status(400).json({ error: "Invalid verification" });
-      return;
-    }
-
-    const [record] = await db
-      .select()
-      .from(verificationCodesTable)
-      .where(
-        and(
-          eq(verificationCodesTable.userId, user.id),
-          eq(verificationCodesTable.code, code.trim().toUpperCase()),
-          eq(verificationCodesTable.type, type),
-          eq(verificationCodesTable.used, false),
-          gt(verificationCodesTable.expiresAt, new Date()),
-        ),
-      )
-      .orderBy(verificationCodesTable.createdAt)
-      .limit(1);
-
-    if (!record) {
-      res.status(400).json({ error: "Invalid or expired verification code" });
-      return;
-    }
-
-    await db
-      .update(verificationCodesTable)
-      .set({ used: true })
-      .where(eq(verificationCodesTable.id, record.id));
-
-    const token = signToken({
-      userId: user.id,
-      email: user.email,
-      fullName: user.fullName,
-    });
-
-    res.cookie("session", token, cookieOptions());
-    res.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        createdAt: user.createdAt,
-      },
-    });
-  } catch (err) {
-    logger.error(err, "verify error");
-    res.status(500).json({ error: "Verification failed" });
   }
 });
 
@@ -214,12 +128,7 @@ router.get("/me", requireAuth, async (req, res) => {
       return;
     }
 
-    res.json({
-      id: user.id,
-      email: user.email,
-      fullName: user.fullName,
-      createdAt: user.createdAt,
-    });
+    res.json({ id: user.id, email: user.email, fullName: user.fullName, createdAt: user.createdAt });
   } catch (err) {
     logger.error(err, "me error");
     res.status(500).json({ error: "Failed to fetch user" });
