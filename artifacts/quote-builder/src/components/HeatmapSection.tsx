@@ -1,7 +1,7 @@
 import pitServicesData from "../data/pit-services.json";
 import { formatCurrency } from "../utils/calculations";
 
-interface HeatmapItem {
+export interface HeatmapItem {
   id: string;
   name: string;
   price: number;
@@ -10,36 +10,37 @@ interface HeatmapItem {
 const heatmapCat = (
   pitServicesData.categories as Array<{
     id: string;
-    lineItems: Array<{
-      id: string;
-      name: string;
-      price?: number;
-      duration?: number;
-    }>;
+    lineItems: Array<{ id: string; name: string; price?: number; duration?: number }>;
   }>
 ).find((c) => c.id === "heatmap");
 
-const HEATMAP_ITEMS: HeatmapItem[] = heatmapCat
-  ? (heatmapCat.lineItems as HeatmapItem[])
+const STATIC_HEATMAP_ITEMS: HeatmapItem[] = heatmapCat
+  ? (heatmapCat.lineItems.filter((i) => i.price !== undefined) as HeatmapItem[])
   : [];
 
 interface Props {
   toggles: Record<string, boolean>;
   onToggle: (id: string, value: boolean) => void;
+  items?: HeatmapItem[];
 }
 
-export function computeHeatmapTotal(toggles: Record<string, boolean>): number {
-  return HEATMAP_ITEMS.reduce(
+export function computeHeatmapTotal(
+  toggles: Record<string, boolean>,
+  items: HeatmapItem[] = STATIC_HEATMAP_ITEMS,
+): number {
+  return items.reduce(
     (sum, item) => sum + (toggles[item.id] ? item.price : 0),
     0,
   );
 }
 
-export default function HeatmapSection({ toggles, onToggle }: Props) {
+export default function HeatmapSection({ toggles, onToggle, items }: Props) {
+  const displayItems = items ?? STATIC_HEATMAP_ITEMS;
+
   return (
     <div className="prpit-card">
       <div className="pit-yn-card" style={{ marginTop: 0 }}>
-        {HEATMAP_ITEMS.map(({ id, name, price }) => {
+        {displayItems.map(({ id, name, price }) => {
           const on = toggles[id] ?? false;
           return (
             <div key={id} className="pit-yn-row">

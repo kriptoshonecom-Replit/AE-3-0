@@ -2,13 +2,13 @@ import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "wouter";
 import logo from "/logo.png";
-import type { Quote, QuoteGroup, QuoteMeta, ProductCategory } from "../types";
+import type { Quote, QuoteGroup, QuoteMeta, ProductCategory, PitCategory } from "../types";
 import catalog from "../data/products.json";
-import pitData from "../data/pit-services.json";
+import pitDataStatic from "../data/pit-services.json";
 import { PIT_HOURLY_RATE } from "../data/pit-config";
 import QuoteMetaForm from "../components/QuoteMetaForm";
 import CurrentSpendForm from "../components/CurrentSpendForm";
-import HeatmapSection, { computeHeatmapTotal } from "../components/HeatmapSection";
+import HeatmapSection, { computeHeatmapTotal, type HeatmapItem } from "../components/HeatmapSection";
 import PaymentsConfigPanel from "../components/PaymentsConfigPanel";
 import LegacyHwSection, { computeLegacyTotal, type LegacyItem } from "../components/LegacyHwSection";
 import UnsavedChangesModal from "../components/UnsavedChangesModal";
@@ -129,11 +129,40 @@ export default function QuoteBuilder() {
     return cat ? cat.items.map((i) => ({ id: i.id, name: i.name, price: i.price })) : [];
   }, [productCategories]);
 
+  const [pitCategories, setPitCategories] = useState<PitCategory[]>(
+    (pitDataStatic.categories as unknown as PitCategory[]).filter((c) => c.id !== "heatmap"),
+  );
+
+  const [heatmapItems, setHeatmapItems] = useState<HeatmapItem[]>(() => {
+    const cat = (pitDataStatic.categories as Array<{ id: string; lineItems: Array<{ id: string; name: string; price?: number }> }>).find(
+      (c) => c.id === "heatmap",
+    );
+    return cat ? (cat.lineItems.filter((i) => i.price !== undefined) as HeatmapItem[]) : [];
+  });
+
   useEffect(() => {
     fetch(`${API_BASE}/api/products`)
       .then((r) => r.ok ? r.json() : null)
       .then((data: { categories?: ProductCategory[] } | null) => {
         if (data?.categories) setProductCategories(data.categories);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/pit-services`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: { categories?: Array<{ id: string; name: string; lineItems: Array<{ id: string; name: string; duration?: number; price?: number }> }> } | null) => {
+        if (!data?.categories) return;
+        setPitCategories(
+          data.categories.filter((c) => c.id !== "heatmap") as PitCategory[],
+        );
+        const heatCat = data.categories.find((c) => c.id === "heatmap");
+        if (heatCat) {
+          setHeatmapItems(
+            heatCat.lineItems.filter((i) => i.price !== undefined) as HeatmapItem[],
+          );
+        }
       })
       .catch(() => {});
   }, []);
@@ -485,6 +514,18 @@ export default function QuoteBuilder() {
                 </svg>
                 Products Configuration
               </button>
+              <button
+                type="button"
+                className="sidebar-admin-link"
+                onClick={() => { setLocation("/admin/pit"); setSidebarOpen(false); }}
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 12V4l5-2 5 2v8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M7 14v-4h2v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M4 7h2M10 7h2M4 10h2M10 10h2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                </svg>
+                PIT Configuration
+              </button>
             </div>
           )}
         </div>
@@ -578,6 +619,7 @@ export default function QuoteBuilder() {
                 onYesNoChange={handleYesNoChange}
                 optionalProgramToggles={optionalProgramToggles}
                 onOptionalProgramToggle={handleOptionalProgramToggle}
+                pitCategories={pitCategories}
               />
             </section>
 
@@ -599,6 +641,7 @@ export default function QuoteBuilder() {
               <HeatmapSection
                 toggles={heatmapToggles}
                 onToggle={handleHeatmapToggle}
+                items={heatmapItems.length > 0 ? heatmapItems : undefined}
               />
             </section>
 
@@ -670,11 +713,11 @@ export default function QuoteBuilder() {
                 <QuoteSummary
                   quote={quote}
                   pitTotal={(() => {
-                    const cat = pitData.categories.find((c) => c.id === (quote.meta.pitType ?? ""));
+                    const cat = pitCategories.find((c) => c.id === (quote.meta.pitType ?? ""));
                     return cat ? cat.lineItems.reduce((s, i) => s + i.duration * PIT_HOURLY_RATE, 0) : 0;
                   })()}
                   productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles, optionalProgramToggles, quote.meta.pitType ?? "", catalogMap)}
-                  heatmapTotal={computeHeatmapTotal(heatmapToggles)}
+                  heatmapTotal={computeHeatmapTotal(heatmapToggles, heatmapItems.length > 0 ? heatmapItems : undefined)}
                   legacyTotal={computeLegacyTotal(legacyToggles, legacyQuantities, legacyItems.length > 0 ? legacyItems : undefined)}
                 />
               </section>

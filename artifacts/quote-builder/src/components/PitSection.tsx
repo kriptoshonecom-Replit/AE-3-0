@@ -1,8 +1,10 @@
-import type { PitCategory } from "../types";
-import pitData from "../data/pit-services.json";
+import pitDataStatic from "../data/pit-services.json";
 import { PIT_HOURLY_RATE } from "../data/pit-config";
+import type { PitCategory } from "../types";
 
-const pitCategories = pitData.categories as PitCategory[];
+const STATIC_PIT_CATEGORIES = (pitDataStatic.categories as unknown as PitCategory[]).filter(
+  (c) => c.id !== "heatmap",
+);
 
 const OPTIONAL_PROGRAMS = [
   { id: "consumer-marketing", label: "Consumer Marketing" },
@@ -20,10 +22,22 @@ interface Props {
   onYesNoChange: (id: string, value: boolean) => void;
   optionalProgramToggles: Record<string, boolean>;
   onOptionalProgramToggle: (id: string) => void;
+  pitCategories?: PitCategory[];
 }
 
-export default function PitSection({ pitType, onChange, yesNoToggles, onYesNoChange, optionalProgramToggles, onOptionalProgramToggle }: Props) {
-  const selected = pitCategories.find((c) => c.id === pitType) ?? null;
+export default function PitSection({
+  pitType,
+  onChange,
+  yesNoToggles,
+  onYesNoChange,
+  optionalProgramToggles,
+  onOptionalProgramToggle,
+  pitCategories,
+}: Props) {
+  const categories = (pitCategories ?? STATIC_PIT_CATEGORIES).filter(
+    (c) => c.id !== "heatmap",
+  );
+  const selected = categories.find((c) => c.id === pitType) ?? null;
 
   return (
     <div className="pit-card">
@@ -36,7 +50,7 @@ export default function PitSection({ pitType, onChange, yesNoToggles, onYesNoCha
             onChange={(e) => onChange(e.target.value)}
           >
             <option value="">— Select a PIT Type —</option>
-            {pitCategories.filter((cat) => cat.id !== "heatmap").map((cat) => (
+            {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.name}
               </option>

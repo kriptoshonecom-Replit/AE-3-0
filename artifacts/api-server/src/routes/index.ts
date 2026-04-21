@@ -3,12 +3,14 @@ import healthRouter from "./health";
 import authRouter from "./auth";
 import adminRouter from "./admin";
 import productsRouter from "./products";
+import pitAdminRouter from "./pitAdmin";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use("/auth", authRouter);
 router.use("/admin", adminRouter);
+router.use("/admin", pitAdminRouter);
 router.use(productsRouter);
 
 export default router;

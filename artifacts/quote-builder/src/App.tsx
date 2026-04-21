@@ -8,6 +8,7 @@ import SignUpPage from "@/pages/SignUpPage";
 import ProfilePage from "@/pages/ProfilePage";
 import UsersPage from "@/pages/UsersPage";
 import ProductsConfigPage from "@/pages/ProductsConfigPage";
+import PitConfigPage from "@/pages/PitConfigPage";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,9 @@ function AppRoutes() {
           </Route>
           <Route path="/admin/products">
             <AdminRoute><ProductsConfigPage /></AdminRoute>
+          </Route>
+          <Route path="/admin/pit">
+            <AdminRoute><PitConfigPage /></AdminRoute>
           </Route>
         </Switch>
       </QueryClientProvider>

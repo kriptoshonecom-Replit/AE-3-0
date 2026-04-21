@@ -1,9 +1,10 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { db, pool } from "@workspace/db";
-import { usersTable, productCatalogTable } from "@workspace/db/schema";
+import { usersTable, productCatalogTable, pitCatalogTable } from "@workspace/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { DEFAULT_CATALOG } from "./lib/catalogSeed";
+import { DEFAULT_PIT_CATALOG } from "./lib/pitCatalogSeed";
 
 const rawPort = process.env["PORT"];
 
@@ -29,9 +30,26 @@ interface Catalog {
   categories: CatalogCategory[];
 }
 
+interface PitCategory {
+  id: string;
+  name: string;
+  lineItems: Record<string, unknown>[];
+}
+
+interface PitCatalog {
+  categories: PitCategory[];
+}
+
 async function runMigrations() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS product_catalog (
+      id TEXT PRIMARY KEY,
+      data JSONB NOT NULL,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pit_catalog (
       id TEXT PRIMARY KEY,
       data JSONB NOT NULL,
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
@@ -56,8 +74,6 @@ async function bootstrapCatalog() {
       return;
     }
 
-    // Ensure any categories present in the default seed but missing from the
-    // stored catalog are added (e.g. after adding a new category like aloha20).
     const [row] = await db
       .select()
       .from(productCatalogTable)
@@ -81,6 +97,48 @@ async function bootstrapCatalog() {
     }
   } catch (err) {
     logger.error(err, "Catalog bootstrap failed");
+  }
+}
+
+async function bootstrapPitCatalog() {
+  try {
+    const existing = await db
+      .select({ id: pitCatalogTable.id })
+      .from(pitCatalogTable)
+      .limit(1);
+
+    if (existing.length === 0) {
+      await db.insert(pitCatalogTable).values({
+        id: "catalog",
+        data: DEFAULT_PIT_CATALOG as unknown as Record<string, unknown>,
+      });
+      logger.info("PIT catalog seeded from defaults");
+      return;
+    }
+
+    const [row] = await db
+      .select()
+      .from(pitCatalogTable)
+      .where(eq(pitCatalogTable.id, "catalog"))
+      .limit(1);
+
+    if (!row) return;
+
+    const stored = row.data as PitCatalog;
+    const existingIds = new Set(stored.categories.map((c) => c.id));
+    const defaultPit = DEFAULT_PIT_CATALOG as unknown as PitCatalog;
+    const missing = defaultPit.categories.filter((c) => !existingIds.has(c.id));
+
+    if (missing.length > 0) {
+      stored.categories.push(...missing);
+      await db
+        .update(pitCatalogTable)
+        .set({ data: stored as unknown as Record<string, unknown>, updatedAt: new Date() })
+        .where(eq(pitCatalogTable.id, "catalog"));
+      logger.info({ added: missing.map((c) => c.id) }, "PIT catalog migration: added missing categories");
+    }
+  } catch (err) {
+    logger.error(err, "PIT catalog bootstrap failed");
   }
 }
 
@@ -115,6 +173,7 @@ async function bootstrapAdmin() {
 async function start() {
   await runMigrations();
   await bootstrapCatalog();
+  await bootstrapPitCatalog();
   await bootstrapAdmin();
 
   app.listen(port, (err) => {
