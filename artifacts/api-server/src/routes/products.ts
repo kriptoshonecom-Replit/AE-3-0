@@ -38,11 +38,13 @@ router.get("/pit-services", async (_req, res) => {
       .limit(1);
 
     if (!row) {
-      res.json(DEFAULT_PIT_CATALOG);
+      res.json({ ...DEFAULT_PIT_CATALOG, hourlyRate: 120.0 });
       return;
     }
 
-    res.json(row.data);
+    const data = row.data as Record<string, unknown>;
+    if (data.hourlyRate === undefined) data.hourlyRate = 120.0;
+    res.json(data);
   } catch (err) {
     logger.error(err, "get pit-services error");
     res.status(500).json({ error: "Failed to load PIT catalog" });

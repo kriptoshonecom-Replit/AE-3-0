@@ -99,5 +99,6 @@ export const DEFAULT_PIT_CATALOG = {
         }
       ]
     }
-  ]
+  ],
+  "hourlyRate": 120
 } as const;

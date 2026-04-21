@@ -18,6 +18,7 @@ interface PitCategory {
 
 interface PitData {
   categories: PitCategory[];
+  hourlyRate?: number;
 }
 
 function numberOrEmpty(v: unknown): string {
@@ -259,6 +260,10 @@ export default function PitConfigPage() {
   const [addingItem, setAddingItem] = useState(false);
   const [addingCat, setAddingCat] = useState(false);
 
+  const [rateInput, setRateInput] = useState("120");
+  const [rateSaving, setRateSaving] = useState(false);
+  const [rateSaved, setRateSaved] = useState(false);
+
   const allIds = (data?.categories ?? []).flatMap((c) => c.lineItems.map((i) => i.id.toLowerCase()));
 
   const load = useCallback(async () => {
@@ -269,12 +274,34 @@ export default function PitConfigPage() {
       if (!res.ok) { setError("Failed to load PIT catalog"); return; }
       const d = await res.json() as PitData;
       setData(d);
+      if (typeof d.hourlyRate === "number") setRateInput(String(d.hourlyRate));
       if (d.categories.length > 0 && !activeCat) setActiveCat(d.categories[0].id);
     } catch { setError("Network error"); }
     finally { setLoading(false); }
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+
+  async function handleSaveRate() {
+    const rate = parseFloat(rateInput);
+    if (Number.isNaN(rate) || rate <= 0) return;
+    setRateSaving(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/pit/rate`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ hourlyRate: rate }),
+      });
+      if (res.ok) {
+        const d = await res.json() as PitData;
+        setData(d);
+        setRateSaved(true);
+        setTimeout(() => setRateSaved(false), 2000);
+      }
+    } catch { /* silent */ }
+    finally { setRateSaving(false); }
+  }
 
   async function handleDeleteItem(catId: string, itemId: string, itemName: string) {
     if (!window.confirm(`Delete line item "${itemName}"? This cannot be undone.`)) return;
@@ -303,6 +330,39 @@ export default function PitConfigPage() {
         </button>
         <h1 className="admin-page-title">PIT Configuration</h1>
         <div className="admin-topbar-right">
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--muted)", whiteSpace: "nowrap" }}>
+              PIT Hour Rate ($/hr)
+            </label>
+            <input
+              type="number"
+              min="1"
+              step="0.01"
+              value={rateInput}
+              onChange={(e) => { setRateInput(e.target.value); setRateSaved(false); }}
+              onBlur={handleSaveRate}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.currentTarget.blur(); } }}
+              disabled={rateSaving}
+              style={{
+                width: "88px",
+                padding: "5px 8px",
+                fontSize: "13px",
+                border: "1px solid var(--border)",
+                borderRadius: "6px",
+                background: "var(--surface)",
+                color: "var(--text)",
+                fontWeight: 600,
+              }}
+            />
+            {rateSaved && (
+              <span style={{ fontSize: "12px", color: "var(--success, #22c55e)", display: "flex", alignItems: "center", gap: "3px" }}>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 8l4 4 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Saved
+              </span>
+            )}
+          </div>
           <button className="admin-btn-add-secondary" onClick={() => setAddingCat(true)}>
             Add Category
           </button>

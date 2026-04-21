@@ -133,6 +133,8 @@ export default function QuoteBuilder() {
     (pitDataStatic.categories as unknown as PitCategory[]).filter((c) => c.id !== "heatmap"),
   );
 
+  const [pitHourlyRate, setPitHourlyRate] = useState<number>(PIT_HOURLY_RATE);
+
   const [heatmapItems, setHeatmapItems] = useState<HeatmapItem[]>(() => {
     const cat = (pitDataStatic.categories as Array<{ id: string; lineItems: Array<{ id: string; name: string; price?: number }> }>).find(
       (c) => c.id === "heatmap",
@@ -152,16 +154,21 @@ export default function QuoteBuilder() {
   useEffect(() => {
     fetch(`${API_BASE}/api/pit-services`)
       .then((r) => r.ok ? r.json() : null)
-      .then((data: { categories?: Array<{ id: string; name: string; lineItems: Array<{ id: string; name: string; duration?: number; price?: number }> }> } | null) => {
-        if (!data?.categories) return;
-        setPitCategories(
-          data.categories.filter((c) => c.id !== "heatmap") as PitCategory[],
-        );
-        const heatCat = data.categories.find((c) => c.id === "heatmap");
-        if (heatCat) {
-          setHeatmapItems(
-            heatCat.lineItems.filter((i) => i.price !== undefined) as HeatmapItem[],
+      .then((data: { categories?: Array<{ id: string; name: string; lineItems: Array<{ id: string; name: string; duration?: number; price?: number }> }>; hourlyRate?: number } | null) => {
+        if (!data) return;
+        if (data.categories) {
+          setPitCategories(
+            data.categories.filter((c) => c.id !== "heatmap") as PitCategory[],
           );
+          const heatCat = data.categories.find((c) => c.id === "heatmap");
+          if (heatCat) {
+            setHeatmapItems(
+              heatCat.lineItems.filter((i) => i.price !== undefined) as HeatmapItem[],
+            );
+          }
+        }
+        if (typeof data.hourlyRate === "number" && data.hourlyRate > 0) {
+          setPitHourlyRate(data.hourlyRate);
         }
       })
       .catch(() => {});
@@ -620,6 +627,7 @@ export default function QuoteBuilder() {
                 optionalProgramToggles={optionalProgramToggles}
                 onOptionalProgramToggle={handleOptionalProgramToggle}
                 pitCategories={pitCategories}
+                pitHourlyRate={pitHourlyRate}
               />
             </section>
 
@@ -714,7 +722,7 @@ export default function QuoteBuilder() {
                   quote={quote}
                   pitTotal={(() => {
                     const cat = pitCategories.find((c) => c.id === (quote.meta.pitType ?? ""));
-                    return cat ? cat.lineItems.reduce((s, i) => s + i.duration * PIT_HOURLY_RATE, 0) : 0;
+                    return cat ? cat.lineItems.reduce((s, i) => s + i.duration * pitHourlyRate, 0) : 0;
                   })()}
                   productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles, optionalProgramToggles, quote.meta.pitType ?? "", catalogMap)}
                   heatmapTotal={computeHeatmapTotal(heatmapToggles, heatmapItems.length > 0 ? heatmapItems : undefined)}

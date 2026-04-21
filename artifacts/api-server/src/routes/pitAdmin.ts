@@ -9,6 +9,7 @@ const router = Router();
 router.use(requireAdmin);
 
 const PIT_ID = "catalog";
+const DEFAULT_HOURLY_RATE = 120.0;
 
 interface PitLineItem {
   id: string;
@@ -25,6 +26,7 @@ interface PitCategory {
 
 interface PitCatalog {
   categories: PitCategory[];
+  hourlyRate?: number;
 }
 
 async function readCatalog(): Promise<PitCatalog> {
@@ -33,7 +35,9 @@ async function readCatalog(): Promise<PitCatalog> {
     .from(pitCatalogTable)
     .where(eq(pitCatalogTable.id, PIT_ID))
     .limit(1);
-  return (row?.data ?? DEFAULT_PIT_CATALOG) as PitCatalog;
+  const data = (row?.data ?? DEFAULT_PIT_CATALOG) as PitCatalog;
+  if (data.hourlyRate === undefined) data.hourlyRate = DEFAULT_HOURLY_RATE;
+  return data;
 }
 
 async function writeCatalog(data: PitCatalog): Promise<PitCatalog> {
@@ -51,14 +55,31 @@ async function writeCatalog(data: PitCatalog): Promise<PitCatalog> {
 router.get("/pit", async (_req, res) => {
   try {
     res.json(await readCatalog());
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Failed to load PIT catalog" });
+  }
+});
+
+/* ── PATCH /api/admin/pit/rate ──────────────────────────── */
+router.patch("/pit/rate", async (req, res) => {
+  const { hourlyRate } = req.body as { hourlyRate?: number };
+  const rate = Number(hourlyRate);
+  if (Number.isNaN(rate) || rate <= 0) {
+    res.status(400).json({ error: "hourlyRate must be a positive number" });
+    return;
+  }
+  try {
+    const catalog = await readCatalog();
+    catalog.hourlyRate = rate;
+    res.json(await writeCatalog(catalog));
+  } catch {
+    res.status(500).json({ error: "Server error" });
   }
 });
 
 /* ── POST /api/admin/pit/categories ─────────────────────── */
 router.post("/pit/categories", async (req, res) => {
-  const { id, name, type } = req.body as { id?: string; name?: string; type?: string };
+  const { id, name } = req.body as { id?: string; name?: string; type?: string };
   if (!id?.trim() || !name?.trim()) {
     res.status(400).json({ error: "ID and name are required" });
     return;

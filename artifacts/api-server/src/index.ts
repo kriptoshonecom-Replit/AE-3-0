@@ -38,6 +38,7 @@ interface PitCategory {
 
 interface PitCatalog {
   categories: PitCategory[];
+  hourlyRate?: number;
 }
 
 async function runMigrations() {
@@ -125,17 +126,28 @@ async function bootstrapPitCatalog() {
     if (!row) return;
 
     const stored = row.data as PitCatalog;
+    let dirty = false;
+
     const existingIds = new Set(stored.categories.map((c) => c.id));
     const defaultPit = DEFAULT_PIT_CATALOG as unknown as PitCatalog;
     const missing = defaultPit.categories.filter((c) => !existingIds.has(c.id));
-
     if (missing.length > 0) {
       stored.categories.push(...missing);
+      dirty = true;
+      logger.info({ added: missing.map((c) => c.id) }, "PIT catalog migration: added missing categories");
+    }
+
+    if (stored.hourlyRate === undefined) {
+      stored.hourlyRate = 120.0;
+      dirty = true;
+      logger.info("PIT catalog migration: added default hourlyRate");
+    }
+
+    if (dirty) {
       await db
         .update(pitCatalogTable)
         .set({ data: stored as unknown as Record<string, unknown>, updatedAt: new Date() })
         .where(eq(pitCatalogTable.id, "catalog"));
-      logger.info({ added: missing.map((c) => c.id) }, "PIT catalog migration: added missing categories");
     }
   } catch (err) {
     logger.error(err, "PIT catalog bootstrap failed");

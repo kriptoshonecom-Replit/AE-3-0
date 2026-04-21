@@ -1,5 +1,5 @@
 import pitDataStatic from "../data/pit-services.json";
-import { PIT_HOURLY_RATE } from "../data/pit-config";
+import { PIT_HOURLY_RATE as STATIC_PIT_HOURLY_RATE } from "../data/pit-config";
 import type { PitCategory } from "../types";
 
 const STATIC_PIT_CATEGORIES = (pitDataStatic.categories as unknown as PitCategory[]).filter(
@@ -23,6 +23,7 @@ interface Props {
   optionalProgramToggles: Record<string, boolean>;
   onOptionalProgramToggle: (id: string) => void;
   pitCategories?: PitCategory[];
+  pitHourlyRate?: number;
 }
 
 export default function PitSection({
@@ -33,7 +34,9 @@ export default function PitSection({
   optionalProgramToggles,
   onOptionalProgramToggle,
   pitCategories,
+  pitHourlyRate,
 }: Props) {
+  const PIT_HOURLY_RATE = pitHourlyRate ?? STATIC_PIT_HOURLY_RATE;
   const categories = (pitCategories ?? STATIC_PIT_CATEGORIES).filter(
     (c) => c.id !== "heatmap",
   );
