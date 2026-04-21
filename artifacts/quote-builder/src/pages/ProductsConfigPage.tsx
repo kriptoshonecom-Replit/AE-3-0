@@ -115,7 +115,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
           <div className="admin-form-row">
             {mode === "add" && (
               <div className="edit-field-group">
-                <label>Product ID <span className="edit-modal-optional">(unique, e.g. tm-005)</span></label>
+                <label>Product ID</label>
                 <input
                   type="text"
                   value={id}
