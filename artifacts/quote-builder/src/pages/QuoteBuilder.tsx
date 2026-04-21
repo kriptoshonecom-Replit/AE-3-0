@@ -1,8 +1,8 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "wouter";
 import logo from "/logo.png";
-import type { Quote, QuoteGroup, QuoteMeta } from "../types";
+import type { Quote, QuoteGroup, QuoteMeta, ProductCategory } from "../types";
 import catalog from "../data/products.json";
 import pitData from "../data/pit-services.json";
 import { PIT_HOURLY_RATE } from "../data/pit-config";
@@ -20,7 +20,7 @@ import {
   findLicenseItem,
 } from "../utils/licenseSync";
 import PitSection from "../components/PitSection";
-import ProductRelatedPitSection, { computeProductRelatedPitTotal } from "../components/ProductRelatedPitSection";
+import ProductRelatedPitSection, { computeProductRelatedPitTotal, buildProductCatalogMap, type ProductCatalogMap } from "../components/ProductRelatedPitSection";
 import QuoteGroupComponent from "../components/QuoteGroup";
 import QuoteSummary from "../components/QuoteSummary";
 import QuoteList from "../components/QuoteList";
@@ -29,7 +29,7 @@ import { saveQuote, loadAllQuotes, getActiveQuoteId, loadQuote } from "../utils/
 import { exportQuoteToPDF } from "../utils/pdfExport";
 import { generateId, todayString, thirtyDaysOut } from "../utils/calculations";
 
-const productCategories = catalog.categories;
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
 const DEFAULT_YES_NO: Record<string, boolean> = {
   "connected-payments-yn": false,
@@ -114,6 +114,24 @@ export default function QuoteBuilder() {
   const [legacyQuantities, setLegacyQuantities] = useState<Record<string, number>>(DEFAULT_LEGACY_QUANTITIES);
   const isDirtyRef = useRef(false);
   const [pendingAction, setPendingAction] = useState<null | "export" | "new">(null);
+
+  const [productCategories, setProductCategories] = useState<ProductCategory[]>(
+    catalog.categories as unknown as ProductCategory[],
+  );
+
+  const catalogMap: ProductCatalogMap = useMemo(
+    () => buildProductCatalogMap(productCategories),
+    [productCategories],
+  );
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/products`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: { categories?: ProductCategory[] } | null) => {
+        if (data?.categories) setProductCategories(data.categories);
+      })
+      .catch(() => {});
+  }, []);
   const [licenseSyncState, setLicenseSyncState] = useState<null | {
     deviceCount: number;
     licenseProductName: string;
@@ -566,6 +584,7 @@ export default function QuoteBuilder() {
                 yesNoToggles={yesNoToggles}
                 optionalProgramToggles={optionalProgramToggles}
                 pitType={quote.meta.pitType ?? ""}
+                catalogMap={catalogMap}
               />
             </section>
 
@@ -648,7 +667,7 @@ export default function QuoteBuilder() {
                     const cat = pitData.categories.find((c) => c.id === (quote.meta.pitType ?? ""));
                     return cat ? cat.lineItems.reduce((s, i) => s + i.duration * PIT_HOURLY_RATE, 0) : 0;
                   })()}
-                  productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles, optionalProgramToggles, quote.meta.pitType ?? "")}
+                  productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles, optionalProgramToggles, quote.meta.pitType ?? "", catalogMap)}
                   heatmapTotal={computeHeatmapTotal(heatmapToggles)}
                   legacyTotal={computeLegacyTotal(legacyToggles, legacyQuantities)}
                 />

@@ -1,21 +1,22 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
-import { readFile, writeFile, mkdir } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import multer from "multer";
 import { db } from "@workspace/db";
-import { usersTable } from "@workspace/db/schema";
+import { usersTable, productCatalogTable } from "@workspace/db/schema";
 import { eq, ne } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/requireAdmin";
 import { logger } from "../lib/logger";
 import { sendWelcomeEmail } from "../lib/email";
+import { DEFAULT_CATALOG } from "../lib/catalogSeed";
 
 const router = Router();
 router.use(requireAdmin);
 
 const BCRYPT_ROUNDS = 10;
+const CATALOG_ID = "catalog";
 
-const PRODUCTS_PATH = path.join(process.cwd(), "../quote-builder/src/data/products.json");
 const PRODUCTS_IMG_DIR = path.join(process.cwd(), "../quote-builder/public/products");
 
 const upload = multer({
@@ -42,6 +43,61 @@ function isStrongPassword(pw: string): boolean {
 
 function userDto(u: typeof usersTable.$inferSelect) {
   return { id: u.id, email: u.email, fullName: u.fullName, role: u.role, createdAt: u.createdAt };
+}
+
+/* ── Products (DB-backed) ─────────────────────────────── */
+
+interface ProductItem {
+  id: string;
+  name: string;
+  type?: string;
+  text?: string;
+  image?: string;
+  price: number;
+  pci?: number;
+  produration?: number;
+  traduration?: number;
+  instaduration?: number;
+  stageduration?: number;
+  [key: string]: unknown;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  items: ProductItem[];
+}
+
+async function readProducts(): Promise<{ categories: Category[] }> {
+  const [row] = await db
+    .select()
+    .from(productCatalogTable)
+    .where(eq(productCatalogTable.id, CATALOG_ID))
+    .limit(1);
+
+  if (!row) {
+    const seed = DEFAULT_CATALOG as unknown as { categories: Category[] };
+    await db
+      .insert(productCatalogTable)
+      .values({ id: CATALOG_ID, data: seed as unknown as Record<string, unknown> });
+    logger.info("Product catalog seeded from defaults");
+    return seed;
+  }
+
+  return row.data as { categories: Category[] };
+}
+
+async function writeProducts(data: { categories: Category[] }) {
+  await db
+    .insert(productCatalogTable)
+    .values({ id: CATALOG_ID, data: data as unknown as Record<string, unknown> })
+    .onConflictDoUpdate({
+      target: productCatalogTable.id,
+      set: {
+        data: data as unknown as Record<string, unknown>,
+        updatedAt: new Date(),
+      },
+    });
 }
 
 /* ── Users ────────────────────────────────────────────── */
@@ -96,7 +152,6 @@ router.post("/users", async (req, res) => {
       .values({ email: email.toLowerCase().trim(), passwordHash, fullName: fullName.trim(), role: assignedRole })
       .returning();
 
-    // Send welcome email (non-fatal — user is created even if email fails)
     sendWelcomeEmail(user.email, user.fullName, password).catch((err) => {
       logger.error(err, "welcome email failed");
     });
@@ -170,37 +225,7 @@ router.delete("/users/:id", async (req, res) => {
   }
 });
 
-/* ── Products ─────────────────────────────────────────── */
-
-async function readProducts() {
-  const raw = await readFile(PRODUCTS_PATH, "utf-8");
-  return JSON.parse(raw) as { categories: Category[] };
-}
-
-async function writeProducts(data: { categories: Category[] }) {
-  await writeFile(PRODUCTS_PATH, JSON.stringify(data, null, 2), "utf-8");
-}
-
-interface ProductItem {
-  id: string;
-  name: string;
-  type?: string;
-  text?: string;
-  image?: string;
-  price: number;
-  pci?: number;
-  produration?: number;
-  traduration?: number;
-  instaduration?: number;
-  stageduration?: number;
-  [key: string]: unknown;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  items: ProductItem[];
-}
+/* ── Products routes ──────────────────────────────────── */
 
 router.post("/products/upload-image", upload.single("file"), async (req, res) => {
   try {
@@ -321,6 +346,19 @@ router.patch("/products/categories/:catId/items/:itemId", async (req, res) => {
   } catch (err) {
     logger.error(err, "admin update product error");
     res.status(500).json({ error: "Failed to update product" });
+  }
+});
+
+router.delete("/products/categories/:catId", async (req, res) => {
+  try {
+    const { catId } = req.params;
+    const data = await readProducts();
+    data.categories = data.categories.filter((c) => c.id !== catId);
+    await writeProducts(data);
+    res.json(data);
+  } catch (err) {
+    logger.error(err, "admin delete category error");
+    res.status(500).json({ error: "Failed to delete category" });
   }
 });
 

@@ -1,8 +1,9 @@
 import app from "./app";
 import { logger } from "./lib/logger";
-import { db } from "@workspace/db";
-import { usersTable } from "@workspace/db/schema";
+import { db, pool } from "@workspace/db";
+import { usersTable, productCatalogTable } from "@workspace/db/schema";
 import { eq, sql } from "drizzle-orm";
+import { DEFAULT_CATALOG } from "./lib/catalogSeed";
 
 const rawPort = process.env["PORT"];
 
@@ -16,6 +17,36 @@ const port = Number(rawPort);
 
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
+}
+
+async function runMigrations() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS product_catalog (
+      id TEXT PRIMARY KEY,
+      data JSONB NOT NULL,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+    )
+  `);
+  logger.info("DB migrations complete");
+}
+
+async function bootstrapCatalog() {
+  try {
+    const existing = await db
+      .select({ id: productCatalogTable.id })
+      .from(productCatalogTable)
+      .limit(1);
+
+    if (existing.length === 0) {
+      await db.insert(productCatalogTable).values({
+        id: "catalog",
+        data: DEFAULT_CATALOG as unknown as Record<string, unknown>,
+      });
+      logger.info("Product catalog seeded from defaults");
+    }
+  } catch (err) {
+    logger.error(err, "Catalog bootstrap failed");
+  }
 }
 
 async function bootstrapAdmin() {
@@ -46,7 +77,11 @@ async function bootstrapAdmin() {
   }
 }
 
-bootstrapAdmin().then(() => {
+async function start() {
+  await runMigrations();
+  await bootstrapCatalog();
+  await bootstrapAdmin();
+
   app.listen(port, (err) => {
     if (err) {
       logger.error({ err }, "Error listening on port");
@@ -55,4 +90,9 @@ bootstrapAdmin().then(() => {
 
     logger.info({ port }, "Server listening");
   });
+}
+
+start().catch((err) => {
+  logger.error(err, "Failed to start server");
+  process.exit(1);
 });
