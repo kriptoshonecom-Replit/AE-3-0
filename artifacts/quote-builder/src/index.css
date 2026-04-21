@@ -2847,3 +2847,21 @@ textarea:focus::placeholder {
 .admin-products-table .admin-td-desc {
   white-space: nowrap;
 }
+
+/* ── New user email note ─────────────────────────────── */
+
+.nu-email-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--text-3);
+  font-style: italic;
+}
+
+.nu-email-note svg {
+  flex-shrink: 0;
+  color: var(--accent);
+  opacity: 0.7;
+}

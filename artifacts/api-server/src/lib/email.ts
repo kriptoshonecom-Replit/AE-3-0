@@ -40,53 +40,61 @@ async function getResendClient(): Promise<{ client: Resend; fromEmail: string } 
   }
 }
 
-export async function sendVerificationEmail(
+async function send(to: string, subject: string, html: string): Promise<void> {
+  const resend = await getResendClient();
+  if (resend) {
+    const { error } = await resend.client.emails.send({ from: resend.fromEmail, to, subject, html });
+    if (error) {
+      logger.error({ error, to, subject }, "Resend error — falling back to console log");
+      console.log(`\n📧 EMAIL to ${to} | Subject: ${subject}\n[Resend error — check API key / domain]\n`);
+    } else {
+      logger.info({ to, subject }, "Email sent via Resend");
+    }
+  } else {
+    logger.warn({ to, subject }, "Resend not configured — email logged to console");
+    console.log(`\n📧 EMAIL to ${to} | Subject: ${subject}\n`);
+  }
+}
+
+export async function sendWelcomeEmail(
   to: string,
-  code: string,
-  type: "register" | "login",
+  fullName: string,
+  password: string,
 ): Promise<void> {
-  const subject =
-    type === "register"
-      ? "Verify your Aloha CPQ account"
-      : "Your Aloha CPQ sign-in code";
+  const subject = "Welcome to Aloha Essential CPQ 3.0 — Your Account Details";
 
   const html = `
-    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
-      <h2 style="color:#7c3aed;margin-bottom:8px">Aloha Essential CPQ 3.0</h2>
-      <p style="color:#334155;font-size:15px;margin-bottom:24px">
-        ${type === "register" ? "Thanks for signing up! Use the code below to verify your account." : "Use the code below to complete your sign-in."}
+    <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;color:#1e293b">
+      <h2 style="color:#7c3aed;margin:0 0 4px">Aloha Essential CPQ 3.0</h2>
+      <p style="color:#64748b;font-size:13px;margin:0 0 28px">Quote Builder Platform</p>
+
+      <p style="font-size:15px;margin:0 0 16px">Hi <strong>${fullName}</strong>,</p>
+      <p style="font-size:14px;color:#334155;margin:0 0 24px">
+        An admin has created an account for you on <strong>Aloha Essential CPQ 3.0</strong>.
+        Use the credentials below to sign in and get started.
       </p>
-      <div style="background:#f8f7ff;border:2px solid #7c3aed;border-radius:10px;padding:20px 24px;text-align:center;margin-bottom:24px">
-        <span style="font-size:32px;font-weight:700;letter-spacing:8px;color:#7c3aed;font-family:monospace">${code}</span>
+
+      <div style="background:#f8f7ff;border:1px solid #e2d9f3;border-radius:10px;padding:20px 24px;margin-bottom:24px">
+        <table style="width:100%;border-collapse:collapse">
+          <tr>
+            <td style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#7c3aed;padding:6px 0;width:100px">Email</td>
+            <td style="font-size:14px;color:#1e293b;padding:6px 0">${to}</td>
+          </tr>
+          <tr>
+            <td style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#7c3aed;padding:6px 0">Password</td>
+            <td style="font-size:14px;font-family:monospace;color:#1e293b;padding:6px 0;font-weight:600">${password}</td>
+          </tr>
+        </table>
       </div>
-      <p style="color:#64748b;font-size:13px">This code expires in 10 minutes. If you didn't request this, you can safely ignore this email.</p>
+
+      <p style="font-size:13px;color:#64748b;margin:0 0 8px">
+        For your security, please change your password after signing in for the first time.
+      </p>
+      <p style="font-size:13px;color:#94a3b8;margin:0">
+        If you weren't expecting this email, please ignore it or contact your administrator.
+      </p>
     </div>
   `;
 
-  // WARNING: Never cache the Resend client — tokens expire.
-  const resend = await getResendClient();
-
-  if (resend) {
-    const { error } = await resend.client.emails.send({
-      from: resend.fromEmail,
-      to,
-      subject,
-      html,
-    });
-    if (error) {
-      // Resend is configured but returned an error (e.g. invalid API key or unverified domain).
-      // Fall back to console so the auth flow still works while the integration is being set up.
-      logger.error({ error, to, type }, "Resend error — falling back to console log");
-      console.log(`\n🔐 VERIFICATION CODE for ${to}: ${code}\n`);
-      logger.warn({ to, code, type }, "Code logged to console (Resend not ready yet)");
-    } else {
-      logger.info({ to, type }, "Verification email sent via Resend");
-    }
-  } else {
-    logger.warn(
-      { to, code, type },
-      "Resend not configured — verification code logged here for development",
-    );
-    console.log(`\n🔐 VERIFICATION CODE for ${to}: ${code}\n`);
-  }
+  await send(to, subject, html);
 }

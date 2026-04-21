@@ -7,6 +7,7 @@ import { usersTable } from "@workspace/db/schema";
 import { eq, ne } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/requireAdmin";
 import { logger } from "../lib/logger";
+import { sendWelcomeEmail } from "../lib/email";
 
 const router = Router();
 router.use(requireAdmin);
@@ -37,6 +38,58 @@ router.get("/users", async (_req, res) => {
   } catch (err) {
     logger.error(err, "admin list users error");
     res.status(500).json({ error: "Failed to list users" });
+  }
+});
+
+router.post("/users", async (req, res) => {
+  try {
+    const { fullName, email, password, role } = req.body as {
+      fullName?: string;
+      email?: string;
+      password?: string;
+      role?: string;
+    };
+
+    if (!fullName?.trim() || !email?.trim() || !password) {
+      res.status(400).json({ error: "fullName, email, and password are required" });
+      return;
+    }
+
+    if (!isStrongPassword(password)) {
+      res.status(400).json({
+        error: "Password must be at least 8 characters and include a letter, a number, and a special character",
+      });
+      return;
+    }
+
+    const existing = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.email, email.toLowerCase().trim()))
+      .limit(1);
+
+    if (existing.length > 0) {
+      res.status(409).json({ error: "An account with this email already exists" });
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    const assignedRole = role === "admin" ? "admin" : "user";
+
+    const [user] = await db
+      .insert(usersTable)
+      .values({ email: email.toLowerCase().trim(), passwordHash, fullName: fullName.trim(), role: assignedRole })
+      .returning();
+
+    // Send welcome email (non-fatal — user is created even if email fails)
+    sendWelcomeEmail(user.email, user.fullName, password).catch((err) => {
+      logger.error(err, "welcome email failed");
+    });
+
+    res.status(201).json(userDto(user));
+  } catch (err) {
+    logger.error(err, "admin create user error");
+    res.status(500).json({ error: "Failed to create user" });
   }
 });
 

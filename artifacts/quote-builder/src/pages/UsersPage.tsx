@@ -34,6 +34,154 @@ function EyeIcon({ open }: { open: boolean }) {
   );
 }
 
+interface NewUserModalProps {
+  onClose: () => void;
+  onCreated: (u: AdminUser) => void;
+}
+
+function NewUserModal({ onClose, onCreated }: NewUserModalProps) {
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [pwTouched, setPwTouched] = useState(false);
+  const [role, setRole] = useState("user");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const checks = pwChecks(password);
+  const pwValid = checks.length && checks.letter && checks.number && checks.special;
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setPwTouched(true);
+    if (!fullName.trim() || !email.trim()) { setError("Full name and email are required"); return; }
+    if (!pwValid) { setError("Password does not meet the requirements"); return; }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ fullName: fullName.trim(), email: email.trim(), password, role }),
+      });
+      const data = await res.json() as AdminUser & { error?: string };
+      if (!res.ok) { setError((data as { error?: string }).error ?? "Failed to create user"); return; }
+      onCreated(data);
+      onClose();
+    } catch {
+      setError("Network error — please try again");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="admin-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="admin-modal">
+        <div className="admin-modal-header">
+          <h3>New User</h3>
+          <button className="edit-modal-close" onClick={onClose} aria-label="Close">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        <form className="admin-modal-body" onSubmit={handleCreate} noValidate>
+          {error && <div className="edit-modal-error">{error}</div>}
+
+          <div className="admin-form-row">
+            <div className="edit-field-group">
+              <label htmlFor="nu-name">Full name</label>
+              <input
+                id="nu-name"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Jane Smith"
+                autoComplete="name"
+              />
+            </div>
+            <div className="edit-field-group">
+              <label htmlFor="nu-email">Email</label>
+              <input
+                id="nu-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="jane@example.com"
+                autoComplete="email"
+              />
+            </div>
+          </div>
+
+          <div className="edit-field-group">
+            <label htmlFor="nu-role">Role</label>
+            <select id="nu-role" className="admin-select" value={role} onChange={(e) => setRole(e.target.value)}>
+              <option value="user">Read Only (User)</option>
+              <option value="admin">Read &amp; Write (Admin)</option>
+            </select>
+          </div>
+
+          <div className="edit-field-group">
+            <label htmlFor="nu-pw">Password</label>
+            <div className="auth-pw-wrap">
+              <input
+                id="nu-pw"
+                type={showPw ? "text" : "password"}
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); setPwTouched(true); }}
+                placeholder="Set an initial password"
+                autoComplete="new-password"
+              />
+              <button type="button" className="auth-pw-eye" onClick={() => setShowPw(v => !v)} tabIndex={-1}
+                aria-label={showPw ? "Hide password" : "Show password"}>
+                <EyeIcon open={showPw} />
+              </button>
+            </div>
+            {(pwTouched || password.length > 0) && (
+              <ul className="auth-pw-rules" style={{ marginTop: 6 }}>
+                <li className={checks.length ? "pw-ok" : "pw-fail"}>
+                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  At least 8 characters
+                </li>
+                <li className={checks.letter ? "pw-ok" : "pw-fail"}>
+                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  At least one letter
+                </li>
+                <li className={checks.number ? "pw-ok" : "pw-fail"}>
+                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  At least one number
+                </li>
+                <li className={checks.special ? "pw-ok" : "pw-fail"}>
+                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  At least one special character
+                </li>
+              </ul>
+            )}
+            <p className="nu-email-note">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                <path d="M2 4l6 5 6-5M2 4h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Login credentials will be emailed to the user after account creation.
+            </p>
+          </div>
+
+          <div className="edit-modal-footer">
+            <button type="button" className="edit-modal-cancel" onClick={onClose}>Cancel</button>
+            <button type="submit" className="edit-modal-save" disabled={loading}>
+              {loading ? "Creating…" : "Create user & send email"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 interface EditUserModalProps {
   user: AdminUser;
   onClose: () => void;
@@ -170,6 +318,7 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState<AdminUser | null>(null);
+  const [creatingNew, setCreatingNew] = useState(false);
   const [search, setSearch] = useState("");
 
   const load = useCallback(async () => {
@@ -211,6 +360,12 @@ export default function UsersPage() {
         <h1 className="admin-page-title">Users</h1>
         <div className="admin-topbar-right">
           <span className="admin-badge">{users.length} total</span>
+          <button className="edit-modal-save" style={{ padding: "7px 14px", fontSize: "13px" }} onClick={() => setCreatingNew(true)}>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ marginRight: 4 }}>
+              <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            New User
+          </button>
         </div>
       </div>
 
@@ -289,6 +444,13 @@ export default function UsersPage() {
           </div>
         )}
       </div>
+
+      {creatingNew && (
+        <NewUserModal
+          onClose={() => setCreatingNew(false)}
+          onCreated={(newUser) => setUsers((prev) => [...prev, newUser])}
+        />
+      )}
 
       {editing && (
         <EditUserModal
