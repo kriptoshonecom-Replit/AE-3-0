@@ -289,16 +289,10 @@ export default function ProductsConfigPage() {
         <h1 className="admin-page-title">Products Configuration</h1>
         <div className="admin-topbar-right">
           <button className="admin-btn-add-secondary" onClick={() => setAddingCat(true)}>
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-              <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
             Add Category
           </button>
           {activeCat && (
             <button className="edit-modal-save" style={{ padding: "7px 14px", fontSize: "13px" }} onClick={() => setAddingItem(true)}>
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ marginRight: 4 }}>
-                <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
               Add Product
             </button>
           )}

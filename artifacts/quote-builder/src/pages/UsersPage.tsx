@@ -361,9 +361,6 @@ export default function UsersPage() {
         <div className="admin-topbar-right">
           <span className="admin-badge">{users.length} total</span>
           <button className="edit-modal-save" style={{ padding: "7px 14px", fontSize: "13px" }} onClick={() => setCreatingNew(true)}>
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ marginRight: 4 }}>
-              <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
             New User
           </button>
         </div>
