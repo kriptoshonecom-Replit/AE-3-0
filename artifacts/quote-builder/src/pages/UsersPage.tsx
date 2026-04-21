@@ -360,6 +360,17 @@ export default function UsersPage() {
         <h1 className="admin-page-title">Users</h1>
         <div className="admin-topbar-right">
           <span className="admin-badge">{users.length} total</span>
+          <button
+            className="admin-btn-add-secondary"
+            onClick={() => void load()}
+            disabled={loading}
+            title="Reload user list"
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ marginRight: 4 }}>
+              <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.8 0 3.4.87 4.4 2.2M13.5 2v3.5H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Refresh
+          </button>
           <button className="edit-modal-save" style={{ padding: "7px 14px", fontSize: "13px" }} onClick={() => setCreatingNew(true)}>
             New User
           </button>

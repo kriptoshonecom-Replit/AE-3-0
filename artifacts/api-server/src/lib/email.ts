@@ -1,9 +1,21 @@
-// Uses the Resend Replit integration for transactional email.
-// Falls back to console.log if the connection is unavailable (dev without connector).
+// Sends transactional email via Resend.
+// Resolution order for credentials:
+//   1. RESEND_API_KEY / RESEND_FROM_EMAIL env vars (set via Replit Secrets)
+//   2. Replit Resend connector (if configured)
+//   3. Falls back to console.log so the app keeps running if email isn't set up.
 import { Resend } from "resend";
 import { logger } from "./logger";
 
 async function getResendClient(): Promise<{ client: Resend; fromEmail: string } | null> {
+  // 1. Direct env-var — takes priority (set RESEND_API_KEY in Secrets)
+  if (process.env.RESEND_API_KEY) {
+    return {
+      client: new Resend(process.env.RESEND_API_KEY),
+      fromEmail: process.env.RESEND_FROM_EMAIL ?? "noreply@aloha-cpq.app",
+    };
+  }
+
+  // 2. Replit connector fallback
   try {
     const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
     if (!hostname) return null;
@@ -28,7 +40,6 @@ async function getResendClient(): Promise<{ client: Resend; fromEmail: string } 
 
     const data = await res.json() as { items?: Array<{ settings: { api_key?: string; from_email?: string } }> };
     const conn = data.items?.[0];
-
     if (!conn?.settings?.api_key) return null;
 
     return {
@@ -42,17 +53,18 @@ async function getResendClient(): Promise<{ client: Resend; fromEmail: string } 
 
 async function send(to: string, subject: string, html: string): Promise<void> {
   const resend = await getResendClient();
-  if (resend) {
-    const { error } = await resend.client.emails.send({ from: resend.fromEmail, to, subject, html });
-    if (error) {
-      logger.error({ error, to, subject }, "Resend error — falling back to console log");
-      console.log(`\n📧 EMAIL to ${to} | Subject: ${subject}\n[Resend error — check API key / domain]\n`);
-    } else {
-      logger.info({ to, subject }, "Email sent via Resend");
-    }
-  } else {
+  if (!resend) {
     logger.warn({ to, subject }, "Resend not configured — email logged to console");
-    console.log(`\n📧 EMAIL to ${to} | Subject: ${subject}\n`);
+    console.log(`\n📧 EMAIL (not sent) to ${to} | Subject: ${subject}\n`);
+    return;
+  }
+
+  const { error } = await resend.client.emails.send({ from: resend.fromEmail, to, subject, html });
+  if (error) {
+    logger.error({ error, to, subject }, "Resend send error");
+    console.log(`\n📧 EMAIL FAILED to ${to} | Subject: ${subject}\n[Error: ${JSON.stringify(error)}]\n`);
+  } else {
+    logger.info({ to, subject }, "Email sent via Resend");
   }
 }
 
