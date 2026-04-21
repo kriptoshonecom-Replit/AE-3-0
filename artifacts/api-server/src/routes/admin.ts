@@ -17,7 +17,7 @@ router.use(requireAdmin);
 const BCRYPT_ROUNDS = 10;
 const CATALOG_ID = "catalog";
 
-const PRODUCTS_IMG_DIR = path.join(process.cwd(), "../quote-builder/public/products");
+const PRODUCTS_IMG_DIR = path.join(process.cwd(), "uploads", "products");
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -247,7 +247,7 @@ router.post("/products/upload-image", upload.single("file"), async (req, res) =>
 
     await writeFile(dest, file.buffer);
 
-    res.json({ path: `/products/${slug}` });
+    res.json({ path: `/api/images/products/${slug}` });
   } catch (err) {
     logger.error(err, "image upload error");
     res.status(500).json({ error: "Upload failed" });
