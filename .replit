@@ -91,5 +91,8 @@ JWT_SECRET = "951a32af2b40230dfa0f531bdded2f36b473b46702942faa15cf4be7e94d81f0cf
 RESEND_API_KEY = "re_JnLnjxDT_JMUq9MouynXq6w9ECgNnAUNu"
 RESEND_FROM_EMAIL = "noreply@splavsuvenir.rs"
 
+[userenv.production]
+ADMIN_BOOTSTRAP_EMAIL = "nenad.jelic@ncrvoyix.com"
+
 [nix]
 channel = "stable-25_05"
