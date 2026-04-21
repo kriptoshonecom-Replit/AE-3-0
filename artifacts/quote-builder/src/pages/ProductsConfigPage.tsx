@@ -53,11 +53,46 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
   const [tra, setTra] = useState(numberOrEmpty(item?.traduration));
   const [ins, setIns] = useState(numberOrEmpty(item?.instaduration));
   const [sta, setSta] = useState(numberOrEmpty(item?.stageduration));
+  const [imageUrl, setImageUrl] = useState<string | null>(item?.image ?? null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageError, setImageError] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const idTrimmed = id.trim().toLowerCase();
   const idTaken = mode === "add" && idTrimmed.length > 0 && allIds.includes(idTrimmed);
+
+  async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    setImageError("");
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith(".png") || file.type !== "image/png") {
+      setImageError("Only PNG files are accepted"); e.target.value = ""; return;
+    }
+
+    const bmp = await createImageBitmap(file).catch(() => null);
+    if (!bmp) { setImageError("Could not read image"); e.target.value = ""; return; }
+    if (bmp.width > 500 || bmp.height > 500) {
+      setImageError(`Image must be 500×500 px or smaller (yours: ${bmp.width}×${bmp.height})`);
+      e.target.value = ""; return;
+    }
+
+    setImageUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch(`${API_BASE}/api/admin/products/upload-image`, {
+        method: "POST",
+        credentials: "include",
+        body: form,
+      });
+      const data = await res.json() as { path?: string; error?: string };
+      if (!res.ok) { setImageError(data.error ?? "Upload failed"); return; }
+      setImageUrl(data.path!);
+    } catch { setImageError("Network error during upload"); }
+    finally { setImageUploading(false); e.target.value = ""; }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -66,7 +101,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
     if (mode === "add" && !id.trim()) { setError("ID is required"); return; }
     if (idTaken) { setError("This Product ID is already in use — please choose a different one"); return; }
 
-    const body = {
+    const body: Record<string, unknown> = {
       ...(mode === "add" ? { id: id.trim() } : {}),
       name: name.trim(), type, text,
       price: Number(price) || 0,
@@ -75,6 +110,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
       traduration: Number(tra) || 0,
       instaduration: Number(ins) || 0,
       stageduration: Number(sta) || 0,
+      image: imageUrl ?? null,
     };
 
     const url = mode === "add"
@@ -151,6 +187,52 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
           <div className="edit-field-group">
             <label>Description / Text</label>
             <input type="text" value={text} onChange={(e) => setText(e.target.value)} placeholder="Short description shown to users" />
+          </div>
+
+          <div className="edit-field-group">
+            <label>Product Image <span className="edit-modal-optional">(PNG only, max 500×500 px)</span></label>
+            <div className="product-img-upload-row">
+              {imageUrl ? (
+                <div className="product-img-preview">
+                  <img src={imageUrl} alt="Product" />
+                  <button type="button" className="product-img-remove" onClick={() => setImageUrl(null)} title="Remove image">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                      <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <div className="product-img-placeholder">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.4"/>
+                    <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" strokeWidth="1.2"/>
+                    <path d="M3 15l5-4 4 4 3-2.5 4 4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span>No image</span>
+                </div>
+              )}
+              <div className="product-img-controls">
+                <label className="product-img-btn" aria-disabled={imageUploading}>
+                  {imageUploading ? "Uploading…" : imageUrl ? "Replace image" : "Upload image"}
+                  <input
+                    type="file"
+                    accept=".png,image/png"
+                    style={{ display: "none" }}
+                    disabled={imageUploading}
+                    onChange={handleImageSelect}
+                  />
+                </label>
+                {imageError && (
+                  <span className="product-img-error">
+                    <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                      <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M8 5v4M8 11v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                    {imageError}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="admin-form-row admin-form-row-5">

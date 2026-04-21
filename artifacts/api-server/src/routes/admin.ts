@@ -1,7 +1,8 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
-import { readFile, writeFile } from "fs/promises";
+import { readFile, writeFile, mkdir } from "fs/promises";
 import path from "path";
+import multer from "multer";
 import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db/schema";
 import { eq, ne } from "drizzle-orm";
@@ -15,6 +16,20 @@ router.use(requireAdmin);
 const BCRYPT_ROUNDS = 10;
 
 const PRODUCTS_PATH = path.join(process.cwd(), "../quote-builder/src/data/products.json");
+const PRODUCTS_IMG_DIR = path.join(process.cwd(), "../quote-builder/public/products");
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 4 * 1024 * 1024 },
+});
+
+const PNG_SIG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+function parsePngDimensions(buf: Buffer): { width: number; height: number } | null {
+  if (buf.length < 24) return null;
+  for (let i = 0; i < 8; i++) if (buf[i] !== PNG_SIG[i]) return null;
+  return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+}
 
 function isStrongPassword(pw: string): boolean {
   return (
@@ -187,6 +202,33 @@ interface Category {
   items: ProductItem[];
 }
 
+router.post("/products/upload-image", upload.single("file"), async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) { res.status(400).json({ error: "No file uploaded" }); return; }
+
+    const dims = parsePngDimensions(file.buffer);
+    if (!dims) { res.status(400).json({ error: "File must be a valid PNG image" }); return; }
+    if (dims.width > 500 || dims.height > 500) {
+      res.status(400).json({ error: `Image must be 500×500 px or smaller (uploaded: ${dims.width}×${dims.height})` });
+      return;
+    }
+
+    await mkdir(PRODUCTS_IMG_DIR, { recursive: true });
+
+    const ext = ".png";
+    const slug = (file.originalname.replace(/[^a-z0-9]/gi, "-").replace(/-+/g, "-").toLowerCase() || "product") + "-" + Date.now() + ext;
+    const dest = path.join(PRODUCTS_IMG_DIR, slug);
+
+    await writeFile(dest, file.buffer);
+
+    res.json({ path: `/products/${slug}` });
+  } catch (err) {
+    logger.error(err, "image upload error");
+    res.status(500).json({ error: "Upload failed" });
+  }
+});
+
 router.get("/products", async (_req, res) => {
   try {
     const data = await readProducts();
@@ -273,6 +315,7 @@ router.patch("/products/categories/:catId/items/:itemId", async (req, res) => {
     const item = cat.items.find((i) => i.id === itemId);
     if (!item) { res.status(404).json({ error: "Product not found" }); return; }
     Object.assign(item, updates);
+    if (updates.image === null) delete item.image;
     await writeProducts(data);
     res.json(data);
   } catch (err) {
