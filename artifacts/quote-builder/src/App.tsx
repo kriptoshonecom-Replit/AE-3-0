@@ -6,6 +6,8 @@ import QuoteBuilder from "@/pages/QuoteBuilder";
 import SignInPage from "@/pages/SignInPage";
 import SignUpPage from "@/pages/SignUpPage";
 import ProfilePage from "@/pages/ProfilePage";
+import UsersPage from "@/pages/UsersPage";
+import ProductsConfigPage from "@/pages/ProductsConfigPage";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +35,14 @@ function ProtectedProfile() {
   return <ProfilePage />;
 }
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoaded } = useAuth();
+  if (!isLoaded) return <LoadingScreen />;
+  if (!user) return <Redirect to="/sign-in" />;
+  if (user.role !== "admin") return <Redirect to="/" />;
+  return <>{children}</>;
+}
+
 function AppRoutes() {
   return (
     <AuthProvider>
@@ -42,6 +52,12 @@ function AppRoutes() {
           <Route path="/sign-in" component={SignInPage} />
           <Route path="/sign-up" component={SignUpPage} />
           <Route path="/profile" component={ProtectedProfile} />
+          <Route path="/admin/users">
+            <AdminRoute><UsersPage /></AdminRoute>
+          </Route>
+          <Route path="/admin/products">
+            <AdminRoute><ProductsConfigPage /></AdminRoute>
+          </Route>
         </Switch>
       </QueryClientProvider>
     </AuthProvider>

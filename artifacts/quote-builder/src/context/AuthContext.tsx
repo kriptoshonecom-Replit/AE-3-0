@@ -4,6 +4,7 @@ export interface AuthUser {
   id: string;
   email: string;
   fullName: string;
+  role: string;
   createdAt: string;
 }
 
@@ -24,9 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchMe = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/auth/me`, {
-        credentials: "include",
-      });
+      const res = await fetch(`${API_BASE}/api/auth/me`, { credentials: "include" });
       if (res.ok) {
         const data = await res.json() as AuthUser;
         setUser(data);
@@ -40,15 +39,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  useEffect(() => {
-    void fetchMe();
-  }, [fetchMe]);
+  useEffect(() => { void fetchMe(); }, [fetchMe]);
 
   const signOut = useCallback(async () => {
-    await fetch(`${API_BASE}/api/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
+    await fetch(`${API_BASE}/api/auth/logout`, { method: "POST", credentials: "include" });
     setUser(null);
   }, []);
 

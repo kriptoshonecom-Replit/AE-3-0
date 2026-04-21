@@ -1,0 +1,244 @@
+import { Router } from "express";
+import bcrypt from "bcrypt";
+import { readFile, writeFile } from "fs/promises";
+import path from "path";
+import { db } from "@workspace/db";
+import { usersTable } from "@workspace/db/schema";
+import { eq, ne } from "drizzle-orm";
+import { requireAdmin } from "../middlewares/requireAdmin";
+import { logger } from "../lib/logger";
+
+const router = Router();
+router.use(requireAdmin);
+
+const BCRYPT_ROUNDS = 10;
+
+const PRODUCTS_PATH = path.join(process.cwd(), "../quote-builder/src/data/products.json");
+
+function isStrongPassword(pw: string): boolean {
+  return (
+    pw.length >= 8 &&
+    /[A-Za-z]/.test(pw) &&
+    /[0-9]/.test(pw) &&
+    /[^A-Za-z0-9]/.test(pw)
+  );
+}
+
+function userDto(u: typeof usersTable.$inferSelect) {
+  return { id: u.id, email: u.email, fullName: u.fullName, role: u.role, createdAt: u.createdAt };
+}
+
+/* ── Users ────────────────────────────────────────────── */
+
+router.get("/users", async (_req, res) => {
+  try {
+    const users = await db.select().from(usersTable).orderBy(usersTable.createdAt);
+    res.json(users.map(userDto));
+  } catch (err) {
+    logger.error(err, "admin list users error");
+    res.status(500).json({ error: "Failed to list users" });
+  }
+});
+
+router.patch("/users/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fullName, email, role, newPassword } = req.body as {
+      fullName?: string;
+      email?: string;
+      role?: string;
+      newPassword?: string;
+    };
+
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
+    if (!user) { res.status(404).json({ error: "User not found" }); return; }
+
+    const updates: Partial<typeof usersTable.$inferInsert> = {};
+
+    if (fullName?.trim()) updates.fullName = fullName.trim();
+
+    if (email?.trim()) {
+      const normalised = email.toLowerCase().trim();
+      if (normalised !== user.email) {
+        const conflict = await db
+          .select({ id: usersTable.id })
+          .from(usersTable)
+          .where(eq(usersTable.email, normalised))
+          .limit(1);
+        if (conflict.length > 0) { res.status(409).json({ error: "That email is already in use" }); return; }
+        updates.email = normalised;
+      }
+    }
+
+    if (role && ["user", "admin"].includes(role)) updates.role = role;
+
+    if (newPassword) {
+      if (!isStrongPassword(newPassword)) {
+        res.status(400).json({ error: "Password must be 8+ chars with a letter, number, and special character" });
+        return;
+      }
+      updates.passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+    }
+
+    if (Object.keys(updates).length === 0) { res.status(400).json({ error: "Nothing to update" }); return; }
+
+    const [updated] = await db.update(usersTable).set(updates).where(eq(usersTable.id, id)).returning();
+    res.json(userDto(updated));
+  } catch (err) {
+    logger.error(err, "admin update user error");
+    res.status(500).json({ error: "Failed to update user" });
+  }
+});
+
+router.delete("/users/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (id === req.auth!.userId) { res.status(400).json({ error: "You cannot delete your own account" }); return; }
+    await db.delete(usersTable).where(eq(usersTable.id, id));
+    res.json({ success: true });
+  } catch (err) {
+    logger.error(err, "admin delete user error");
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+});
+
+/* ── Products ─────────────────────────────────────────── */
+
+async function readProducts() {
+  const raw = await readFile(PRODUCTS_PATH, "utf-8");
+  return JSON.parse(raw) as { categories: Category[] };
+}
+
+async function writeProducts(data: { categories: Category[] }) {
+  await writeFile(PRODUCTS_PATH, JSON.stringify(data, null, 2), "utf-8");
+}
+
+interface ProductItem {
+  id: string;
+  name: string;
+  type?: string;
+  text?: string;
+  image?: string;
+  price: number;
+  produration?: number;
+  traduration?: number;
+  instaduration?: number;
+  stageduration?: number;
+  [key: string]: unknown;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  items: ProductItem[];
+}
+
+router.get("/products", async (_req, res) => {
+  try {
+    const data = await readProducts();
+    res.json(data);
+  } catch (err) {
+    logger.error(err, "admin get products error");
+    res.status(500).json({ error: "Failed to read products" });
+  }
+});
+
+router.post("/products/categories", async (req, res) => {
+  try {
+    const { id, name } = req.body as { id?: string; name?: string };
+    if (!id?.trim() || !name?.trim()) { res.status(400).json({ error: "id and name are required" }); return; }
+    const data = await readProducts();
+    if (data.categories.find((c) => c.id === id.trim())) {
+      res.status(409).json({ error: "Category ID already exists" }); return;
+    }
+    data.categories.push({ id: id.trim(), name: name.trim(), items: [] });
+    await writeProducts(data);
+    res.json(data);
+  } catch (err) {
+    logger.error(err, "admin add category error");
+    res.status(500).json({ error: "Failed to add category" });
+  }
+});
+
+router.patch("/products/categories/:catId", async (req, res) => {
+  try {
+    const { catId } = req.params;
+    const { name } = req.body as { name?: string };
+    const data = await readProducts();
+    const cat = data.categories.find((c) => c.id === catId);
+    if (!cat) { res.status(404).json({ error: "Category not found" }); return; }
+    if (name?.trim()) cat.name = name.trim();
+    await writeProducts(data);
+    res.json(data);
+  } catch (err) {
+    logger.error(err, "admin update category error");
+    res.status(500).json({ error: "Failed to update category" });
+  }
+});
+
+router.post("/products/categories/:catId/items", async (req, res) => {
+  try {
+    const { catId } = req.params;
+    const item = req.body as Partial<ProductItem>;
+    if (!item.id?.trim() || !item.name?.trim()) { res.status(400).json({ error: "id and name are required" }); return; }
+    const data = await readProducts();
+    const cat = data.categories.find((c) => c.id === catId);
+    if (!cat) { res.status(404).json({ error: "Category not found" }); return; }
+    if (cat.items.find((i) => i.id === item.id!.trim())) {
+      res.status(409).json({ error: "Product ID already exists in this category" }); return;
+    }
+    const newItem: ProductItem = {
+      id: item.id!.trim(),
+      name: item.name!.trim(),
+      type: item.type ?? "info",
+      text: item.text ?? "",
+      price: Number(item.price) || 0,
+      produration: Number(item.produration) || 0,
+      traduration: Number(item.traduration) || 0,
+      instaduration: Number(item.instaduration) || 0,
+      stageduration: Number(item.stageduration) || 0,
+    };
+    if (item.image) newItem.image = item.image;
+    cat.items.push(newItem);
+    await writeProducts(data);
+    res.json(data);
+  } catch (err) {
+    logger.error(err, "admin add product error");
+    res.status(500).json({ error: "Failed to add product" });
+  }
+});
+
+router.patch("/products/categories/:catId/items/:itemId", async (req, res) => {
+  try {
+    const { catId, itemId } = req.params;
+    const updates = req.body as Partial<ProductItem>;
+    const data = await readProducts();
+    const cat = data.categories.find((c) => c.id === catId);
+    if (!cat) { res.status(404).json({ error: "Category not found" }); return; }
+    const item = cat.items.find((i) => i.id === itemId);
+    if (!item) { res.status(404).json({ error: "Product not found" }); return; }
+    Object.assign(item, updates);
+    await writeProducts(data);
+    res.json(data);
+  } catch (err) {
+    logger.error(err, "admin update product error");
+    res.status(500).json({ error: "Failed to update product" });
+  }
+});
+
+router.delete("/products/categories/:catId/items/:itemId", async (req, res) => {
+  try {
+    const { catId, itemId } = req.params;
+    const data = await readProducts();
+    const cat = data.categories.find((c) => c.id === catId);
+    if (!cat) { res.status(404).json({ error: "Category not found" }); return; }
+    cat.items = cat.items.filter((i) => i.id !== itemId);
+    await writeProducts(data);
+    res.json(data);
+  } catch (err) {
+    logger.error(err, "admin delete product error");
+    res.status(500).json({ error: "Failed to delete product" });
+  }
+});
+
+export default router;

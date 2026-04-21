@@ -30,6 +30,10 @@ function isStrongPassword(pw: string): boolean {
   );
 }
 
+function userDto(u: typeof usersTable.$inferSelect) {
+  return { id: u.id, email: u.email, fullName: u.fullName, role: u.role, createdAt: u.createdAt };
+}
+
 router.post("/register", async (req, res) => {
   try {
     const { email, password, fullName } = req.body as {
@@ -65,12 +69,12 @@ router.post("/register", async (req, res) => {
 
     const [user] = await db
       .insert(usersTable)
-      .values({ email: email.toLowerCase().trim(), passwordHash, fullName: fullName.trim() })
+      .values({ email: email.toLowerCase().trim(), passwordHash, fullName: fullName.trim(), role: "user" })
       .returning();
 
-    const token = signToken({ userId: user.id, email: user.email, fullName: user.fullName });
+    const token = signToken({ userId: user.id, email: user.email, fullName: user.fullName, role: user.role });
     res.cookie("session", token, cookieOptions());
-    res.json({ user: { id: user.id, email: user.email, fullName: user.fullName, createdAt: user.createdAt } });
+    res.json({ user: userDto(user) });
   } catch (err) {
     logger.error(err, "register error");
     res.status(500).json({ error: "Registration failed" });
@@ -100,9 +104,9 @@ router.post("/login", async (req, res) => {
       return;
     }
 
-    const token = signToken({ userId: user.id, email: user.email, fullName: user.fullName });
+    const token = signToken({ userId: user.id, email: user.email, fullName: user.fullName, role: user.role });
     res.cookie("session", token, cookieOptions());
-    res.json({ user: { id: user.id, email: user.email, fullName: user.fullName, createdAt: user.createdAt } });
+    res.json({ user: userDto(user) });
   } catch (err) {
     logger.error(err, "login error");
     res.status(500).json({ error: "Login failed" });
@@ -181,9 +185,9 @@ router.patch("/profile", requireAuth, async (req, res) => {
       .where(eq(usersTable.id, user.id))
       .returning();
 
-    const token = signToken({ userId: updated.id, email: updated.email, fullName: updated.fullName });
+    const token = signToken({ userId: updated.id, email: updated.email, fullName: updated.fullName, role: updated.role });
     res.cookie("session", token, cookieOptions());
-    res.json({ user: { id: updated.id, email: updated.email, fullName: updated.fullName, createdAt: updated.createdAt } });
+    res.json({ user: userDto(updated) });
   } catch (err) {
     logger.error(err, "profile update error");
     res.status(500).json({ error: "Profile update failed" });
@@ -209,7 +213,7 @@ router.get("/me", requireAuth, async (req, res) => {
       return;
     }
 
-    res.json({ id: user.id, email: user.email, fullName: user.fullName, createdAt: user.createdAt });
+    res.json(userDto(user));
   } catch (err) {
     logger.error(err, "me error");
     res.status(500).json({ error: "Failed to fetch user" });

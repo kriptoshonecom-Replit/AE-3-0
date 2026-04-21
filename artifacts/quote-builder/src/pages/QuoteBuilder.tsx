@@ -434,6 +434,36 @@ export default function QuoteBuilder() {
             refreshTrigger={refreshTrigger}
             userId={userId}
           />
+
+          {user?.role === "admin" && (
+            <div className="sidebar-admin-links">
+              <button
+                type="button"
+                className="sidebar-admin-link"
+                onClick={() => { setLocation("/admin/users"); setSidebarOpen(false); }}
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <circle cx="6" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.4" />
+                  <path d="M1 13c0-2.5 2-4 5-4s5 1.5 5 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                  <path d="M13 7v4M11 9h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                </svg>
+                Users
+              </button>
+              <button
+                type="button"
+                className="sidebar-admin-link"
+                onClick={() => { setLocation("/admin/products"); setSidebarOpen(false); }}
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <rect x="1.5" y="1.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
+                  <rect x="9.5" y="1.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
+                  <rect x="1.5" y="9.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
+                  <rect x="9.5" y="9.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
+                </svg>
+                Products Configuration
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
