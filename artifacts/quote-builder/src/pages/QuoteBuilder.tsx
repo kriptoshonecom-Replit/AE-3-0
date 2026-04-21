@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useUser } from "@clerk/react";
+import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "wouter";
 import logo from "/logo.png";
 import type { Quote, QuoteGroup, QuoteMeta } from "../types";
@@ -96,7 +96,7 @@ function createNewQuote(): Quote {
 }
 
 export default function QuoteBuilder() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const userId = user?.id ?? "";
   const [, setLocation] = useLocation();
 
@@ -416,15 +416,11 @@ export default function QuoteBuilder() {
               onClick={() => { setLocation("/profile"); setSidebarOpen(false); }}
             >
               <div className="sidebar-user-avatar">
-                {user?.imageUrl ? (
-                  <img src={user.imageUrl} alt={user.fullName || "User"} />
-                ) : (
-                  <span>{(user?.firstName?.[0] || user?.emailAddresses?.[0]?.emailAddress?.[0] || "U").toUpperCase()}</span>
-                )}
+                <span>{(user?.fullName?.[0] || user?.email?.[0] || "U").toUpperCase()}</span>
               </div>
               <div className="sidebar-user-info">
-                <span className="sidebar-user-name">{user?.fullName || user?.firstName || "Your Account"}</span>
-                <span className="sidebar-user-email">{user?.primaryEmailAddress?.emailAddress}</span>
+                <span className="sidebar-user-name">{user?.fullName || "Your Account"}</span>
+                <span className="sidebar-user-email">{user?.email}</span>
               </div>
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none" className="sidebar-user-chevron">
                 <path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />

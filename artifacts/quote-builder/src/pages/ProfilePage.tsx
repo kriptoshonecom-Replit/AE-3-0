@@ -1,9 +1,8 @@
-import { useUser, useClerk } from "@clerk/react";
+import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "wouter";
 
 export default function ProfilePage() {
-  const { user, isLoaded } = useUser();
-  const { signOut } = useClerk();
+  const { user, isLoaded, signOut } = useAuth();
   const [, setLocation] = useLocation();
 
   if (!isLoaded) {
@@ -19,39 +18,50 @@ export default function ProfilePage() {
     setLocation("/");
   };
 
+  const initials = user?.fullName
+    ? user.fullName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
+    : user?.email?.[0]?.toUpperCase() ?? "U";
+
+  const [firstName, ...lastParts] = (user?.fullName ?? "").split(" ");
+  const lastName = lastParts.join(" ");
+
   return (
     <div className="profile-page">
       <div className="profile-card">
         <div className="profile-header">
           <div className="profile-avatar">
-            {user?.imageUrl ? (
-              <img src={user.imageUrl} alt={user.fullName || "User"} />
-            ) : (
-              <span>{(user?.firstName?.[0] || user?.emailAddresses?.[0]?.emailAddress?.[0] || "U").toUpperCase()}</span>
-            )}
+            <span>{initials}</span>
           </div>
           <div className="profile-info">
             <h2>{user?.fullName || "Your Account"}</h2>
-            <p>{user?.primaryEmailAddress?.emailAddress}</p>
+            <p>{user?.email}</p>
           </div>
         </div>
 
         <div className="profile-details">
           <div className="profile-field">
             <label>First name</label>
-            <span>{user?.firstName || "—"}</span>
+            <span>{firstName || "—"}</span>
           </div>
           <div className="profile-field">
             <label>Last name</label>
-            <span>{user?.lastName || "—"}</span>
+            <span>{lastName || "—"}</span>
           </div>
           <div className="profile-field">
             <label>Email</label>
-            <span>{user?.primaryEmailAddress?.emailAddress || "—"}</span>
+            <span>{user?.email || "—"}</span>
           </div>
           <div className="profile-field">
             <label>Member since</label>
-            <span>{user?.createdAt ? new Date(user.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "—"}</span>
+            <span>
+              {user?.createdAt
+                ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })
+                : "—"}
+            </span>
           </div>
         </div>
 
