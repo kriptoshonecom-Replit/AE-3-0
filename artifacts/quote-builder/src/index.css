@@ -2961,3 +2961,19 @@ textarea:focus::placeholder {
   font-size: 12px;
   color: #ef4444;
 }
+
+/* ── Admin table media column ─────────────────────────── */
+
+.admin-td-media {
+  width: 44px;
+  text-align: center;
+}
+
+.admin-media-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+  opacity: 0.85;
+}

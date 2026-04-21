@@ -429,6 +429,7 @@ export default function ProductsConfigPage() {
                     <tr>
                       <th>ID</th>
                       <th>Name</th>
+                      <th>Media</th>
                       <th>Type</th>
                       <th>Price/mo</th>
                       <th title="Product Cost Indicator">PCI</th>
@@ -442,12 +443,17 @@ export default function ProductsConfigPage() {
                   </thead>
                   <tbody>
                     {currentCat.items.length === 0 && (
-                      <tr><td colSpan={11} className="admin-table-empty">No products in this category</td></tr>
+                      <tr><td colSpan={12} className="admin-table-empty">No products in this category</td></tr>
                     )}
                     {currentCat.items.map((item) => (
                       <tr key={item.id}>
                         <td><code className="admin-code">{item.id}</code></td>
                         <td className="admin-td-bold">{item.name}</td>
+                        <td className="admin-td-media">
+                          {item.image && (
+                            <img src="/product-btn.png" alt="Has media" className="admin-media-icon" title={item.image} />
+                          )}
+                        </td>
                         <td><span className={`admin-type-badge type-${item.type}`}>{item.type ?? "—"}</span></td>
                         <td>${(item.price ?? 0).toFixed(2)}</td>
                         <td>{(item.pci ?? 0).toFixed(2)}</td>
