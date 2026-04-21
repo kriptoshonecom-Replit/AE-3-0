@@ -9,27 +9,27 @@
           "name": "Aloha Essentials 3.0 TS",
           "type": "warning",
           "text": "License Count Must Matche the Total Number of Devices (Terminals + Tablets)",
-          "price": 130.0,
+          "price": 130,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "co-002",
           "name": "Aloha Essentials 3.0 QS",
           "type": "warning",
           "text": "License Count Must Matche the Total Number of Devices (Terminals + Tablets)",
-          "price": 130.0,
+          "price": 130,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         }
       ]
     },
-
     {
       "id": "terminals",
       "name": "Terminals",
@@ -40,27 +40,27 @@
           "type": "info",
           "text": "POS Terminal | Thermal Receipt Printers | Power Conditioner 180VA",
           "image": "/products/cx5.png",
-          "price": 88.0,
+          "price": 88,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "tm-002",
           "name": "CX5 15 inch 4:3 Wall Mount",
           "type": "info",
           "text": "POS Terminal | Thermal Receipt Printers | Power Conditioner 180VA | Mounting KIT",
-          "price": 88.0,
+          "price": 88,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         }
       ]
     },
-
     {
       "id": "server",
       "name": "BOH Server",
@@ -71,15 +71,15 @@
           "type": "info",
           "text": "21'5 Monitor | Power Conditioner 250VA UPM | D-Link 24 Port | BOH Server | Mouse, Keyboard, Cable KIT",
           "image": "/products/N4000.png",
-          "price": 97.0,
+          "price": 97,
           "produration": 0,
           "traduration": 0,
           "instaduration": 2,
-          "stageduration": 2
+          "stageduration": 2,
+          "pci": 0
         }
       ]
     },
-
     {
       "id": "serveradd",
       "name": "Additional Server and KWM",
@@ -89,37 +89,37 @@
           "name": "N4000 Server 16GB i5 240GB SSD",
           "type": "info",
           "text": "21'5 Monitor | Power Conditioner 250VA UPM | D-Link 24 Port | BOH Server | Mouse, Keyboard, Cable KIT",
-          "price": 77.0,
+          "price": 77,
           "produration": 0,
           "traduration": 0,
           "instaduration": 2,
-          "stageduration": 2
+          "stageduration": 2,
+          "pci": 0
         },
-
         {
           "id": "se-003",
           "name": "2-Display Port USB KVM Switch",
           "image": "/products/kvm2.png",
-          "price": 11.0,
+          "price": 11,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "se-004",
           "name": "4-Display Port USB KVM Switch",
           "image": "/products/kvm4.png",
-          "price": 15.0,
+          "price": 15,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         }
       ]
     },
-
     {
       "id": "tablet",
       "name": "Windows Tablet",
@@ -129,90 +129,90 @@
           "name": "8 Inch Tablet With SmartBack, Equinox 6200, Shoulder Strap, PowerPack (Rugged Frame)",
           "type": "warning",
           "text": "The PinPad, Charging Station, and Power Supply are not Included in the Base Unit and Require Individual Selection | Heat Maps and Cabling Must be communicated",
-          "price": 75.0,
+          "price": 75,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "ta-002",
           "name": "8 Inch Tablet With MSR, PowerPack, Shoulder Strap (Rugged Frame)",
           "image": "/products/tablet.png",
           "type": "warning",
           "text": "Charging Station, and Power Supply are not Included in the Base Unit and Require Individual Selection | Heat Maps and Cabling Must be communicated",
-          "price": 65.0,
+          "price": 65,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "ta-003",
           "name": "8 Inch Tablet With MSR, PowerPack, Shoulder Strap (Scanner Frame)",
           "type": "warning",
           "text": "Charging Station, and Power Supply are not Included in the Base Unit and Require Individual Selection | Heat Maps and Cabling Must be communicated",
-          "price": 70.0,
+          "price": 70,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "ta-004",
           "name": "Hand Strap for Tablet",
-          "price": 1.0,
+          "price": 1,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "ta-005",
           "name": "Tablet Extended Battery Pack",
-          "price": 8.0,
+          "price": 8,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "ta-006",
           "name": "Power Supply",
-          "price": 11.0,
+          "price": 11,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "ta-007",
           "name": "Docking Bay Charger-Single Unit",
-          "price": 8.0,
+          "price": 8,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "ta-008",
           "name": "Docking Bay Charger-Multi up to 5 Units",
-          "price": 37.0,
+          "price": 37,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         }
       ]
     },
-
     {
       "id": "handheld",
       "name": "Hand-held",
@@ -223,57 +223,57 @@
           "image": "/products/axium.png",
           "type": "warning",
           "text": "Charging Station is not Included in the Base Unit and Require Individual Selection | Heat maps and cabling must be communicated | Additional BOH Server Must be Sold",
-          "price": 57.0,
+          "price": 57,
           "produration": 2,
           "traduration": 2,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "ha-002",
           "name": "Axium Ex8000, Case with Strap (OrderPay) HW|SW",
           "type": "warning",
           "text": "Charging Station is not Included in the Base Unit and Require Individual Selection | Heat maps and cabling must be communicated | Additional BOH Server Must be Sold",
-          "price": 57.0,
+          "price": 57,
           "produration": 2,
           "traduration": 2,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "ha-003",
           "name": "Axium Docking Bay Charger-Single Unit",
-          "price": 5.0,
+          "price": 5,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "ha-004",
           "name": "Axium Multi-Bay Docking Charging Station up to 5 Units",
-          "price": 20.0,
+          "price": 20,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "ha-005",
           "name": "Axium Additional License - TS Only",
-          "price": 20.0,
+          "price": 20,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         }
       ]
     },
-
     {
       "id": "pinpads",
       "name": "Pin-Pads",
@@ -282,124 +282,124 @@
           "id": "pi-001",
           "name": "Voyix Pay Equinox 6200m P-USB with Stand",
           "image": "/products/6200.png",
-          "price": 35.0,
+          "price": 35,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "pi-002",
           "name": "WorldPay/Vantiv Equinox 6200m P-USB with Stand",
-          "price": 40.0,
+          "price": 40,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "pi-003",
           "name": "Voyix Pay Equinox 6200m Mobile without Printer",
           "image": "/products/6200m.png",
           "type": "warning",
           "text": "Weighted Base and Mobile Charging Stand is not Included in the Base Unit and Require Individual Selection",
-          "price": 35.0,
+          "price": 35,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "pi-004",
           "name": "WorldPay/Vantiv Equinox 6200m Mobile without Printer",
           "type": "warning",
           "text": "Weighted Base and Mobile Charging Stand is not Included in the Base Unit and Require Individual Selection",
-          "price": 40.0,
+          "price": 40,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "pi-005",
           "name": "Voyix Pay Equinox 6200m P-USB CX5/CX7 POS Mount",
-          "price": 35.0,
+          "price": 35,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "pi-006",
           "name": "WorldPay/Vantiv Equinox 6200m P-USB CX5/CX7 POS Mount",
-          "price": 40.0,
+          "price": 40,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "pi-007",
           "name": "6200m Mobile Charging Stand",
-          "price": 2.0,
+          "price": 2,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "pi-008",
           "name": "Voyix Pay Equinox 8500i P-USB with Stand",
           "type": "warning",
           "text": "Weighted Base is not Included in the Base Unit and Require Individual Selection",
-          "price": 40.0,
+          "price": 40,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "pi-009",
           "name": "WorldPay/Vantiv Equinox 8500i P-USB with Stand",
           "type": "warning",
           "text": "Weighted Base is not Included in the Base Unit and Require Individual Selection",
-          "price": 45.0,
+          "price": 45,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "pi-010",
           "name": "Weighted Base with Rubber Pad",
-          "price": 1.0,
+          "price": 1,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "pi-011",
           "name": "Weighted Base with Adhesive Base",
-          "price": 1.0,
+          "price": 1,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         }
       ]
     },
-
     {
       "id": "printers",
       "name": "Printers",
@@ -407,59 +407,59 @@
         {
           "id": "pr-001",
           "name": "Bixolon SRP-S300 Serial Label Printer Thermal Printer",
-          "price": 15.0,
+          "price": 15,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "pr-002",
           "name": "Bixolon SRP-S300 Ethernet Label Printer Thermal Printer",
-          "price": 16.0,
+          "price": 16,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "pr-003",
           "name": "Bixolon SRP-350 Plus V USB+Ethernet+Serial Thermal Printer",
-          "price": 15.0,
+          "price": 15,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "pr-004",
           "name": "Bixolon SRP-275 III Kitchen Impact Ethernet",
           "type": "warning",
           "text": "To Ensure Stable Performance And Protect Against Power Surges An Additional 78VA Power Conditioner Is Required For All Kitchen Printer Installations",
-          "price": 18.0,
+          "price": 18,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "pr-005",
           "name": "Bixolon SRP-275 III Kitchen Impact Serial",
           "type": "warning",
           "text": "To Ensure Stable Performance And Protect Against Power Surges An Additional 78VA Power Conditioner Is Required For All Kitchen Printer Installations",
-          "price": 16.0,
+          "price": 16,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         }
       ]
     },
-
     {
       "id": "displays",
       "name": "Displays",
@@ -467,45 +467,45 @@
         {
           "id": "dp-001",
           "name": "XL10 No-Touch Display Only With MSR",
-          "price": 17.0,
+          "price": 17,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "dp-002",
           "name": "XL10 USB-C Touch Display Only With MSR",
-          "price": 25.0,
+          "price": 25,
           "produration": 0,
           "traduration": 0,
           "instaduration": 1,
-          "stageduration": 1
+          "stageduration": 1,
+          "pci": 0
         },
-
         {
           "id": "dp-003",
           "name": "Mounting Bracket and Cable for CX5/CX7",
-          "price": 1.0,
+          "price": 1,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "dp-004",
           "name": "XL10 Table-Top Stand",
-          "price": 3.0,
+          "price": 3,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         }
       ]
     },
-
     {
       "id": "peripherals",
       "name": "Peripherals",
@@ -513,75 +513,75 @@
         {
           "id": "ps-001",
           "name": "MS 16 Inch Cash Drawer",
-          "price": 10.0,
+          "price": 10,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "ps-002",
           "name": "PowerVar 250VA Server BBU",
-          "price": 20.0,
+          "price": 20,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "ps-003",
           "name": "PowerVar 78VA Kitchen GG Power Conditioner",
-          "price": 10.0,
+          "price": 10,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "ps-004",
           "name": "DS9308 QR and Bar Code Scanner",
-          "price": 16.0,
+          "price": 16,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "ps-005",
           "name": "24 Port Switch PoE",
-          "price": 25.0,
+          "price": 25,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "ps-006",
           "name": "Additional 24 Port Switch PoE",
-          "price": 15.0,
+          "price": 15,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "ps-007",
           "name": "Cash Drawer Till",
-          "price": 1.0,
+          "price": 1,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         }
       ]
     },
-
     {
       "id": "expo",
       "name": "Advanced Kitchen",
@@ -591,27 +591,27 @@
           "name": "Advanced Expo Station HW+SW",
           "type": "info",
           "text": "21'5 Touch Monitor | Power Conditioner 78VA UPM | Kitchen Controler Unit 5 | Kitchen SW | Quick Release Mount | Cable KIT",
-          "price": 98.0,
+          "price": 98,
           "produration": 6,
           "traduration": 2,
           "instaduration": 1,
           "stageduration": 1,
           "sitecopytradiration": 0,
-          "sitecopyproduration": 0
+          "sitecopyproduration": 0,
+          "pci": 0
         },
-
         {
           "id": "exp-002",
           "name": "Heavy Duty Radial Arm Kitchen Mount",
-          "price": 10.0,
+          "price": 10,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         }
       ]
     },
-
     {
       "id": "prep",
       "name": "Basic Kitchen",
@@ -621,37 +621,37 @@
           "name": "Basic Prep Station HW+SW",
           "type": "info",
           "text": "21'5 Monitor | Power Conditioner 78VA UPM | BumpBar | Kitchen Controler Unit 5 | Kitchen SW | Integration Brkt | Cable KIT",
-          "price": 91.0,
+          "price": 91,
           "produration": 6,
           "traduration": 2,
           "instaduration": 1,
           "stageduration": 1,
           "sitecopytradiration": 0,
-          "sitecopyproduration": 0
+          "sitecopyproduration": 0,
+          "pci": 0
         },
-
         {
           "id": "prp-002",
           "name": "Wall Kitchen Mount Bracket",
-          "price": 2.0,
+          "price": 2,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "prp-003",
           "name": "Counter Pole Kitchen Mount",
-          "price": 10.0,
+          "price": 10,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         }
       ]
     },
-
     {
       "id": "nss",
       "name": "Network and Security",
@@ -659,125 +659,125 @@
         {
           "id": "net-001",
           "name": "Network Security",
-          "price": 90.0,
+          "price": 90,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "net-002",
           "name": "Aloha Wi-Fi",
-          "price": 100.0,
+          "price": 100,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "net-003",
           "name": "Indoor Wireless Access Point-330",
-          "price": 30.0,
+          "price": 30,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "net-004",
           "name": "Outdoor Wireless Access Point-332",
-          "price": 40.0,
+          "price": 40,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "net-005",
           "name": "Site Shield (Standalone)",
-          "price": 70.0,
+          "price": 70,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "net-006",
           "name": "Threat Defender",
-          "price": 12.0,
+          "price": 12,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "net-007",
           "name": "NCR Patch Management",
-          "price": 9.0,
+          "price": 9,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "net-008",
           "name": "NCR Antivirus",
-          "price": 7.0,
+          "price": 7,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "net-009",
           "name": "PCI Compliance Services (ControlScan)",
-          "price": 25.0,
+          "price": 25,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "net-010",
           "name": "Internal Network Scanning",
-          "price": 15.0,
+          "price": 15,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "net-011",
           "name": "Log Management",
-          "price": 18.0,
+          "price": 18,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "net-012",
           "name": "Broadband Failover",
-          "price": 75.0,
+          "price": 75,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         }
       ]
     },
-
     {
       "id": "softwareadd",
       "name": "Software Add",
@@ -785,225 +785,225 @@
         {
           "id": "sa-001",
           "name": "Consumer Marketing-Core",
-          "price": 50.0,
+          "price": 50,
           "produration": 2,
           "traduration": 2,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-002",
           "name": "Aloha Insight",
-          "price": 15.0,
+          "price": 15,
           "produration": 1,
           "traduration": 1,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-003",
           "name": "Aloha Console",
-          "price": 10.0,
+          "price": 10,
           "produration": 1,
           "traduration": 1,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-004",
           "name": "Aloha Stored Value",
-          "price": 15.0,
+          "price": 15,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-005",
           "name": "Aloha API",
-          "price": 50.0,
+          "price": 50,
           "produration": 2,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-006",
           "name": "Actionable Insights-Restaurant Guard",
-          "price": 125.0,
+          "price": 125,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-007",
           "name": "Aloha Delivery",
-          "price": 30.0,
+          "price": 30,
           "produration": 2,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-008",
           "name": "Aloha Stored Value-Webstore",
-          "price": 20.0,
+          "price": 20,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-009",
           "name": "Enterprise Back Office",
-          "price": 140.0,
+          "price": 140,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-011",
           "name": "Axium License-TS",
-          "price": 20.0,
+          "price": 20,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-012",
           "name": "Mobile SW License-TS",
-          "price": 30.0,
+          "price": 30,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-013",
           "name": "Mobile SW License-QS",
-          "price": 30.0,
+          "price": 30,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-014",
           "name": "PMS Interface",
-          "price": 40.0,
+          "price": 40,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-015",
           "name": "Aloha Mobile Engage",
-          "price": 0.0,
+          "price": 0,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-016",
           "name": "Aloha Connect EIT",
-          "price": 0.0,
+          "price": 0,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-017",
           "name": "Kitchen Operations SW",
-          "price": 25.0,
+          "price": 25,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-018",
           "name": "Aloha Smart Manager - Starter",
-          "price": 0.0,
+          "price": 0,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-019",
           "name": "Biometric License",
-          "price": 0.0,
+          "price": 0,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-020",
           "name": "SW ATO with Non-NCR Radiant HW",
-          "price": 0.0,
+          "price": 0,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-021",
           "name": "3rd Party Kitchen Integration",
-          "price": 0.0,
+          "price": 0,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-022",
           "name": "SBONet",
-          "price": 0.0,
+          "price": 0,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "sa-023",
           "name": "Biometric License",
-          "price": 0.0,
+          "price": 0,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         }
       ]
     },
-
     {
       "id": "olo",
       "name": "Online Ordering package",
@@ -1011,31 +1011,32 @@
         {
           "id": "olo-001",
           "name": "Online Ordering Fixed 500",
-          "price": 60.0,
+          "price": 60,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "olo-002",
           "name": "Online Ordering Fixed 1000",
-          "price": 80.0,
+          "price": 80,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         },
-
         {
           "id": "olo-003",
           "name": "Online Ordering (NCR Pay Variable)",
-          "price": 0.0,
+          "price": 0,
           "produration": 0,
           "traduration": 0,
           "instaduration": 0,
-          "stageduration": 0
+          "stageduration": 0,
+          "pci": 0
         }
       ]
     }

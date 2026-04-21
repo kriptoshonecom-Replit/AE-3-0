@@ -10,6 +10,7 @@ interface ProductItem {
   text?: string;
   image?: string;
   price: number;
+  pci?: number;
   produration?: number;
   traduration?: number;
   instaduration?: number;
@@ -46,6 +47,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode }: EditProductMo
   const [type, setType] = useState(item?.type ?? "info");
   const [text, setText] = useState(item?.text ?? "");
   const [price, setPrice] = useState(numberOrEmpty(item?.price));
+  const [pci, setPci] = useState(numberOrEmpty(item?.pci));
   const [pro, setPro] = useState(numberOrEmpty(item?.produration));
   const [tra, setTra] = useState(numberOrEmpty(item?.traduration));
   const [ins, setIns] = useState(numberOrEmpty(item?.instaduration));
@@ -63,6 +65,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode }: EditProductMo
       ...(mode === "add" ? { id: id.trim() } : {}),
       name: name.trim(), type, text,
       price: Number(price) || 0,
+      pci: Number(pci) || 0,
       produration: Number(pro) || 0,
       traduration: Number(tra) || 0,
       instaduration: Number(ins) || 0,
@@ -134,6 +137,10 @@ function EditProductModal({ catId, item, onClose, onSaved, mode }: EditProductMo
             <div className="edit-field-group">
               <label>Price ($/mo)</label>
               <input type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0" />
+            </div>
+            <div className="edit-field-group">
+              <label>PCI</label>
+              <input type="number" min="0" step="0.01" value={pci} onChange={(e) => setPci(e.target.value)} placeholder="0" />
             </div>
             <div className="edit-field-group">
               <label>Pro Duration (h)</label>
@@ -326,6 +333,7 @@ export default function ProductsConfigPage() {
                       <th>Name</th>
                       <th>Type</th>
                       <th>Price/mo</th>
+                      <th title="Product Cost Indicator">PCI</th>
                       <th>Pro</th>
                       <th>Train</th>
                       <th>Install</th>
@@ -336,7 +344,7 @@ export default function ProductsConfigPage() {
                   </thead>
                   <tbody>
                     {currentCat.items.length === 0 && (
-                      <tr><td colSpan={10} className="admin-table-empty">No products in this category</td></tr>
+                      <tr><td colSpan={11} className="admin-table-empty">No products in this category</td></tr>
                     )}
                     {currentCat.items.map((item) => (
                       <tr key={item.id}>
@@ -344,6 +352,7 @@ export default function ProductsConfigPage() {
                         <td className="admin-td-bold">{item.name}</td>
                         <td><span className={`admin-type-badge type-${item.type}`}>{item.type ?? "—"}</span></td>
                         <td>${(item.price ?? 0).toFixed(2)}</td>
+                        <td>{(item.pci ?? 0).toFixed(2)}</td>
                         <td>{item.produration ?? 0}h</td>
                         <td>{item.traduration ?? 0}h</td>
                         <td>{item.instaduration ?? 0}h</td>

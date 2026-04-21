@@ -120,6 +120,7 @@ interface ProductItem {
   text?: string;
   image?: string;
   price: number;
+  pci?: number;
   produration?: number;
   traduration?: number;
   instaduration?: number;
@@ -193,6 +194,7 @@ router.post("/products/categories/:catId/items", async (req, res) => {
       type: item.type ?? "info",
       text: item.text ?? "",
       price: Number(item.price) || 0,
+      pci: Number(item.pci) || 0,
       produration: Number(item.produration) || 0,
       traduration: Number(item.traduration) || 0,
       instaduration: Number(item.instaduration) || 0,
