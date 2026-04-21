@@ -39,9 +39,10 @@ interface EditProductModalProps {
   onClose: () => void;
   onSaved: (data: ProductsData) => void;
   mode: "edit" | "add";
+  allIds: string[];
 }
 
-function EditProductModal({ catId, item, onClose, onSaved, mode }: EditProductModalProps) {
+function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditProductModalProps) {
   const [id, setId] = useState(mode === "edit" ? item?.id ?? "" : "");
   const [name, setName] = useState(item?.name ?? "");
   const [type, setType] = useState(item?.type ?? "info");
@@ -55,11 +56,15 @@ function EditProductModal({ catId, item, onClose, onSaved, mode }: EditProductMo
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const idTrimmed = id.trim().toLowerCase();
+  const idTaken = mode === "add" && idTrimmed.length > 0 && allIds.includes(idTrimmed);
+
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     if (!name.trim()) { setError("Name is required"); return; }
     if (mode === "add" && !id.trim()) { setError("ID is required"); return; }
+    if (idTaken) { setError("This Product ID is already in use — please choose a different one"); return; }
 
     const body = {
       ...(mode === "add" ? { id: id.trim() } : {}),
@@ -111,7 +116,22 @@ function EditProductModal({ catId, item, onClose, onSaved, mode }: EditProductMo
             {mode === "add" && (
               <div className="edit-field-group">
                 <label>Product ID <span className="edit-modal-optional">(unique, e.g. tm-005)</span></label>
-                <input type="text" value={id} onChange={(e) => setId(e.target.value)} placeholder="tm-005" />
+                <input
+                  type="text"
+                  value={id}
+                  onChange={(e) => setId(e.target.value)}
+                  placeholder="tm-005"
+                  style={idTaken ? { borderColor: "#ef4444", background: "#fff8f8" } : undefined}
+                />
+                {idTaken && (
+                  <span style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                      <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M8 5v4M8 11v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                    This ID is not available
+                  </span>
+                )}
               </div>
             )}
             <div className="edit-field-group" style={{ flex: 2 }}>
@@ -246,6 +266,8 @@ export default function ProductsConfigPage() {
   const [editingItem, setEditingItem] = useState<ProductItem | null>(null);
   const [addingItem, setAddingItem] = useState(false);
   const [addingCat, setAddingCat] = useState(false);
+
+  const allIds = (data?.categories ?? []).flatMap((c) => c.items.map((i) => i.id.toLowerCase()));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -383,6 +405,7 @@ export default function ProductsConfigPage() {
           catId={currentCat.id}
           item={editingItem}
           mode="edit"
+          allIds={allIds}
           onClose={() => setEditingItem(null)}
           onSaved={(d) => setData(d)}
         />
@@ -393,6 +416,7 @@ export default function ProductsConfigPage() {
           catId={currentCat.id}
           item={null}
           mode="add"
+          allIds={allIds}
           onClose={() => setAddingItem(false)}
           onSaved={(d) => setData(d)}
         />
