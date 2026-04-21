@@ -1,7 +1,7 @@
 import legacyData from "../data/legacy.json";
 import { formatCurrency } from "../utils/calculations";
 
-interface LegacyItem {
+export interface LegacyItem {
   id: string;
   name: string;
   price?: number;
@@ -14,31 +14,35 @@ const legacyCat = (
   }>
 ).find((c) => c.id === "aloha20");
 
-const LEGACY_ITEMS: LegacyItem[] = legacyCat ? legacyCat.lineItems : [];
+const STATIC_LEGACY_ITEMS: LegacyItem[] = legacyCat ? legacyCat.lineItems : [];
 
 interface Props {
   toggles: Record<string, boolean>;
   onToggle: (id: string, value: boolean) => void;
   quantities: Record<string, number>;
   onQuantityChange: (id: string, qty: number) => void;
+  items?: LegacyItem[];
 }
 
 export function computeLegacyTotal(
   toggles: Record<string, boolean>,
   quantities: Record<string, number>,
+  items: LegacyItem[] = STATIC_LEGACY_ITEMS,
 ): number {
-  return LEGACY_ITEMS.reduce(
+  return items.reduce(
     (sum, item) =>
       sum + (toggles[item.id] && item.price ? item.price * (quantities[item.id] ?? 1) : 0),
     0,
   );
 }
 
-export default function LegacyHwSection({ toggles, onToggle, quantities, onQuantityChange }: Props) {
+export default function LegacyHwSection({ toggles, onToggle, quantities, onQuantityChange, items }: Props) {
+  const displayItems = items ?? STATIC_LEGACY_ITEMS;
+
   return (
     <div className="prpit-card">
       <div className="pit-yn-card" style={{ marginTop: 0 }}>
-        {LEGACY_ITEMS.map(({ id, name, price }) => {
+        {displayItems.map(({ id, name, price }) => {
           const on = toggles[id] ?? false;
           return (
             <div key={id} className="pit-yn-row">

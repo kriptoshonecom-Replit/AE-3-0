@@ -1039,6 +1039,92 @@ export const DEFAULT_CATALOG = {
           "pci": 0
         }
       ]
+    },
+    {
+      "id": "aloha20",
+      "name": "Aloha Essential 2.0 HW",
+      "items": [
+        {
+          "id": "boh-001",
+          "name": "BOH Server S600",
+          "price": 85,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0,
+          "pci": 0
+        },
+        {
+          "id": "fox-001",
+          "name": "FOH CX3 Terminal",
+          "price": 70,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0,
+          "pci": 0
+        },
+        {
+          "id": "fox-002",
+          "name": "FOH CX3 Terminal APA 2x20 ",
+          "price": 75,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0,
+          "pci": 0
+        },
+        {
+          "id": "km-001",
+          "name": "Short Pole Ceiling Kitchen Mount",
+          "price": 14,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0,
+          "pci": 0
+        },
+        {
+          "id": "boh-002",
+          "name": "N4000 Wall and Rack Mount",
+          "price": 5,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0,
+          "pci": 0
+        },
+        {
+          "id": "xl-001",
+          "name": "XL10 Touch USB-C Display with MSR",
+          "price": 25,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0,
+          "pci": 0
+        },
+        {
+          "id": "pay-001",
+          "name": "Voyix Pay Equinox 6200m Mobile with Printer",
+          "price": 35,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0,
+          "pci": 0
+        },
+        {
+          "id": "pay-002",
+          "name": "6200m Mobile Charging Stand",
+          "price": 2,
+          "produration": 0,
+          "traduration": 0,
+          "instaduration": 0,
+          "stageduration": 0,
+          "pci": 0
+        }
+      ]
     }
   ]
 } as const;

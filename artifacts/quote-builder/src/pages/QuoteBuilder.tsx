@@ -10,7 +10,7 @@ import QuoteMetaForm from "../components/QuoteMetaForm";
 import CurrentSpendForm from "../components/CurrentSpendForm";
 import HeatmapSection, { computeHeatmapTotal } from "../components/HeatmapSection";
 import PaymentsConfigPanel from "../components/PaymentsConfigPanel";
-import LegacyHwSection, { computeLegacyTotal } from "../components/LegacyHwSection";
+import LegacyHwSection, { computeLegacyTotal, type LegacyItem } from "../components/LegacyHwSection";
 import UnsavedChangesModal from "../components/UnsavedChangesModal";
 import LicenseSyncModal from "../components/LicenseSyncModal";
 import {
@@ -123,6 +123,11 @@ export default function QuoteBuilder() {
     () => buildProductCatalogMap(productCategories),
     [productCategories],
   );
+
+  const legacyItems = useMemo<LegacyItem[]>(() => {
+    const cat = productCategories.find((c) => c.id === "aloha20");
+    return cat ? cat.items.map((i) => ({ id: i.id, name: i.name, price: i.price })) : [];
+  }, [productCategories]);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/products`)
@@ -611,6 +616,7 @@ export default function QuoteBuilder() {
                 onToggle={handleLegacyToggle}
                 quantities={legacyQuantities}
                 onQuantityChange={handleLegacyQuantityChange}
+                items={legacyItems.length > 0 ? legacyItems : undefined}
               />
             </section>
 
@@ -669,7 +675,7 @@ export default function QuoteBuilder() {
                   })()}
                   productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles, optionalProgramToggles, quote.meta.pitType ?? "", catalogMap)}
                   heatmapTotal={computeHeatmapTotal(heatmapToggles)}
-                  legacyTotal={computeLegacyTotal(legacyToggles, legacyQuantities)}
+                  legacyTotal={computeLegacyTotal(legacyToggles, legacyQuantities, legacyItems.length > 0 ? legacyItems : undefined)}
                 />
               </section>
             )}

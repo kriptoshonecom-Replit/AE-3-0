@@ -19,6 +19,16 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
+interface CatalogCategory {
+  id: string;
+  name: string;
+  items: Record<string, unknown>[];
+}
+
+interface Catalog {
+  categories: CatalogCategory[];
+}
+
 async function runMigrations() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS product_catalog (
@@ -43,6 +53,31 @@ async function bootstrapCatalog() {
         data: DEFAULT_CATALOG as unknown as Record<string, unknown>,
       });
       logger.info("Product catalog seeded from defaults");
+      return;
+    }
+
+    // Ensure any categories present in the default seed but missing from the
+    // stored catalog are added (e.g. after adding a new category like aloha20).
+    const [row] = await db
+      .select()
+      .from(productCatalogTable)
+      .where(eq(productCatalogTable.id, "catalog"))
+      .limit(1);
+
+    if (!row) return;
+
+    const stored = row.data as Catalog;
+    const existingIds = new Set(stored.categories.map((c) => c.id));
+    const defaultCatalog = DEFAULT_CATALOG as unknown as Catalog;
+    const missing = defaultCatalog.categories.filter((c) => !existingIds.has(c.id));
+
+    if (missing.length > 0) {
+      stored.categories.push(...missing);
+      await db
+        .update(productCatalogTable)
+        .set({ data: stored as unknown as Record<string, unknown>, updatedAt: new Date() })
+        .where(eq(productCatalogTable.id, "catalog"));
+      logger.info({ added: missing.map((c) => c.id) }, "Catalog migration: added missing categories");
     }
   } catch (err) {
     logger.error(err, "Catalog bootstrap failed");
