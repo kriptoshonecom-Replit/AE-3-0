@@ -88,6 +88,8 @@ externalPort = 8000
 
 [userenv.shared]
 JWT_SECRET = "951a32af2b40230dfa0f531bdded2f36b473b46702942faa15cf4be7e94d81f0cff9e21bc1eb5af0b75daa531eaccbb6"
+RESEND_API_KEY = "re_JnLnjxDT_JMUq9MouynXq6w9ECgNnAUNu"
+RESEND_FROM_EMAIL = "shonecom@gmail.com"
 
 [nix]
 channel = "stable-25_05"
