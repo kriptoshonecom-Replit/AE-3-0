@@ -68,12 +68,24 @@ async function send(to: string, subject: string, html: string): Promise<void> {
   }
 }
 
+function getAppUrl(): string {
+  // REPLIT_DOMAINS contains the active domain for whichever environment is running
+  // (dev preview in development, production .replit.app URL when deployed).
+  const domains = process.env.REPLIT_DOMAINS;
+  if (domains) {
+    const first = domains.split(",")[0].trim();
+    return `https://${first}`;
+  }
+  return process.env.APP_URL ?? "https://your-app.replit.app";
+}
+
 export async function sendWelcomeEmail(
   to: string,
   fullName: string,
   password: string,
 ): Promise<void> {
   const subject = "Welcome to Aloha Essential CPQ 3.0 — Your Account Details";
+  const loginUrl = `${getAppUrl()}/sign-in`;
 
   const html = `
     <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;color:#1e293b">
@@ -97,6 +109,17 @@ export async function sendWelcomeEmail(
             <td style="font-size:14px;font-family:monospace;color:#1e293b;padding:6px 0;font-weight:600">${password}</td>
           </tr>
         </table>
+      </div>
+
+      <div style="text-align:center;margin-bottom:28px">
+        <a href="${loginUrl}"
+           style="display:inline-block;background:#7c3aed;color:#ffffff;font-size:15px;font-weight:600;
+                  text-decoration:none;padding:13px 32px;border-radius:8px;letter-spacing:0.01em">
+          Sign in to Aloha CPQ →
+        </a>
+        <p style="margin:10px 0 0;font-size:12px;color:#94a3b8">
+          Or copy this link: <a href="${loginUrl}" style="color:#7c3aed">${loginUrl}</a>
+        </p>
       </div>
 
       <p style="font-size:13px;color:#64748b;margin:0 0 8px">
