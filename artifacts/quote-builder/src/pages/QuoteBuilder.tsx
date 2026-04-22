@@ -123,7 +123,7 @@ export default function QuoteBuilder() {
   }, []);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/pit-services`)
+    fetch(`${API_BASE}/api/pit-services`, { cache: "no-store" })
       .then((r) => r.ok ? r.json() : null)
       .then((data: { categories?: Array<{ id: string; name: string; lineItems: Array<{ id: string; name: string; duration?: number; price?: number }> }>; hourlyRate?: number } | null) => {
         if (!data) return;
@@ -333,7 +333,7 @@ export default function QuoteBuilder() {
   const executeExportPDF = async () => {
     setExporting(true);
     try {
-      await exportQuoteToPDF(quote);
+      await exportQuoteToPDF(quote, pitHourlyRate);
     } finally {
       setExporting(false);
     }
@@ -587,6 +587,7 @@ export default function QuoteBuilder() {
                 optionalProgramToggles={optionalProgramToggles}
                 pitType={quote.meta.pitType ?? ""}
                 catalogMap={catalogMap}
+                pitHourlyRate={pitHourlyRate}
               />
             </section>
 
@@ -659,7 +660,7 @@ export default function QuoteBuilder() {
                     const cat = pitCategories.find((c) => c.id === (quote.meta.pitType ?? ""));
                     return cat ? cat.lineItems.reduce((s, i) => s + i.duration * pitHourlyRate, 0) : 0;
                   })()}
-                  productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles, optionalProgramToggles, quote.meta.pitType ?? "", catalogMap)}
+                  productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles, optionalProgramToggles, quote.meta.pitType ?? "", catalogMap, pitHourlyRate)}
                   heatmapTotal={computeHeatmapTotal(heatmapToggles, heatmapItems.length > 0 ? heatmapItems : undefined)}
                   legacyTotal={0}
                 />

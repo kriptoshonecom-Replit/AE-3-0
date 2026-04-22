@@ -228,6 +228,7 @@ export function computeProductRelatedPitTotal(
   optionalProgramToggles: Record<string, boolean> = {},
   pitType: string = "",
   catalogMap: ProductCatalogMap = DEFAULT_CATALOG_MAP,
+  pitHourlyRate: number = PIT_HOURLY_RATE,
 ): number {
   const forcedItemIds = Object.entries(YES_NO_ITEM_MAP)
     .filter(([toggleId]) => yesNoToggles[toggleId])
@@ -243,7 +244,7 @@ export function computeProductRelatedPitTotal(
       const hours = forced
         ? (TOGGLE_DURATIONS[item.id] ?? 0)
         : computeHours(item.id, cat.id, groups, pitType, catalogMap);
-      total += hours * PIT_HOURLY_RATE;
+      total += hours * pitHourlyRate;
     }
   }
   return total;
@@ -260,9 +261,10 @@ interface CategoryTableProps {
   excludedItemIds: Set<string>;
   pitType: string;
   catalogMap: ProductCatalogMap;
+  pitHourlyRate: number;
 }
 
-function CategoryTable({ category, groups, forcedItemIds, excludedItemIds, pitType, catalogMap }: CategoryTableProps) {
+function CategoryTable({ category, groups, forcedItemIds, excludedItemIds, pitType, catalogMap, pitHourlyRate }: CategoryTableProps) {
   const rows = category.lineItems
     .filter((item) => !excludedItemIds.has(item.id))
     .map((item) => {
@@ -270,7 +272,7 @@ function CategoryTable({ category, groups, forcedItemIds, excludedItemIds, pitTy
       const hours = forced
         ? (TOGGLE_DURATIONS[item.id] ?? 0)
         : computeHours(item.id, category.id, groups, pitType, catalogMap);
-      return { item, hours, price: hours * PIT_HOURLY_RATE };
+      return { item, hours, price: hours * pitHourlyRate };
     })
     .filter((r) => r.hours > 0);
 
@@ -320,10 +322,12 @@ interface Props {
   optionalProgramToggles: Record<string, boolean>;
   pitType: string;
   catalogMap?: ProductCatalogMap;
+  pitHourlyRate?: number;
 }
 
-export default function ProductRelatedPitSection({ groups, yesNoToggles, optionalProgramToggles, pitType, catalogMap }: Props) {
+export default function ProductRelatedPitSection({ groups, yesNoToggles, optionalProgramToggles, pitType, catalogMap, pitHourlyRate }: Props) {
   const map = catalogMap ?? DEFAULT_CATALOG_MAP;
+  const rate = pitHourlyRate ?? PIT_HOURLY_RATE;
   const hasAnyProducts = groups.some((g) => g.lineItems.length > 0);
 
   const forcedItemIds = Object.entries(YES_NO_ITEM_MAP)
@@ -350,6 +354,7 @@ export default function ProductRelatedPitSection({ groups, yesNoToggles, optiona
               excludedItemIds={excludedItemIds}
               pitType={pitType}
               catalogMap={map}
+              pitHourlyRate={rate}
             />
           ))}
         </div>

@@ -50,7 +50,8 @@ async function loadImageAsDataUrl(src: string): Promise<string> {
   });
 }
 
-export async function exportQuoteToPDF(quote: Quote): Promise<void> {
+export async function exportQuoteToPDF(quote: Quote, pitHourlyRate?: number): Promise<void> {
+  const rate = pitHourlyRate ?? PIT_HOURLY_RATE;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pageWidth = 210;
   const margin = 16;
@@ -259,7 +260,7 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
   );
   const pitTotal = pitCatForTotal
     ? pitCatForTotal.lineItems.reduce(
-        (s, i) => s + i.duration * PIT_HOURLY_RATE,
+        (s, i) => s + i.duration * rate,
         0,
       )
     : 0;
@@ -276,6 +277,8 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
     yesNoToggles,
     optToggles,
     quote.meta.pitType ?? "",
+    undefined,
+    rate,
   );
   const heatmapItems =
     (
