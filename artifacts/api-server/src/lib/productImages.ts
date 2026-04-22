@@ -30,6 +30,12 @@ export async function uploadProductImage(slug: string, buffer: Buffer): Promise<
   await file.save(buffer, { contentType: "image/png", resumable: false });
 }
 
+export async function deleteProductImage(slug: string): Promise<void> {
+  const file = gcs.bucket(getBucketId()).file(GCS_PREFIX + slug);
+  const [exists] = await file.exists();
+  if (exists) await file.delete();
+}
+
 export async function serveProductImage(slug: string, res: Response): Promise<void> {
   const file = gcs.bucket(getBucketId()).file(GCS_PREFIX + slug);
   const [exists] = await file.exists();

@@ -9,6 +9,7 @@ import ProfilePage from "@/pages/ProfilePage";
 import UsersPage from "@/pages/UsersPage";
 import ProductsConfigPage from "@/pages/ProductsConfigPage";
 import PitConfigPage from "@/pages/PitConfigPage";
+import MediaFilesPage from "@/pages/MediaFilesPage";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,9 @@ function AppRoutes() {
           </Route>
           <Route path="/admin/pit">
             <AdminRoute><PitConfigPage /></AdminRoute>
+          </Route>
+          <Route path="/admin/media">
+            <AdminRoute><MediaFilesPage /></AdminRoute>
           </Route>
         </Switch>
       </QueryClientProvider>

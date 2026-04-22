@@ -480,6 +480,18 @@ export default function QuoteBuilder() {
                 </svg>
                 PIT Configuration
               </button>
+              <button
+                type="button"
+                className="sidebar-admin-link"
+                onClick={() => { setLocation("/admin/media"); setSidebarOpen(false); }}
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                  <circle cx="5.5" cy="7" r="1.5" stroke="currentColor" strokeWidth="1.2" />
+                  <path d="M1.5 11l3.5-3 3 3 2.5-2.5 3.5 3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Media Files
+              </button>
             </div>
           )}
         </div>

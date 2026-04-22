@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
+import MediaPickerModal from "@/components/MediaPickerModal";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -56,6 +57,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
   const [imageUrl, setImageUrl] = useState<string | null>(item?.image ?? null);
   const [imageUploading, setImageUploading] = useState(false);
   const [imageError, setImageError] = useState("");
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -189,8 +191,15 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
             <input type="text" value={text} onChange={(e) => setText(e.target.value)} placeholder="Short description shown to users" />
           </div>
 
+          {showMediaPicker && (
+            <MediaPickerModal
+              onSelect={(f) => { setImageUrl(f.path); setImageError(""); }}
+              onClose={() => setShowMediaPicker(false)}
+            />
+          )}
+
           <div className="edit-field-group">
-            <label>Product Image <span className="edit-modal-optional">(PNG only, max 500×500 px)</span></label>
+            <label>Product Image <span className="edit-modal-optional">(PNG, max 500×500 px)</span></label>
             <div className="product-img-upload-row">
               {imageUrl ? (
                 <div className="product-img-preview">
@@ -212,8 +221,20 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
                 </div>
               )}
               <div className="product-img-controls">
+                <button
+                  type="button"
+                  className="product-img-btn product-img-btn-library"
+                  onClick={() => setShowMediaPicker(true)}
+                >
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                    <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+                    <circle cx="5.5" cy="7" r="1.5" stroke="currentColor" strokeWidth="1.1" />
+                    <path d="M1.5 11l3.5-3 3 3 2.5-2.5 3.5 3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  {imageUrl ? "Choose different" : "Choose from library"}
+                </button>
                 <label className="product-img-btn" aria-disabled={imageUploading}>
-                  {imageUploading ? "Uploading…" : imageUrl ? "Replace image" : "Upload image"}
+                  {imageUploading ? "Uploading…" : "Upload new"}
                   <input
                     type="file"
                     accept=".png,image/png"
