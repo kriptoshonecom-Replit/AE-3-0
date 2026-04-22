@@ -20,6 +20,8 @@ import {
   findLicenseItem,
   lookupQtyChanged,
   lookupProductSelected,
+  subjectProductSelected,
+  subjectQtyChanged,
   computeLookupCount,
   findSubjectItem,
 } from "../utils/licenseSync";
@@ -185,6 +187,12 @@ export default function QuoteBuilder() {
   const latestGroupsRef = useRef(quote.groups);
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Refs so timer callbacks always read the freshest modal state
+  const licenseSyncStateRef = useRef(licenseSyncState);
+  const configAlertStateRef = useRef(configAlertState);
+  useEffect(() => { licenseSyncStateRef.current = licenseSyncState; }, [licenseSyncState]);
+  useEffect(() => { configAlertStateRef.current = configAlertState; }, [configAlertState]);
+
   // Clear timer on unmount
   useEffect(() => {
     return () => {
@@ -316,7 +324,7 @@ export default function QuoteBuilder() {
     // ── Dynamic DB-configured alert checks ──────────────────────────────────
     for (const cfg of alertConfigs) {
       const tryShowConfigAlert = (grps: QuoteGroup[]) => {
-        if (licenseSyncState || configAlertState) return; // don't stack modals
+        if (licenseSyncStateRef.current || configAlertStateRef.current) return; // don't stack modals
         const subject = findSubjectItem(grps, cfg.subjectProductId);
         if (!subject) return;
         const count = computeLookupCount(grps, cfg.lookupProductIds);
@@ -331,11 +339,18 @@ export default function QuoteBuilder() {
         });
       };
 
-      if (lookupQtyChanged(oldGroup, group, cfg.lookupProductIds)) {
+      const qtyChanged =
+        lookupQtyChanged(oldGroup, group, cfg.lookupProductIds) ||
+        subjectQtyChanged(oldGroup, group, cfg.subjectProductId);
+      const productSelected =
+        lookupProductSelected(oldGroup, group, cfg.lookupProductIds) ||
+        subjectProductSelected(oldGroup, group, cfg.subjectProductId);
+
+      if (qtyChanged) {
         if (configTimersRef.current[cfg.id]) clearTimeout(configTimersRef.current[cfg.id]);
         delete configTimersRef.current[cfg.id];
         tryShowConfigAlert(groups);
-      } else if (lookupProductSelected(oldGroup, group, cfg.lookupProductIds)) {
+      } else if (productSelected) {
         if (configTimersRef.current[cfg.id]) clearTimeout(configTimersRef.current[cfg.id]);
         const delaySec = cfg.delaySeconds > 0 ? cfg.delaySeconds * 1000 : 5000;
         configTimersRef.current[cfg.id] = setTimeout(() => {

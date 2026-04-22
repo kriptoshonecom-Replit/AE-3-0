@@ -50,6 +50,26 @@ export function lookupProductSelected(oldGroup: QuoteGroup, newGroup: QuoteGroup
   return false;
 }
 
+/** Returns true if the subject product was newly assigned in the group */
+export function subjectProductSelected(oldGroup: QuoteGroup, newGroup: QuoteGroup, subjectId: string): boolean {
+  for (const newItem of newGroup.lineItems) {
+    if (newItem.productId !== subjectId) continue;
+    const oldItem = oldGroup.lineItems.find((i) => i.id === newItem.id);
+    if (!oldItem || oldItem.productId !== subjectId) return true;
+  }
+  return false;
+}
+
+/** Returns true if the subject product quantity changed in the group */
+export function subjectQtyChanged(oldGroup: QuoteGroup, newGroup: QuoteGroup, subjectId: string): boolean {
+  for (const newItem of newGroup.lineItems) {
+    if (newItem.productId !== subjectId) continue;
+    const oldItem = oldGroup.lineItems.find((i) => i.id === newItem.id);
+    if (oldItem && oldItem.productId === subjectId && oldItem.quantity !== newItem.quantity) return true;
+  }
+  return false;
+}
+
 export const LICENSE_IDS = ["co-001", "co-002"] as const;
 export const TERMINAL_IDS = ["tm-001", "tm-002"] as const;
 export const TABLET_IDS = ["ta-001", "ta-002", "ta-003"] as const;
