@@ -45,12 +45,14 @@ router.post("/admin/alert-configs", async (req, res) => {
     const {
       subjectProductId,
       lookupProductIds,
+      lookupLogic,
       displayMessage,
       delaySeconds,
       isActive,
     } = req.body as {
       subjectProductId: string;
       lookupProductIds: string[];
+      lookupLogic?: string;
       displayMessage: string;
       delaySeconds?: number;
       isActive?: boolean;
@@ -70,6 +72,7 @@ router.post("/admin/alert-configs", async (req, res) => {
       .values({
         subjectProductId: subjectProductId.trim(),
         lookupProductIds,
+        lookupLogic: lookupLogic === "or" ? "or" : "and",
         displayMessage: displayMessage?.trim() ?? "",
         delaySeconds: typeof delaySeconds === "number" ? delaySeconds : 5,
         isActive: isActive !== false,
@@ -89,12 +92,14 @@ router.patch("/admin/alert-configs/:id", async (req, res) => {
     const {
       subjectProductId,
       lookupProductIds,
+      lookupLogic,
       displayMessage,
       delaySeconds,
       isActive,
     } = req.body as Partial<{
       subjectProductId: string;
       lookupProductIds: string[];
+      lookupLogic: string;
       displayMessage: string;
       delaySeconds: number;
       isActive: boolean;
@@ -115,6 +120,7 @@ router.patch("/admin/alert-configs/:id", async (req, res) => {
     };
     if (subjectProductId !== undefined) updates.subjectProductId = subjectProductId.trim();
     if (lookupProductIds !== undefined) updates.lookupProductIds = lookupProductIds;
+    if (lookupLogic !== undefined) updates.lookupLogic = lookupLogic === "or" ? "or" : "and";
     if (displayMessage !== undefined) updates.displayMessage = displayMessage.trim();
     if (delaySeconds !== undefined) updates.delaySeconds = delaySeconds;
     if (isActive !== undefined) updates.isActive = isActive;

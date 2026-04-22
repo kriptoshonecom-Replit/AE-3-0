@@ -7,6 +7,7 @@ interface AlertConfig {
   id: string;
   subjectProductId: string;
   lookupProductIds: string[];
+  lookupLogic: string;
   displayMessage: string;
   delaySeconds: number;
   isActive: boolean;
@@ -19,7 +20,6 @@ interface FlatProduct {
   categoryName: string;
 }
 
-/* ── Fetch helpers ──────────────────────────────────────────────────────────── */
 async function fetchProducts(): Promise<FlatProduct[]> {
   const res = await fetch(`${API_BASE}/api/admin/products`, { credentials: "include" });
   if (!res.ok) return [];
@@ -31,6 +31,42 @@ async function fetchProducts(): Promise<FlatProduct[]> {
     }
   }
   return flat;
+}
+
+/* ── Logic Toggle ────────────────────────────────────────────────────────────── */
+function LogicToggle({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <span style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 500 }}>Logic:</span>
+      <div style={{
+        display: "inline-flex",
+        border: "1px solid var(--border)",
+        borderRadius: 5,
+        overflow: "hidden",
+        fontSize: 11,
+        fontWeight: 600,
+        letterSpacing: "0.04em",
+      }}>
+        {(["and", "or"] as const).map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => onChange(opt)}
+            style={{
+              padding: "3px 11px",
+              border: "none",
+              cursor: "pointer",
+              background: value === opt ? "var(--accent, #6c47ff)" : "transparent",
+              color: value === opt ? "#fff" : "var(--text-muted)",
+              transition: "background 0.15s, color 0.15s",
+            }}
+          >
+            {opt.toUpperCase()}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 /* ── Add / Edit Modal ───────────────────────────────────────────────────────── */
@@ -45,6 +81,7 @@ function AlertModal({ config, products, onClose, onSaved }: ModalProps) {
   const isEdit = config !== null;
   const [subjectId, setSubjectId] = useState(config?.subjectProductId ?? "");
   const [lookupIds, setLookupIds] = useState<string[]>(config?.lookupProductIds ?? []);
+  const [lookupLogic, setLookupLogic] = useState<string>(config?.lookupLogic ?? "and");
   const [message, setMessage] = useState(config?.displayMessage ?? "");
   const [delay, setDelay] = useState(String(config?.delaySeconds ?? 5));
   const [active, setActive] = useState(config?.isActive ?? true);
@@ -53,6 +90,17 @@ function AlertModal({ config, products, onClose, onSaved }: ModalProps) {
 
   function toggleLookup(id: string) {
     setLookupIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  }
+
+  function productName(id: string) {
+    return products.find((p) => p.id === id)?.name ?? id;
+  }
+
+  function buildStatement() {
+    if (lookupIds.length === 0) return null;
+    const names = lookupIds.map((id) => productName(id));
+    const connector = ` ${lookupLogic} `;
+    return names.join(connector);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -75,6 +123,7 @@ function AlertModal({ config, products, onClose, onSaved }: ModalProps) {
         body: JSON.stringify({
           subjectProductId: subjectId,
           lookupProductIds: lookupIds,
+          lookupLogic,
           displayMessage: message.trim(),
           delaySeconds: delayNum,
           isActive: active,
@@ -92,6 +141,8 @@ function AlertModal({ config, products, onClose, onSaved }: ModalProps) {
     (acc[p.categoryName] ??= []).push(p);
     return acc;
   }, {});
+
+  const statement = buildStatement();
 
   return (
     <div
@@ -133,29 +184,45 @@ function AlertModal({ config, products, onClose, onSaved }: ModalProps) {
 
           {/* Quantity Lookup Products */}
           <div className="edit-field-group">
-            <label>Quantity Lookup Products <span style={{ color: "#e55" }}>*</span></label>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 3 }}>
+              <label style={{ marginBottom: 0 }}>
+                Quantity Lookup Products <span style={{ color: "#e55" }}>*</span>
+              </label>
+              <LogicToggle value={lookupLogic} onChange={setLookupLogic} />
+            </div>
             <p className="edit-field-hint">Products to count. When their total qty doesn't match the subject, the alert fires.</p>
+
             <div className="alert-lookup-list">
-              {Object.entries(grouped).map(([cat, items]) => (
-                <div key={cat} className="alert-lookup-group">
-                  <div className="alert-lookup-cat">{cat}</div>
-                  {items.map((p) => (
-                    <label key={p.id} className="alert-lookup-item">
-                      <input
-                        type="checkbox"
-                        checked={lookupIds.includes(p.id)}
-                        onChange={() => toggleLookup(p.id)}
-                      />
-                      <span>{p.name}</span>
-                      <code className="admin-code" style={{ marginLeft: "auto", fontSize: 11 }}>{p.id}</code>
-                    </label>
-                  ))}
-                </div>
-              ))}
-              {products.length === 0 && (
-                <div style={{ color: "var(--text-muted)", fontSize: 12, padding: "6px 0" }}>No products found</div>
+              {products.length === 0 ? (
+                <div style={{ color: "var(--text-muted)", fontSize: 12, padding: "8px 10px" }}>No products found</div>
+              ) : (
+                Object.entries(grouped).map(([cat, items]) => (
+                  <div key={cat} className="alert-lookup-group">
+                    <div className="alert-lookup-cat">{cat}</div>
+                    {items.map((p) => (
+                      <label key={p.id} className="alert-lookup-item">
+                        <input
+                          type="checkbox"
+                          checked={lookupIds.includes(p.id)}
+                          onChange={() => toggleLookup(p.id)}
+                          className="alert-lookup-checkbox"
+                        />
+                        <span className="alert-lookup-name">{p.name}</span>
+                        <code className="admin-code alert-lookup-code">{p.id}</code>
+                      </label>
+                    ))}
+                  </div>
+                ))
               )}
             </div>
+
+            {/* Statement rule */}
+            {statement && (
+              <div className="alert-lookup-statement">
+                <span className="alert-lookup-statement-label">Rule:</span>
+                <span className="alert-lookup-statement-text">{statement}</span>
+              </div>
+            )}
           </div>
 
           {/* Display Message */}
@@ -303,9 +370,10 @@ export default function AlertConfigPage() {
     return products.find((p) => p.id === id)?.name ?? id;
   }
 
-  function lookupSummary(ids: string[]) {
-    if (ids.length === 0) return "—";
-    return ids.map((id) => productName(id)).join(", ");
+  function lookupSummary(cfg: AlertConfig) {
+    if (cfg.lookupProductIds.length === 0) return "—";
+    const connector = ` ${cfg.lookupLogic ?? "and"} `;
+    return cfg.lookupProductIds.map((id) => productName(id)).join(connector);
   }
 
   return (
@@ -361,7 +429,7 @@ export default function AlertConfigPage() {
             <thead>
               <tr>
                 <th>Subject Product</th>
-                <th>Quantity Lookup</th>
+                <th>Lookup Rule</th>
                 <th>Display Message</th>
                 <th>Delay</th>
                 <th>Status</th>
@@ -375,9 +443,9 @@ export default function AlertConfigPage() {
                     <div className="admin-td-bold">{productName(cfg.subjectProductId)}</div>
                     <code className="admin-code">{cfg.subjectProductId}</code>
                   </td>
-                  <td style={{ maxWidth: 200 }}>
-                    <div style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
-                      {lookupSummary(cfg.lookupProductIds)}
+                  <td style={{ maxWidth: 220 }}>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5, fontStyle: "italic" }}>
+                      "{lookupSummary(cfg)}"
                     </div>
                   </td>
                   <td style={{ maxWidth: 220 }}>
@@ -408,19 +476,13 @@ export default function AlertConfigPage() {
                   </td>
                   <td>
                     <div className="admin-actions">
-                      <button
-                        className="admin-btn-edit"
-                        onClick={() => setEditTarget(cfg)}
-                      >
+                      <button className="admin-btn-edit" onClick={() => setEditTarget(cfg)}>
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
                           <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                         Edit
                       </button>
-                      <button
-                        className="admin-btn-delete"
-                        onClick={() => setDeleteTarget(cfg)}
-                      >
+                      <button className="admin-btn-delete" onClick={() => setDeleteTarget(cfg)}>
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
                           <path d="M3 4h10M5 4V2.5h6V4M6 7v4M10 7v4M4 4l.5 9.5h7L12 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
@@ -441,34 +503,86 @@ export default function AlertConfigPage() {
           color: var(--text-muted);
           margin: 2px 0 6px;
         }
+
+        /* ── Lookup list ── */
         .alert-lookup-list {
           border: 1px solid var(--border);
           border-radius: 6px;
           max-height: 200px;
           overflow-y: auto;
-          padding: 4px 0;
+          padding: 2px 0;
         }
-        .alert-lookup-group { padding: 0 8px 4px; }
+        .alert-lookup-group { padding: 0 0 2px; }
         .alert-lookup-cat {
           font-size: 10px;
           font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 0.06em;
+          letter-spacing: 0.07em;
           color: var(--text-muted);
-          padding: 6px 0 3px;
+          padding: 6px 10px 3px;
+          position: sticky;
+          top: 0;
+          background: var(--bg, #fff);
+          z-index: 1;
         }
         .alert-lookup-item {
           display: flex;
           align-items: center;
-          gap: 7px;
-          padding: 4px 4px;
-          border-radius: 4px;
+          gap: 8px;
+          padding: 5px 10px;
           cursor: pointer;
           font-size: 12.5px;
           color: var(--text);
+          line-height: 1;
+          user-select: none;
+          transition: background 0.1s;
         }
         .alert-lookup-item:hover { background: var(--hover-bg, rgba(0,0,0,.04)); }
-        .alert-lookup-item input { flex-shrink: 0; cursor: pointer; }
+        .alert-lookup-checkbox {
+          width: 1em;
+          height: 1em;
+          flex-shrink: 0;
+          cursor: pointer;
+          accent-color: var(--accent, #6c47ff);
+          margin: 0;
+        }
+        .alert-lookup-name {
+          flex: 1;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .alert-lookup-code {
+          font-size: 10px !important;
+          opacity: 0.65;
+          flex-shrink: 0;
+        }
+
+        /* ── Statement rule ── */
+        .alert-lookup-statement {
+          margin-top: 7px;
+          padding: 6px 10px;
+          border-radius: 5px;
+          background: var(--accent-bg, rgba(108,71,255,0.07));
+          border: 1px solid var(--accent-border, rgba(108,71,255,0.18));
+          display: flex;
+          align-items: baseline;
+          gap: 6px;
+          font-size: 12px;
+          line-height: 1.5;
+        }
+        .alert-lookup-statement-label {
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          color: var(--accent, #6c47ff);
+          flex-shrink: 0;
+        }
+        .alert-lookup-statement-text {
+          color: var(--text);
+          font-style: italic;
+        }
       `}</style>
     </div>
   );
