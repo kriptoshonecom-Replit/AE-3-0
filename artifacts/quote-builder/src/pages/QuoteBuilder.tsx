@@ -18,6 +18,10 @@ import {
   deviceProductSelected,
   computeTotalDeviceCount,
   findLicenseItem,
+  lookupQtyChanged,
+  lookupProductSelected,
+  computeLookupCount,
+  findSubjectItem,
 } from "../utils/licenseSync";
 import PitSection from "../components/PitSection";
 import ProductRelatedPitSection, { computeProductRelatedPitTotal, buildProductCatalogMap, type ProductCatalogMap } from "../components/ProductRelatedPitSection";
@@ -144,6 +148,32 @@ export default function QuoteBuilder() {
       })
       .catch(() => {});
   }, []);
+  // ── Dynamic alert configs loaded from DB ─────────────────────────────────
+  interface AlertConfigRuntime {
+    id: string;
+    subjectProductId: string;
+    lookupProductIds: string[];
+    displayMessage: string;
+    delaySeconds: number;
+  }
+  const [alertConfigs, setAlertConfigs] = useState<AlertConfigRuntime[]>([]);
+  const [configAlertState, setConfigAlertState] = useState<null | {
+    configId: string;
+    subjectCount: number;
+    subjectProductName: string;
+    displayMessage: string;
+    groupIdx: number;
+    itemIdx: number;
+  }>(null);
+  const configTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/alert-configs`, { cache: "no-store" })
+      .then((r) => r.ok ? r.json() : [])
+      .then((data: AlertConfigRuntime[]) => { if (Array.isArray(data)) setAlertConfigs(data); })
+      .catch(() => {});
+  }, []);
+
   const [licenseSyncState, setLicenseSyncState] = useState<null | {
     deviceCount: number;
     licenseProductName: string;
@@ -159,6 +189,7 @@ export default function QuoteBuilder() {
   useEffect(() => {
     return () => {
       if (syncTimerRef.current !== null) clearTimeout(syncTimerRef.current);
+      Object.values(configTimersRef.current).forEach(clearTimeout);
     };
   }, []);
 
@@ -281,6 +312,38 @@ export default function QuoteBuilder() {
         tryShowLicenseSyncModal(latestGroupsRef.current);
       }, 5000);
     }
+
+    // ── Dynamic DB-configured alert checks ──────────────────────────────────
+    for (const cfg of alertConfigs) {
+      const tryShowConfigAlert = (grps: QuoteGroup[]) => {
+        if (licenseSyncState || configAlertState) return; // don't stack modals
+        const subject = findSubjectItem(grps, cfg.subjectProductId);
+        if (!subject) return;
+        const count = computeLookupCount(grps, cfg.lookupProductIds);
+        if (count === subject.currentQty) return;
+        setConfigAlertState({
+          configId: cfg.id,
+          subjectCount: count,
+          subjectProductName: subject.productName,
+          displayMessage: cfg.displayMessage,
+          groupIdx: subject.groupIdx,
+          itemIdx: subject.itemIdx,
+        });
+      };
+
+      if (lookupQtyChanged(oldGroup, group, cfg.lookupProductIds)) {
+        if (configTimersRef.current[cfg.id]) clearTimeout(configTimersRef.current[cfg.id]);
+        delete configTimersRef.current[cfg.id];
+        tryShowConfigAlert(groups);
+      } else if (lookupProductSelected(oldGroup, group, cfg.lookupProductIds)) {
+        if (configTimersRef.current[cfg.id]) clearTimeout(configTimersRef.current[cfg.id]);
+        const delaySec = cfg.delaySeconds > 0 ? cfg.delaySeconds * 1000 : 5000;
+        configTimersRef.current[cfg.id] = setTimeout(() => {
+          delete configTimersRef.current[cfg.id];
+          tryShowConfigAlert(latestGroupsRef.current);
+        }, delaySec);
+      }
+    }
   };
 
   const handleLicenseAutoAdjust = () => {
@@ -300,6 +363,24 @@ export default function QuoteBuilder() {
   };
 
   const handleLicenseKeep = () => setLicenseSyncState(null);
+
+  const handleConfigAlertAutoAdjust = () => {
+    if (!configAlertState) return;
+    const { subjectCount, groupIdx, itemIdx } = configAlertState;
+    const groups = quote.groups.map((g, gi) => {
+      if (gi !== groupIdx) return g;
+      const lineItems = g.lineItems.map((item, li) =>
+        li === itemIdx ? { ...item, quantity: subjectCount } : item,
+      );
+      return { ...g, lineItems };
+    });
+    const updated = { ...quote, groups };
+    setQuote(updated);
+    autosave(updated);
+    setConfigAlertState(null);
+  };
+
+  const handleConfigAlertKeep = () => setConfigAlertState(null);
 
   const handleGroupRemove = (idx: number) => {
     const groups = quote.groups.filter((_, i) => i !== idx);
@@ -402,13 +483,24 @@ export default function QuoteBuilder() {
         <UnsavedChangesModal onYes={handleUnsavedYes} onNo={handleUnsavedNo} />
       )}
 
-      {/* License sync modal */}
+      {/* License sync modal (built-in) */}
       {licenseSyncState && (
         <LicenseSyncModal
           deviceCount={licenseSyncState.deviceCount}
           licenseProductName={licenseSyncState.licenseProductName}
           onAutoAdjust={handleLicenseAutoAdjust}
           onKeep={handleLicenseKeep}
+        />
+      )}
+
+      {/* Dynamic DB-configured alert modal */}
+      {!licenseSyncState && configAlertState && (
+        <LicenseSyncModal
+          deviceCount={configAlertState.subjectCount}
+          licenseProductName={configAlertState.subjectProductName}
+          displayMessage={configAlertState.displayMessage || undefined}
+          onAutoAdjust={handleConfigAlertAutoAdjust}
+          onKeep={handleConfigAlertKeep}
         />
       )}
 
@@ -491,6 +583,17 @@ export default function QuoteBuilder() {
                   <path d="M1.5 11l3.5-3 3 3 2.5-2.5 3.5 3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 Media Files
+              </button>
+              <button
+                type="button"
+                className="sidebar-admin-link"
+                onClick={() => { setLocation("/admin/alerts"); setSidebarOpen(false); }}
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 2a5 5 0 0 1 5 5c0 2.5.8 3.5 1.5 4.5H1.5C2.2 10.5 3 9.5 3 7a5 5 0 0 1 5-5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M6.5 11.5a1.5 1.5 0 0 0 3 0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                </svg>
+                Alert Configuration
               </button>
             </div>
           )}

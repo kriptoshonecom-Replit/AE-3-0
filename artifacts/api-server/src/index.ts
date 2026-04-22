@@ -56,6 +56,27 @@ async function runMigrations() {
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
     )
   `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS media_files (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      original_name TEXT NOT NULL,
+      slug TEXT NOT NULL UNIQUE,
+      path TEXT NOT NULL,
+      uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS alert_configs (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      subject_product_id TEXT NOT NULL,
+      lookup_product_ids JSONB NOT NULL DEFAULT '[]',
+      display_message TEXT NOT NULL DEFAULT '',
+      delay_seconds INTEGER NOT NULL DEFAULT 5,
+      is_active BOOLEAN NOT NULL DEFAULT true,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+    )
+  `);
   logger.info("DB migrations complete");
 }
 

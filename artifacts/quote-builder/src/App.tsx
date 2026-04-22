@@ -10,6 +10,7 @@ import UsersPage from "@/pages/UsersPage";
 import ProductsConfigPage from "@/pages/ProductsConfigPage";
 import PitConfigPage from "@/pages/PitConfigPage";
 import MediaFilesPage from "@/pages/MediaFilesPage";
+import AlertConfigPage from "@/pages/AlertConfigPage";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,9 @@ function AppRoutes() {
           </Route>
           <Route path="/admin/media">
             <AdminRoute><MediaFilesPage /></AdminRoute>
+          </Route>
+          <Route path="/admin/alerts">
+            <AdminRoute><AlertConfigPage /></AdminRoute>
           </Route>
         </Switch>
       </QueryClientProvider>

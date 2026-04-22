@@ -3,6 +3,7 @@ import { useEffect } from "react";
 interface Props {
   deviceCount: number;
   licenseProductName: string;
+  displayMessage?: string;
   onAutoAdjust: () => void;
   onKeep: () => void;
 }
@@ -10,6 +11,7 @@ interface Props {
 export default function LicenseSyncModal({
   deviceCount,
   licenseProductName,
+  displayMessage,
   onAutoAdjust,
   onKeep,
 }: Props) {
@@ -41,16 +43,28 @@ export default function LicenseSyncModal({
         </div>
 
         <p className="unsaved-modal-text" style={{ marginTop: 12 }}>
-          You now have{" "}
-          <strong>
-            {deviceCount} device{deviceCount !== 1 ? "s" : ""}
-          </strong>{" "}
-          (terminals&nbsp;+&nbsp;tablets), but your{" "}
-          <strong>{licenseProductName}</strong> quantity doesn't match.
-          <br />
-          <br />
-          Auto-adjust it to <strong>{deviceCount}</strong>, or keep the current
-          value?
+          {displayMessage ? (
+            <>
+              {displayMessage}
+              <br />
+              <br />
+              Auto-adjust <strong>{licenseProductName}</strong> to{" "}
+              <strong>{deviceCount}</strong>, or keep the current value?
+            </>
+          ) : (
+            <>
+              You now have{" "}
+              <strong>
+                {deviceCount} device{deviceCount !== 1 ? "s" : ""}
+              </strong>{" "}
+              (terminals&nbsp;+&nbsp;tablets), but your{" "}
+              <strong>{licenseProductName}</strong> quantity doesn't match.
+              <br />
+              <br />
+              Auto-adjust it to <strong>{deviceCount}</strong>, or keep the
+              current value?
+            </>
+          )}
         </p>
 
         <div className="unsaved-modal-actions">
