@@ -1,7 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { db, pool } from "@workspace/db";
-import { usersTable, productCatalogTable, pitCatalogTable } from "@workspace/db/schema";
+import { usersTable, productCatalogTable, pitCatalogTable, alertConfigsTable } from "@workspace/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { DEFAULT_CATALOG } from "./lib/catalogSeed";
 import { DEFAULT_PIT_CATALOG } from "./lib/pitCatalogSeed";
@@ -70,12 +70,16 @@ async function runMigrations() {
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       subject_product_id TEXT NOT NULL,
       lookup_product_ids JSONB NOT NULL DEFAULT '[]',
+      lookup_logic TEXT NOT NULL DEFAULT 'and',
       display_message TEXT NOT NULL DEFAULT '',
       delay_seconds INTEGER NOT NULL DEFAULT 5,
       is_active BOOLEAN NOT NULL DEFAULT true,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
     )
+  `);
+  await pool.query(`
+    ALTER TABLE alert_configs ADD COLUMN IF NOT EXISTS lookup_logic TEXT NOT NULL DEFAULT 'and'
   `);
   logger.info("DB migrations complete");
 }
@@ -203,11 +207,37 @@ async function bootstrapAdmin() {
   }
 }
 
+async function bootstrapLicenseAlert() {
+  try {
+    const existing = await db
+      .select({ id: alertConfigsTable.id })
+      .from(alertConfigsTable)
+      .where(eq(alertConfigsTable.subjectProductId, "co-001"))
+      .limit(1);
+
+    if (existing.length > 0) return;
+
+    await db.insert(alertConfigsTable).values({
+      subjectProductId: "co-001",
+      lookupProductIds: ["tm-001", "tm-002", "ta-001", "ta-002", "ta-003"],
+      lookupLogic: "and",
+      displayMessage:
+        "Please ensure the number of Aloha Essentials licenses matches the total number of terminals and tablets.",
+      delaySeconds: 5,
+      isActive: true,
+    });
+    logger.info("License alert seeded");
+  } catch (err) {
+    logger.error(err, "License alert bootstrap failed");
+  }
+}
+
 async function start() {
   await runMigrations();
   await bootstrapCatalog();
   await bootstrapPitCatalog();
   await bootstrapAdmin();
+  await bootstrapLicenseAlert();
 
   app.listen(port, (err) => {
     if (err) {
