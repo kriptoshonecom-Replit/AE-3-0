@@ -42,6 +42,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - 8-char verification codes [A-Z0-9], expire in 10 minutes
 - JWT signed with `JWT_SECRET` env var, stored in httpOnly cookie
 - Email via Nodemailer (SMTP); falls back to console.log if SMTP not configured (`SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`)
+- Product image upload: admin uploads PNG via `POST /api/admin/products/upload-image`; files are stored in **Replit Object Storage** (GCS bucket, env var `DEFAULT_OBJECT_STORAGE_BUCKET_ID`) under the `products/` prefix, served at `GET /api/images/products/:slug`. The same bucket is used in both dev and production so images are always in sync. Legacy filesystem images (`uploads/` and `quote-builder/public/`) still served as fallback.
 
 ### Database (`lib/db`)
 - Tables: `users` (id, email, password_hash, full_name, created_at), `verification_codes` (id, user_id, code, type, expires_at, used, created_at)

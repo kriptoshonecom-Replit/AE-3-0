@@ -1,7 +1,5 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 import multer from "multer";
 import { db } from "@workspace/db";
 import { usersTable, productCatalogTable } from "@workspace/db/schema";
@@ -10,14 +8,13 @@ import { requireAdmin } from "../middlewares/requireAdmin";
 import { logger } from "../lib/logger";
 import { sendWelcomeEmail } from "../lib/email";
 import { DEFAULT_CATALOG } from "../lib/catalogSeed";
+import { uploadProductImage } from "../lib/productImages";
 
 const router = Router();
 router.use(requireAdmin);
 
 const BCRYPT_ROUNDS = 10;
 const CATALOG_ID = "catalog";
-
-const PRODUCTS_IMG_DIR = path.join(process.cwd(), "uploads", "products");
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -239,13 +236,9 @@ router.post("/products/upload-image", upload.single("file"), async (req, res) =>
       return;
     }
 
-    await mkdir(PRODUCTS_IMG_DIR, { recursive: true });
+    const slug = (file.originalname.replace(/[^a-z0-9]/gi, "-").replace(/-+/g, "-").toLowerCase() || "product") + "-" + Date.now() + ".png";
 
-    const ext = ".png";
-    const slug = (file.originalname.replace(/[^a-z0-9]/gi, "-").replace(/-+/g, "-").toLowerCase() || "product") + "-" + Date.now() + ext;
-    const dest = path.join(PRODUCTS_IMG_DIR, slug);
-
-    await writeFile(dest, file.buffer);
+    await uploadProductImage(slug, file.buffer);
 
     res.json({ path: `/api/images/products/${slug}` });
   } catch (err) {

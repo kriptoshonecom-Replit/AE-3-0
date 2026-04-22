@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { serveProductImage } from "./lib/productImages";
 
 const app: Express = express();
 
@@ -33,17 +34,23 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Serve product images via the API server so the same URL path works in both
-// development (Vite proxies /api to this server) and production (direct request).
-//
-// New uploads are stored in <api-server>/uploads/ and served at /api/images/*.
-// Legacy images (written into quote-builder/public/ before this change) are also
-// served here as a fallback so existing DB references don't break immediately.
-const uploadsDir = path.join(process.cwd(), "uploads");
-const legacyPublicDir = path.join(process.cwd(), "../quote-builder/public");
+// Serve product images: new images come from GCS (shared between dev & prod).
+// Legacy images that were stored on the local filesystem before the GCS migration
+// are still served as a fallback so existing references keep working.
+const legacyUploadsDir = path.join(process.cwd(), "uploads");
+const legacyPublicDir  = path.join(process.cwd(), "../quote-builder/public");
 
-app.use("/api/images", express.static(uploadsDir, { maxAge: "7d" }));
-app.use("/api/images", express.static(legacyPublicDir, { maxAge: "7d" }));
+app.get("/api/images/products/:slug", async (req, res, next) => {
+  try {
+    await serveProductImage(req.params.slug, res);
+  } catch (err) {
+    // Fall through to legacy filesystem fallback
+    next(err);
+  }
+});
+
+app.use("/api/images", express.static(legacyUploadsDir, { maxAge: "7d" }));
+app.use("/api/images", express.static(legacyPublicDir,  { maxAge: "7d" }));
 
 app.use("/api", router);
 
