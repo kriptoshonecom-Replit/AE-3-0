@@ -2,10 +2,10 @@ import { Router } from "express";
 import multer from "multer";
 import { db } from "@workspace/db";
 import { mediaFilesTable } from "@workspace/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, inArray } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/requireAdmin";
 import { logger } from "../lib/logger";
-import { uploadProductImage, deleteProductImage } from "../lib/productImages";
+import { uploadProductImage, deleteProductImage, listProductImageSlugs } from "../lib/productImages";
 
 const router = Router();
 router.use(requireAdmin);
@@ -25,6 +25,31 @@ function parsePngDimensions(buf: Buffer): { width: number; height: number } | nu
 
 router.get("/media", async (_req, res) => {
   try {
+    // Auto-sync: register any GCS files not yet in the DB
+    try {
+      const gcsSlugs = await listProductImageSlugs();
+      if (gcsSlugs.length > 0) {
+        const existing = await db
+          .select({ slug: mediaFilesTable.slug })
+          .from(mediaFilesTable)
+          .where(inArray(mediaFilesTable.slug, gcsSlugs));
+        const existingSet = new Set(existing.map((r) => r.slug));
+        const toInsert = gcsSlugs
+          .filter((slug) => !existingSet.has(slug))
+          .map((slug) => ({
+            originalName: slug,
+            slug,
+            path: `/api/images/products/${slug}`,
+          }));
+        if (toInsert.length > 0) {
+          await db.insert(mediaFilesTable).values(toInsert).onConflictDoNothing();
+          logger.info({ count: toInsert.length }, "Auto-registered GCS images into media_files");
+        }
+      }
+    } catch (syncErr) {
+      logger.warn(syncErr, "GCS sync skipped (non-fatal)");
+    }
+
     const files = await db
       .select()
       .from(mediaFilesTable)

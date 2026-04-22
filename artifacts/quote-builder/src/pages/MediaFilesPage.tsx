@@ -202,13 +202,13 @@ export default function MediaFilesPage() {
       )}
 
       <div className="admin-topbar">
-        <button className="admin-back-btn" onClick={() => setLocation("/")}>
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        <button className="btn-ghost admin-back-btn" onClick={() => setLocation("/")}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           Back to Quotes
         </button>
-        <span className="admin-page-title">Media Files</span>
+        <h1 className="admin-page-title">Media Files</h1>
         <div className="admin-topbar-right">
           <input
             ref={fileInputRef}
@@ -218,7 +218,7 @@ export default function MediaFilesPage() {
             onChange={handleUpload}
           />
           <button
-            className="admin-add-btn"
+            className="btn-primary"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
           >
@@ -228,12 +228,7 @@ export default function MediaFilesPage() {
                 Uploading…
               </>
             ) : (
-              <>
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
-                Upload Image
-              </>
+              "Upload Image"
             )}
           </button>
         </div>

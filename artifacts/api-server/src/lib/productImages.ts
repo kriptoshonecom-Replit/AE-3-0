@@ -30,6 +30,11 @@ export async function uploadProductImage(slug: string, buffer: Buffer): Promise<
   await file.save(buffer, { contentType: "image/png", resumable: false });
 }
 
+export async function listProductImageSlugs(): Promise<string[]> {
+  const [files] = await gcs.bucket(getBucketId()).getFiles({ prefix: GCS_PREFIX });
+  return files.map((f) => f.name.slice(GCS_PREFIX.length)).filter(Boolean);
+}
+
 export async function deleteProductImage(slug: string): Promise<void> {
   const file = gcs.bucket(getBucketId()).file(GCS_PREFIX + slug);
   const [exists] = await file.exists();
