@@ -9,7 +9,7 @@ import {
   quoteTotal,
 } from "./calculations";
 import pitData from "../data/pit-services.json";
-import legacyData from "../data/legacy.json";
+
 import { PIT_HOURLY_RATE } from "../data/pit-config";
 import { computeLineItemTotal } from "./quoteLogic";
 import { computeProductRelatedPitTotal } from "../components/ProductRelatedPitSection";
@@ -377,33 +377,6 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
     row("Cost of BuyOut", formatCurrency(buyoutAmount));
   }
 
-  const legacyToggles = quote.meta.legacyToggles ?? {};
-  const legacyQuantities = quote.meta.legacyQuantities ?? {};
-  const legacyItems: Array<{ id: string; price: number }> = [
-    { id: "boh-001", price: 85 },
-    { id: "fox-001", price: 70 },
-    { id: "fox-002", price: 75 },
-    { id: "km-001", price: 14 },
-    { id: "boh-002", price: 5 },
-    { id: "xl-001", price: 25 },
-    { id: "pay-001", price: 35 },
-    { id: "pay-002", price: 2 },
-  ];
-  const legacyTotal = legacyItems.reduce(
-    (s, i) => s + (legacyToggles[i.id] ? i.price * (legacyQuantities[i.id] ?? 1) : 0),
-    0,
-  );
-  if (legacyTotal > 0) {
-    y += 2;
-    doc.setDrawColor(220, 220, 218);
-    doc.setLineWidth(0.3);
-    doc.line(totalsX - 5, y - 1, margin + contentWidth, y - 1);
-    y += 3;
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    row("Legacy HW Added", formatCurrency(legacyTotal));
-  }
-
   // ── Notes ──────────────────────────────────────────
   if (quote.meta.notes) {
     const noteLines = doc.splitTextToSize(quote.meta.notes, contentWidth - 10);
@@ -507,20 +480,6 @@ export async function exportQuoteToPDF(quote: Quote): Promise<void> {
     .map((i) => ({ name: i.name, qty: 1, price: i.price ?? 0 }));
 
   drawItemsTable("Heatmap & Cabling", activeHeatmapRows, false);
-
-  // ── Aloha Essential 2.0 HW breakdown ────────────────
-  const legacyFullItems = (
-    legacyData.categories as Array<{
-      id: string;
-      lineItems: Array<{ id: string; name: string; price: number }>;
-    }>
-  ).find((c) => c.id === "aloha20")?.lineItems ?? [];
-
-  const activeLegacyRows: TableRow[] = legacyFullItems
-    .filter((i) => legacyToggles[i.id])
-    .map((i) => ({ name: i.name, qty: legacyQuantities[i.id] ?? 1, price: i.price }));
-
-  drawItemsTable("Aloha Essential 2.0 HW", activeLegacyRows, true);
 
   // ── Footer ──────────────────────────────────────────
   const totalPages = doc.getNumberOfPages();

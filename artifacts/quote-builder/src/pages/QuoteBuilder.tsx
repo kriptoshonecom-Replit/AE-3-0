@@ -10,7 +10,7 @@ import QuoteMetaForm from "../components/QuoteMetaForm";
 import CurrentSpendForm from "../components/CurrentSpendForm";
 import HeatmapSection, { computeHeatmapTotal, type HeatmapItem } from "../components/HeatmapSection";
 import PaymentsConfigPanel from "../components/PaymentsConfigPanel";
-import LegacyHwSection, { computeLegacyTotal, type LegacyItem } from "../components/LegacyHwSection";
+
 import UnsavedChangesModal from "../components/UnsavedChangesModal";
 import LicenseSyncModal from "../components/LicenseSyncModal";
 import {
@@ -51,28 +51,6 @@ const DEFAULT_HEATMAP_TOGGLES: Record<string, boolean> = {
   "heat-003": false,
 };
 
-const DEFAULT_LEGACY_TOGGLES: Record<string, boolean> = {
-  "boh-001": false,
-  "fox-001": false,
-  "fox-002": false,
-  "km-001": false,
-  "boh-002": false,
-  "xl-001": false,
-  "pay-001": false,
-  "pay-002": false,
-};
-
-const DEFAULT_LEGACY_QUANTITIES: Record<string, number> = {
-  "boh-001": 1,
-  "fox-001": 1,
-  "fox-002": 1,
-  "km-001": 1,
-  "boh-002": 1,
-  "xl-001": 1,
-  "pay-001": 1,
-  "pay-002": 1,
-};
-
 function createNewQuote(): Quote {
   return {
     meta: {
@@ -110,8 +88,6 @@ export default function QuoteBuilder() {
   const [yesNoToggles, setYesNoToggles] = useState<Record<string, boolean>>(DEFAULT_YES_NO);
   const [optionalProgramToggles, setOptionalProgramToggles] = useState<Record<string, boolean>>(DEFAULT_OPT_PROGRAMS);
   const [heatmapToggles, setHeatmapToggles] = useState<Record<string, boolean>>(DEFAULT_HEATMAP_TOGGLES);
-  const [legacyToggles, setLegacyToggles] = useState<Record<string, boolean>>(DEFAULT_LEGACY_TOGGLES);
-  const [legacyQuantities, setLegacyQuantities] = useState<Record<string, number>>(DEFAULT_LEGACY_QUANTITIES);
   const isDirtyRef = useRef(false);
   const [pendingAction, setPendingAction] = useState<null | "export" | "new">(null);
 
@@ -123,11 +99,6 @@ export default function QuoteBuilder() {
     () => buildProductCatalogMap(productCategories),
     [productCategories],
   );
-
-  const legacyItems = useMemo<LegacyItem[]>(() => {
-    const cat = productCategories.find((c) => c.id === "aloha20");
-    return cat ? cat.items.map((i) => ({ id: i.id, name: i.name, price: i.price })) : [];
-  }, [productCategories]);
 
   const [pitCategories, setPitCategories] = useState<PitCategory[]>(
     (pitDataStatic.categories as unknown as PitCategory[]).filter((c) => c.id !== "heatmap"),
@@ -215,22 +186,6 @@ export default function QuoteBuilder() {
     autosave(updated);
   };
 
-  const handleLegacyToggle = (id: string, value: boolean) => {
-    const next = { ...legacyToggles, [id]: value };
-    setLegacyToggles(next);
-    const updated = { ...quote, meta: { ...quote.meta, legacyToggles: next } };
-    setQuote(updated);
-    autosave(updated);
-  };
-
-  const handleLegacyQuantityChange = (id: string, qty: number) => {
-    const next = { ...legacyQuantities, [id]: qty };
-    setLegacyQuantities(next);
-    const updated = { ...quote, meta: { ...quote.meta, legacyQuantities: next } };
-    setQuote(updated);
-    autosave(updated);
-  };
-
   const printAreaRef = useRef<HTMLDivElement>(null);
 
   // Load the correct quote once we know who the user is
@@ -244,8 +199,6 @@ export default function QuoteBuilder() {
         if (q.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...q.meta.yesNoToggles });
         setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
         setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });
-        setLegacyToggles({ ...DEFAULT_LEGACY_TOGGLES, ...(q.meta.legacyToggles ?? {}) });
-        setLegacyQuantities({ ...DEFAULT_LEGACY_QUANTITIES, ...(q.meta.legacyQuantities ?? {}) });
         setInitialized(true);
         return;
       }
@@ -257,8 +210,6 @@ export default function QuoteBuilder() {
       if (q.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...q.meta.yesNoToggles });
       setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
       setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });
-      setLegacyToggles({ ...DEFAULT_LEGACY_TOGGLES, ...(q.meta.legacyToggles ?? {}) });
-      setLegacyQuantities({ ...DEFAULT_LEGACY_QUANTITIES, ...(q.meta.legacyQuantities ?? {}) });
     }
     setInitialized(true);
   }, [userId, initialized]);
@@ -394,8 +345,6 @@ export default function QuoteBuilder() {
     setYesNoToggles(DEFAULT_YES_NO);
     setOptionalProgramToggles(DEFAULT_OPT_PROGRAMS);
     setHeatmapToggles(DEFAULT_HEATMAP_TOGGLES);
-    setLegacyToggles(DEFAULT_LEGACY_TOGGLES);
-    setLegacyQuantities(DEFAULT_LEGACY_QUANTITIES);
     autosave(newQ, false);
     isDirtyRef.current = false;
     setSidebarOpen(false);
@@ -440,8 +389,6 @@ export default function QuoteBuilder() {
     setYesNoToggles({ ...DEFAULT_YES_NO, ...(q.meta.yesNoToggles ?? {}) });
     setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
     setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });
-    setLegacyToggles({ ...DEFAULT_LEGACY_TOGGLES, ...(q.meta.legacyToggles ?? {}) });
-    setLegacyQuantities({ ...DEFAULT_LEGACY_QUANTITIES, ...(q.meta.legacyQuantities ?? {}) });
     setSidebarOpen(false);
   };
 
@@ -659,18 +606,6 @@ export default function QuoteBuilder() {
               <PaymentsConfigPanel meta={quote.meta} onChange={handleMetaChange} />
             </section>
 
-            {/* Aloha Essential 2.0 HW */}
-            <section className="section">
-              <h2 className="section-title">Aloha Essential 2.0 HW</h2>
-              <LegacyHwSection
-                toggles={legacyToggles}
-                onToggle={handleLegacyToggle}
-                quantities={legacyQuantities}
-                onQuantityChange={handleLegacyQuantityChange}
-                items={legacyItems.length > 0 ? legacyItems : undefined}
-              />
-            </section>
-
             {/* Groups section */}
             <section className="section">
               <div className="section-header">
@@ -726,7 +661,7 @@ export default function QuoteBuilder() {
                   })()}
                   productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles, optionalProgramToggles, quote.meta.pitType ?? "", catalogMap)}
                   heatmapTotal={computeHeatmapTotal(heatmapToggles, heatmapItems.length > 0 ? heatmapItems : undefined)}
-                  legacyTotal={computeLegacyTotal(legacyToggles, legacyQuantities, legacyItems.length > 0 ? legacyItems : undefined)}
+                  legacyTotal={0}
                 />
               </section>
             )}
