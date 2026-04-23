@@ -2680,6 +2680,28 @@ textarea:focus::placeholder {
   gap: 6px;
 }
 
+.admin-btn-move {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  padding: 4px 9px;
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+
+.admin-btn-move:hover {
+  border-color: #16a34a;
+  color: #16a34a;
+}
+
 .admin-btn-edit {
   display: flex;
   align-items: center;

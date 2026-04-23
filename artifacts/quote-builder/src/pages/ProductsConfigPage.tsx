@@ -33,6 +33,84 @@ function numberOrEmpty(v: unknown): string {
   return Number.isNaN(n) ? "" : String(n);
 }
 
+/* ─── Move Product Modal ─────────────────────────────── */
+interface MoveProductModalProps {
+  item: ProductItem;
+  sourceCatId: string;
+  categories: Category[];
+  onClose: () => void;
+  onMoved: (d: ProductsData) => void;
+}
+
+function MoveProductModal({ item, sourceCatId, categories, onClose, onMoved }: MoveProductModalProps) {
+  const otherCats = categories.filter((c) => c.id !== sourceCatId);
+  const [targetCatId, setTargetCatId] = useState(otherCats[0]?.id ?? "");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!targetCatId) { setError("Please select a target category."); return; }
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/admin/products/categories/${sourceCatId}/items/${item.id}/move`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ targetCatId }),
+        },
+      );
+      const data = await res.json() as ProductsData & { error?: string };
+      if (!res.ok) { setError(data.error ?? "Move failed"); return; }
+      onMoved(data);
+      onClose();
+    } catch { setError("Network error"); }
+    finally { setLoading(false); }
+  }
+
+  return (
+    <div className="admin-modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="admin-modal" onMouseDown={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
+        <div className="admin-modal-header">
+          <h3>Move Product</h3>
+          <button className="admin-modal-close" onClick={onClose}>✕</button>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="admin-modal-body" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <p style={{ margin: 0, fontSize: 13, color: "var(--text-2)" }}>
+              Moving <strong>{item.name}</strong> to a different category.
+            </p>
+            <div className="edit-field-group">
+              <label>Target Category</label>
+              {otherCats.length === 0 ? (
+                <p style={{ color: "var(--danger)", fontSize: 13 }}>No other categories available.</p>
+              ) : (
+                <select
+                  value={targetCatId}
+                  onChange={(e) => setTargetCatId(e.target.value)}
+                >
+                  {otherCats.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+            {error && <p className="edit-modal-error">{error}</p>}
+          </div>
+          <div className="edit-modal-footer">
+            <button type="button" className="edit-modal-cancel" onClick={onClose}>Cancel</button>
+            <button type="submit" className="edit-modal-save" disabled={loading || otherCats.length === 0}>
+              {loading ? "Moving…" : "Move Product"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Edit Product Modal ──────────────────────────────── */
 interface EditProductModalProps {
   catId: string;
@@ -367,6 +445,7 @@ export default function ProductsConfigPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editingItem, setEditingItem] = useState<ProductItem | null>(null);
+  const [movingItem, setMovingItem] = useState<ProductItem | null>(null);
   const [addingItem, setAddingItem] = useState(false);
   const [addingCat, setAddingCat] = useState(false);
 
@@ -485,6 +564,12 @@ export default function ProductsConfigPage() {
                         <td className="admin-td-desc">{item.text ?? "—"}</td>
                         <td>
                           <div className="admin-actions">
+                            <button className="admin-btn-move" onClick={() => setMovingItem(item)}>
+                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                <path d="M8 2v12M2 8l6-6 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                              Move
+                            </button>
                             <button className="admin-btn-edit" onClick={() => setEditingItem(item)}>
                               <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
                                 <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -508,6 +593,16 @@ export default function ProductsConfigPage() {
           </>
         )}
       </div>
+
+      {movingItem && currentCat && data && (
+        <MoveProductModal
+          item={movingItem}
+          sourceCatId={currentCat.id}
+          categories={data.categories}
+          onClose={() => setMovingItem(null)}
+          onMoved={(d) => { setData(d); setMovingItem(null); }}
+        />
+      )}
 
       {editingItem && currentCat && (
         <EditProductModal

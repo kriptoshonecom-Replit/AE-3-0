@@ -342,6 +342,28 @@ router.patch("/products/categories/:catId/items/:itemId", async (req, res) => {
   }
 });
 
+router.patch("/products/categories/:catId/items/:itemId/move", async (req, res) => {
+  try {
+    const { catId, itemId } = req.params;
+    const { targetCatId } = req.body as { targetCatId: string };
+    if (!targetCatId?.trim()) { res.status(400).json({ error: "targetCatId is required" }); return; }
+    const data = await readProducts();
+    const sourceCat = data.categories.find((c) => c.id === catId);
+    if (!sourceCat) { res.status(404).json({ error: "Source category not found" }); return; }
+    const targetCat = data.categories.find((c) => c.id === targetCatId);
+    if (!targetCat) { res.status(404).json({ error: "Target category not found" }); return; }
+    const itemIdx = sourceCat.items.findIndex((i) => i.id === itemId);
+    if (itemIdx === -1) { res.status(404).json({ error: "Product not found" }); return; }
+    const [item] = sourceCat.items.splice(itemIdx, 1);
+    targetCat.items.push(item);
+    await writeProducts(data);
+    res.json(data);
+  } catch (err) {
+    logger.error(err, "admin move product error");
+    res.status(500).json({ error: "Failed to move product" });
+  }
+});
+
 router.delete("/products/categories/:catId", async (req, res) => {
   try {
     const { catId } = req.params;
