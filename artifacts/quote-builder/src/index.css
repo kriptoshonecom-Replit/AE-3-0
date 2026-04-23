@@ -669,6 +669,7 @@ button {
   line-height: 1.55;
   color: var(--text);
   margin: 0;
+  white-space: pre-wrap;
 }
 
 .info-modal-close {
