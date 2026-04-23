@@ -350,40 +350,61 @@ export default function QuoteBuilder() {
         if (configAlertStateRef.current) return; // don't stack modals
         const subject = findSubjectItem(grps, cfg.subjectProductId);
         if (!subject) return;
-        const count = computeLookupCount(grps, cfg.lookupProductIds);
-        if (count === subject.currentQty) return;
 
-        // info-only: auto-add any missing lookup products (qty=1, skip if already present)
-        let resolvedGroups = grps;
         if (cfg.infoOnly) {
-          resolvedGroups = autoAddLookupProducts(grps, cfg.lookupProductIds, productCategories);
+          // info-only: skip entirely if every lookup product is already present (qty > 0)
+          const anyMissing = cfg.lookupProductIds.some((lid) =>
+            grps.reduce(
+              (sum, g) => sum + g.lineItems.filter((li) => li.productId === lid).reduce((s, li) => s + li.quantity, 0),
+              0,
+            ) === 0,
+          );
+          if (!anyMissing) return;
+
+          // auto-add the missing lookup products at qty=1
+          const resolvedGroups = autoAddLookupProducts(grps, cfg.lookupProductIds, productCategories);
           if (resolvedGroups !== grps) {
             const updated = { ...quote, groups: resolvedGroups };
             setQuote(updated);
             autosave(updated);
             latestGroupsRef.current = resolvedGroups;
           }
-        }
 
-        setConfigAlertState({
-          configId: cfg.id,
-          subjectCount: computeLookupCount(resolvedGroups, cfg.lookupProductIds),
-          subjectProductName: subject.productName,
-          displayMessage: cfg.displayMessage,
-          groupIdx: subject.groupIdx,
-          itemIdx: subject.itemIdx,
-          infoOnly: cfg.infoOnly,
-        });
+          setConfigAlertState({
+            configId: cfg.id,
+            subjectCount: computeLookupCount(resolvedGroups, cfg.lookupProductIds),
+            subjectProductName: subject.productName,
+            displayMessage: cfg.displayMessage,
+            groupIdx: subject.groupIdx,
+            itemIdx: subject.itemIdx,
+            infoOnly: true,
+          });
+        } else {
+          const count = computeLookupCount(grps, cfg.lookupProductIds);
+          if (count === subject.currentQty) return;
+          setConfigAlertState({
+            configId: cfg.id,
+            subjectCount: count,
+            subjectProductName: subject.productName,
+            displayMessage: cfg.displayMessage,
+            groupIdx: subject.groupIdx,
+            itemIdx: subject.itemIdx,
+            infoOnly: false,
+          });
+        }
       };
 
       const qtyChanged =
         lookupQtyChanged(oldGroup, group, cfg.lookupProductIds) ||
         subjectQtyChanged(oldGroup, group, cfg.subjectProductId);
-      const productSelected =
-        lookupProductSelected(oldGroup, group, cfg.lookupProductIds) ||
-        subjectProductSelected(oldGroup, group, cfg.subjectProductId);
+      // For info-only alerts: only fire when the subject product itself is first added.
+      // Never re-fire on qty changes or when lookup products are selected/modified.
+      const productSelected = cfg.infoOnly
+        ? subjectProductSelected(oldGroup, group, cfg.subjectProductId)
+        : lookupProductSelected(oldGroup, group, cfg.lookupProductIds) ||
+          subjectProductSelected(oldGroup, group, cfg.subjectProductId);
 
-      if (qtyChanged) {
+      if (qtyChanged && !cfg.infoOnly) {
         if (configTimersRef.current[cfg.id]) clearTimeout(configTimersRef.current[cfg.id]);
         delete configTimersRef.current[cfg.id];
         tryShowConfigAlert(groups);
