@@ -2316,6 +2316,25 @@ textarea:focus::placeholder {
   border-color: var(--accent);
 }
 
+.edit-field-group textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 13.5px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.edit-field-group textarea:focus {
+  border-color: var(--accent);
+}
+
 .edit-field-group .auth-pw-wrap input {
   padding-right: 36px;
 }

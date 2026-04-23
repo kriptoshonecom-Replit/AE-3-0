@@ -188,7 +188,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
 
           <div className="edit-field-group">
             <label>Description / Text</label>
-            <input type="text" value={text} onChange={(e) => setText(e.target.value)} placeholder="Short description shown to users" />
+            <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Short description shown to users" rows={3} />
           </div>
 
           {showMediaPicker && (
