@@ -635,11 +635,15 @@ button {
   border-radius: 10px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.18);
   padding: 20px 24px;
-  width: 520px;
+  width: 360px;
   max-width: calc(100vw - 32px);
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.info-modal.info {
+  width: 520px;
 }
 
 .info-modal-header {
