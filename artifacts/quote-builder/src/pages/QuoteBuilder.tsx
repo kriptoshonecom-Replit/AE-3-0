@@ -14,10 +14,6 @@ import PaymentsConfigPanel from "../components/PaymentsConfigPanel";
 import UnsavedChangesModal from "../components/UnsavedChangesModal";
 import LicenseSyncModal from "../components/LicenseSyncModal";
 import {
-  deviceQtyChanged,
-  deviceProductSelected,
-  computeTotalDeviceCount,
-  findLicenseItem,
   lookupQtyChanged,
   lookupProductSelected,
   subjectProductSelected,
@@ -176,27 +172,16 @@ export default function QuoteBuilder() {
       .catch(() => {});
   }, []);
 
-  const [licenseSyncState, setLicenseSyncState] = useState<null | {
-    deviceCount: number;
-    licenseProductName: string;
-    groupIdx: number;
-    itemIdx: number;
-  }>(null);
-
   // Refs so timer callbacks always read the freshest groups state
   const latestGroupsRef = useRef(quote.groups);
-  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Refs so timer callbacks always read the freshest modal state
-  const licenseSyncStateRef = useRef(licenseSyncState);
+  // Ref so timer callbacks always read the freshest modal state
   const configAlertStateRef = useRef(configAlertState);
-  useEffect(() => { licenseSyncStateRef.current = licenseSyncState; }, [licenseSyncState]);
   useEffect(() => { configAlertStateRef.current = configAlertState; }, [configAlertState]);
 
-  // Clear timer on unmount
+  // Clear timers on unmount
   useEffect(() => {
     return () => {
-      if (syncTimerRef.current !== null) clearTimeout(syncTimerRef.current);
       Object.values(configTimersRef.current).forEach(clearTimeout);
     };
   }, []);
@@ -276,23 +261,6 @@ export default function QuoteBuilder() {
     autosave(updated);
   };
 
-  // Shared helper — reads freshest groups from ref and shows modal if mismatched
-  const tryShowLicenseSyncModal = useCallback((groups: QuoteGroup[]) => {
-    const license = findLicenseItem(groups);
-    if (!license) return;
-    const deviceCount = computeTotalDeviceCount(groups);
-    if (deviceCount === license.currentQty) return;
-    const licenseName =
-      groups[license.groupIdx]?.lineItems[license.itemIdx]?.productName ??
-      license.productId;
-    setLicenseSyncState({
-      deviceCount,
-      licenseProductName: licenseName,
-      groupIdx: license.groupIdx,
-      itemIdx: license.itemIdx,
-    });
-  }, []);
-
   const handleGroupChange = (idx: number, group: QuoteGroup) => {
     const oldGroup = quote.groups[idx];
     const groups = quote.groups.map((g, i) => (i === idx ? group : g));
@@ -305,26 +273,10 @@ export default function QuoteBuilder() {
 
     if (!oldGroup) return;
 
-    if (deviceQtyChanged(oldGroup, group)) {
-      // Qty explicitly changed — cancel any pending timer and check immediately
-      if (syncTimerRef.current !== null) {
-        clearTimeout(syncTimerRef.current);
-        syncTimerRef.current = null;
-      }
-      tryShowLicenseSyncModal(groups);
-    } else if (deviceProductSelected(oldGroup, group)) {
-      // New device product selected — start 5-second countdown at default qty=1
-      if (syncTimerRef.current !== null) clearTimeout(syncTimerRef.current);
-      syncTimerRef.current = setTimeout(() => {
-        syncTimerRef.current = null;
-        tryShowLicenseSyncModal(latestGroupsRef.current);
-      }, 5000);
-    }
-
     // ── Dynamic DB-configured alert checks ──────────────────────────────────
     for (const cfg of alertConfigs) {
       const tryShowConfigAlert = (grps: QuoteGroup[]) => {
-        if (licenseSyncStateRef.current || configAlertStateRef.current) return; // don't stack modals
+        if (configAlertStateRef.current) return; // don't stack modals
         const subject = findSubjectItem(grps, cfg.subjectProductId);
         if (!subject) return;
         const count = computeLookupCount(grps, cfg.lookupProductIds);
@@ -360,24 +312,6 @@ export default function QuoteBuilder() {
       }
     }
   };
-
-  const handleLicenseAutoAdjust = () => {
-    if (!licenseSyncState) return;
-    const { deviceCount, groupIdx, itemIdx } = licenseSyncState;
-    const groups = quote.groups.map((g, gi) => {
-      if (gi !== groupIdx) return g;
-      const lineItems = g.lineItems.map((item, li) =>
-        li === itemIdx ? { ...item, quantity: deviceCount } : item,
-      );
-      return { ...g, lineItems };
-    });
-    const updated = { ...quote, groups };
-    setQuote(updated);
-    autosave(updated);
-    setLicenseSyncState(null);
-  };
-
-  const handleLicenseKeep = () => setLicenseSyncState(null);
 
   const handleConfigAlertAutoAdjust = () => {
     if (!configAlertState) return;
@@ -498,18 +432,8 @@ export default function QuoteBuilder() {
         <UnsavedChangesModal onYes={handleUnsavedYes} onNo={handleUnsavedNo} />
       )}
 
-      {/* License sync modal (built-in) */}
-      {licenseSyncState && (
-        <LicenseSyncModal
-          deviceCount={licenseSyncState.deviceCount}
-          licenseProductName={licenseSyncState.licenseProductName}
-          onAutoAdjust={handleLicenseAutoAdjust}
-          onKeep={handleLicenseKeep}
-        />
-      )}
-
       {/* Dynamic DB-configured alert modal */}
-      {!licenseSyncState && configAlertState && (
+      {configAlertState && (
         <LicenseSyncModal
           deviceCount={configAlertState.subjectCount}
           licenseProductName={configAlertState.subjectProductName}
