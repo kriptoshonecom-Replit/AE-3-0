@@ -347,14 +347,18 @@ router.patch("/products/categories/:catId/items/:itemId/move", async (req, res) 
     const { catId, itemId } = req.params;
     const { targetCatId } = req.body as { targetCatId: string };
     if (!targetCatId?.trim()) { res.status(400).json({ error: "targetCatId is required" }); return; }
+    if (catId === targetCatId) { res.status(400).json({ error: "Source and target category are the same" }); return; }
     const data = await readProducts();
-    const sourceCat = data.categories.find((c) => c.id === catId);
+    const sourceCat = data.categories.find((c) => String(c.id) === catId);
     if (!sourceCat) { res.status(404).json({ error: "Source category not found" }); return; }
-    const targetCat = data.categories.find((c) => c.id === targetCatId);
+    const targetCat = data.categories.find((c) => String(c.id) === targetCatId);
     if (!targetCat) { res.status(404).json({ error: "Target category not found" }); return; }
-    const itemIdx = sourceCat.items.findIndex((i) => i.id === itemId);
-    if (itemIdx === -1) { res.status(404).json({ error: "Product not found" }); return; }
+    // Use String coercion in case IDs were stored as numbers in JSONB
+    const itemIdx = sourceCat.items.findIndex((i) => String(i.id) === itemId);
+    if (itemIdx === -1) { res.status(404).json({ error: "Product not found in source category" }); return; }
     const [item] = sourceCat.items.splice(itemIdx, 1);
+    // Dedup: remove any stale copy of this item from the target before inserting
+    targetCat.items = targetCat.items.filter((i) => String(i.id) !== itemId);
     targetCat.items.push(item);
     await writeProducts(data);
     res.json(data);
