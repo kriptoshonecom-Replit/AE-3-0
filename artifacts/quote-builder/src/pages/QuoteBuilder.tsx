@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "wouter";
 import logo from "/logo.png";
-import type { Quote, QuoteGroup, QuoteMeta, ProductCategory, PitCategory } from "../types";
+import type { Quote, QuoteGroup, QuoteLineItem, QuoteMeta, ProductCategory, PitCategory } from "../types";
 import catalog from "../data/products.json";
 import pitDataStatic from "../data/pit-services.json";
 import { PIT_HOURLY_RATE } from "../data/pit-config";
@@ -73,6 +73,69 @@ function createNewQuote(): Quote {
     },
     groups: [],
   };
+}
+
+// ── Auto-add helper for info-only alerts ──────────────────────────────────────
+// For each lookup product not already present in the quote (qty > 0), adds a
+// new line item with quantity 1 into the matching category group (or a new group).
+function autoAddLookupProducts(
+  groups: QuoteGroup[],
+  lookupIds: string[],
+  categories: ProductCategory[],
+): QuoteGroup[] {
+  const missing = lookupIds.filter((lid) => {
+    const total = groups.reduce(
+      (sum, g) => sum + g.lineItems.filter((li) => li.productId === lid).reduce((s, li) => s + li.quantity, 0),
+      0,
+    );
+    return total === 0;
+  });
+  if (missing.length === 0) return groups;
+
+  let nextGroups = [...groups];
+  for (const pid of missing) {
+    let foundItem: { id: string; name: string; price: number } | undefined;
+    let foundCatId = "";
+    let foundCatName = "";
+    outer: for (const cat of categories) {
+      for (const item of cat.items) {
+        if (item.id === pid) {
+          foundItem = item;
+          foundCatId = cat.id;
+          foundCatName = cat.name;
+          break outer;
+        }
+      }
+    }
+    if (!foundItem) continue;
+
+    const newLineItem: QuoteLineItem = {
+      id: generateId(),
+      productId: foundItem.id,
+      productName: foundItem.name,
+      unitPrice: foundItem.price,
+      quantity: 1,
+    };
+
+    const groupIdx = nextGroups.findIndex((g) => g.categoryId === foundCatId);
+    if (groupIdx >= 0) {
+      nextGroups = nextGroups.map((g, i) =>
+        i === groupIdx ? { ...g, lineItems: [...g.lineItems, newLineItem] } : g,
+      );
+    } else {
+      nextGroups = [
+        ...nextGroups,
+        {
+          id: generateId(),
+          categoryId: foundCatId,
+          categoryName: foundCatName,
+          lineItems: [newLineItem],
+          isOpen: true,
+        },
+      ];
+    }
+  }
+  return nextGroups;
 }
 
 export default function QuoteBuilder() {
@@ -289,9 +352,22 @@ export default function QuoteBuilder() {
         if (!subject) return;
         const count = computeLookupCount(grps, cfg.lookupProductIds);
         if (count === subject.currentQty) return;
+
+        // info-only: auto-add any missing lookup products (qty=1, skip if already present)
+        let resolvedGroups = grps;
+        if (cfg.infoOnly) {
+          resolvedGroups = autoAddLookupProducts(grps, cfg.lookupProductIds, productCategories);
+          if (resolvedGroups !== grps) {
+            const updated = { ...quote, groups: resolvedGroups };
+            setQuote(updated);
+            autosave(updated);
+            latestGroupsRef.current = resolvedGroups;
+          }
+        }
+
         setConfigAlertState({
           configId: cfg.id,
-          subjectCount: count,
+          subjectCount: computeLookupCount(resolvedGroups, cfg.lookupProductIds),
           subjectProductName: subject.productName,
           displayMessage: cfg.displayMessage,
           groupIdx: subject.groupIdx,
