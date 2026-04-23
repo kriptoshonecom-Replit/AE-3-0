@@ -49,6 +49,7 @@ router.post("/admin/alert-configs", async (req, res) => {
       displayMessage,
       delaySeconds,
       isActive,
+      infoOnly,
     } = req.body as {
       subjectProductId: string;
       lookupProductIds: string[];
@@ -56,6 +57,7 @@ router.post("/admin/alert-configs", async (req, res) => {
       displayMessage: string;
       delaySeconds?: number;
       isActive?: boolean;
+      infoOnly?: boolean;
     };
 
     if (!subjectProductId?.trim()) {
@@ -76,6 +78,7 @@ router.post("/admin/alert-configs", async (req, res) => {
         displayMessage: displayMessage?.trim() ?? "",
         delaySeconds: typeof delaySeconds === "number" ? delaySeconds : 5,
         isActive: isActive !== false,
+        infoOnly: infoOnly === true,
       })
       .returning();
 
@@ -96,6 +99,7 @@ router.patch("/admin/alert-configs/:id", async (req, res) => {
       displayMessage,
       delaySeconds,
       isActive,
+      infoOnly,
     } = req.body as Partial<{
       subjectProductId: string;
       lookupProductIds: string[];
@@ -103,6 +107,7 @@ router.patch("/admin/alert-configs/:id", async (req, res) => {
       displayMessage: string;
       delaySeconds: number;
       isActive: boolean;
+      infoOnly: boolean;
     }>;
 
     const existing = await db
@@ -124,6 +129,7 @@ router.patch("/admin/alert-configs/:id", async (req, res) => {
     if (displayMessage !== undefined) updates.displayMessage = displayMessage.trim();
     if (delaySeconds !== undefined) updates.delaySeconds = delaySeconds;
     if (isActive !== undefined) updates.isActive = isActive;
+    if (infoOnly !== undefined) updates.infoOnly = infoOnly;
 
     const [updated] = await db
       .update(alertConfigsTable)

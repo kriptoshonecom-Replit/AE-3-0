@@ -153,6 +153,7 @@ export default function QuoteBuilder() {
     lookupProductIds: string[];
     displayMessage: string;
     delaySeconds: number;
+    infoOnly: boolean;
   }
   const [alertConfigs, setAlertConfigs] = useState<AlertConfigRuntime[]>([]);
   const [configAlertState, setConfigAlertState] = useState<null | {
@@ -162,11 +163,12 @@ export default function QuoteBuilder() {
     displayMessage: string;
     groupIdx: number;
     itemIdx: number;
+    infoOnly: boolean;
   }>(null);
   const configTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   // Pre-flight alert queue (runs before export / new-quote)
-  type AlertEntry = { configId: string; subjectCount: number; subjectProductName: string; displayMessage: string; groupIdx: number; itemIdx: number; };
+  type AlertEntry = { configId: string; subjectCount: number; subjectProductName: string; displayMessage: string; groupIdx: number; itemIdx: number; infoOnly: boolean; };
   const [preflightAction, setPreflightAction] = useState<null | "export" | "new">(null);
   const [preflightQueue, setPreflightQueue] = useState<AlertEntry[]>([]);
   const preflightGroupsRef = useRef<QuoteGroup[]>([]);
@@ -294,6 +296,7 @@ export default function QuoteBuilder() {
           displayMessage: cfg.displayMessage,
           groupIdx: subject.groupIdx,
           itemIdx: subject.itemIdx,
+          infoOnly: cfg.infoOnly,
         });
       };
 
@@ -321,6 +324,7 @@ export default function QuoteBuilder() {
 
   const handleConfigAlertAutoAdjust = () => {
     if (!configAlertState) return;
+    if (configAlertState.infoOnly) { handleConfigAlertKeep(); return; }
     const { subjectCount, groupIdx, itemIdx } = configAlertState;
     const baseGroups = preflightAction ? preflightGroupsRef.current : quote.groups;
     const groups = baseGroups.map((g, gi) => {
@@ -411,6 +415,7 @@ export default function QuoteBuilder() {
         displayMessage: cfg.displayMessage,
         groupIdx: subject.groupIdx,
         itemIdx: subject.itemIdx,
+        infoOnly: cfg.infoOnly,
       });
     }
     return result;
@@ -501,6 +506,7 @@ export default function QuoteBuilder() {
           deviceCount={configAlertState.subjectCount}
           licenseProductName={configAlertState.subjectProductName}
           displayMessage={configAlertState.displayMessage || undefined}
+          infoOnly={configAlertState.infoOnly}
           onAutoAdjust={handleConfigAlertAutoAdjust}
           onKeep={handleConfigAlertKeep}
         />

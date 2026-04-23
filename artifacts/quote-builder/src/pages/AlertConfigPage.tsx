@@ -11,6 +11,7 @@ interface AlertConfig {
   displayMessage: string;
   delaySeconds: number;
   isActive: boolean;
+  infoOnly: boolean;
   createdAt: string;
 }
 
@@ -85,6 +86,7 @@ function AlertModal({ config, products, onClose, onSaved }: ModalProps) {
   const [message, setMessage] = useState(config?.displayMessage ?? "");
   const [delay, setDelay] = useState(String(config?.delaySeconds ?? 5));
   const [active, setActive] = useState(config?.isActive ?? true);
+  const [infoOnly, setInfoOnly] = useState(config?.infoOnly ?? false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -127,6 +129,7 @@ function AlertModal({ config, products, onClose, onSaved }: ModalProps) {
           displayMessage: message.trim(),
           delaySeconds: delayNum,
           isActive: active,
+          infoOnly,
         }),
       });
       const data = await res.json() as AlertConfig & { error?: string };
@@ -264,6 +267,31 @@ function AlertModal({ config, products, onClose, onSaved }: ModalProps) {
                 />
                 <span style={{ fontSize: 13 }}>Active</span>
               </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", paddingTop: 10 }}>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={infoOnly}
+                  onClick={() => setInfoOnly((v) => !v)}
+                  style={{
+                    width: 36, height: 20, borderRadius: 10, border: "none", cursor: "pointer", flexShrink: 0,
+                    background: infoOnly ? "var(--accent)" : "var(--border)",
+                    position: "relative", transition: "background 0.2s", padding: 0,
+                  }}
+                >
+                  <span style={{
+                    position: "absolute", top: 2, left: infoOnly ? 18 : 2,
+                    width: 16, height: 16, borderRadius: "50%", background: "#fff",
+                    transition: "left 0.2s", display: "block",
+                  }} />
+                </button>
+                <span style={{ fontSize: 13 }}>Product Selected Related Alert</span>
+              </label>
+              {infoOnly && (
+                <p className="edit-field-hint" style={{ marginTop: 4 }}>
+                  Alert will show as informational only — no quantity adjustment offered.
+                </p>
+              )}
             </div>
           </div>
 

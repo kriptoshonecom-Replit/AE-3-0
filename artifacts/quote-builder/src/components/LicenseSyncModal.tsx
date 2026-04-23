@@ -4,6 +4,7 @@ interface Props {
   deviceCount: number;
   licenseProductName: string;
   displayMessage?: string;
+  infoOnly?: boolean;
   onAutoAdjust: () => void;
   onKeep: () => void;
 }
@@ -12,6 +13,7 @@ export default function LicenseSyncModal({
   deviceCount,
   licenseProductName,
   displayMessage,
+  infoOnly,
   onAutoAdjust,
   onKeep,
 }: Props) {
@@ -22,6 +24,40 @@ export default function LicenseSyncModal({
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [onKeep]);
+
+  if (infoOnly) {
+    return (
+      <div
+        className="info-modal-backdrop"
+        onMouseDown={(e) => e.target === e.currentTarget && onKeep()}
+      >
+        <div
+          className="unsaved-modal"
+          onMouseDown={(e) => e.stopPropagation()}
+          style={{ maxWidth: 400 }}
+        >
+          <div className="unsaved-modal-header">
+            <img
+              src="/info-btn.png"
+              alt="Info"
+              style={{ width: 22, height: 22, flexShrink: 0 }}
+            />
+            Information
+          </div>
+
+          <p className="unsaved-modal-text" style={{ marginTop: 12, whiteSpace: "pre-wrap" }}>
+            {displayMessage || `${licenseProductName} is selected in this quote.`}
+          </p>
+
+          <div className="unsaved-modal-actions">
+            <button type="button" className="unsaved-btn-yes" onClick={onKeep}>
+              Got it
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

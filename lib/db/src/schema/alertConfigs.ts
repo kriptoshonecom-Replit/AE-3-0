@@ -8,6 +8,7 @@ export const alertConfigsTable = pgTable("alert_configs", {
   delaySeconds: integer("delay_seconds").notNull().default(5),
   lookupLogic: text("lookup_logic").notNull().default("and"),
   isActive: boolean("is_active").notNull().default(true),
+  infoOnly: boolean("info_only").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
