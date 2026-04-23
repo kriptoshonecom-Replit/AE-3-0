@@ -165,6 +165,12 @@ export default function QuoteBuilder() {
   }>(null);
   const configTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
+  // Pre-flight alert queue (runs before export / new-quote)
+  type AlertEntry = { configId: string; subjectCount: number; subjectProductName: string; displayMessage: string; groupIdx: number; itemIdx: number; };
+  const [preflightAction, setPreflightAction] = useState<null | "export" | "new">(null);
+  const [preflightQueue, setPreflightQueue] = useState<AlertEntry[]>([]);
+  const preflightGroupsRef = useRef<QuoteGroup[]>([]);
+
   useEffect(() => {
     fetch(`${API_BASE}/api/alert-configs`, { cache: "no-store" })
       .then((r) => r.ok ? r.json() : [])
@@ -316,7 +322,8 @@ export default function QuoteBuilder() {
   const handleConfigAlertAutoAdjust = () => {
     if (!configAlertState) return;
     const { subjectCount, groupIdx, itemIdx } = configAlertState;
-    const groups = quote.groups.map((g, gi) => {
+    const baseGroups = preflightAction ? preflightGroupsRef.current : quote.groups;
+    const groups = baseGroups.map((g, gi) => {
       if (gi !== groupIdx) return g;
       const lineItems = g.lineItems.map((item, li) =>
         li === itemIdx ? { ...item, quantity: subjectCount } : item,
@@ -327,9 +334,18 @@ export default function QuoteBuilder() {
     setQuote(updated);
     autosave(updated);
     setConfigAlertState(null);
+    if (preflightAction) {
+      preflightGroupsRef.current = groups;
+      advancePreflightQueue(preflightQueue, preflightAction);
+    }
   };
 
-  const handleConfigAlertKeep = () => setConfigAlertState(null);
+  const handleConfigAlertKeep = () => {
+    setConfigAlertState(null);
+    if (preflightAction) {
+      advancePreflightQueue(preflightQueue, preflightAction);
+    }
+  };
 
   const handleGroupRemove = (idx: number) => {
     const groups = quote.groups.filter((_, i) => i !== idx);
@@ -380,27 +396,74 @@ export default function QuoteBuilder() {
     setSidebarOpen(false);
   };
 
+  // Collect all alert-config mismatches for the given groups
+  const collectMismatches = (groups: QuoteGroup[]): AlertEntry[] => {
+    const result: AlertEntry[] = [];
+    for (const cfg of alertConfigs) {
+      const subject = findSubjectItem(groups, cfg.subjectProductId);
+      if (!subject) continue;
+      const count = computeLookupCount(groups, cfg.lookupProductIds);
+      if (count === subject.currentQty) continue;
+      result.push({
+        configId: cfg.id,
+        subjectCount: count,
+        subjectProductName: subject.productName,
+        displayMessage: cfg.displayMessage,
+        groupIdx: subject.groupIdx,
+        itemIdx: subject.itemIdx,
+      });
+    }
+    return result;
+  };
+
+  // Show mismatches one by one; once resolved, execute the pending action
+  const advancePreflightQueue = (remaining: AlertEntry[], action: "export" | "new") => {
+    if (remaining.length > 0) {
+      const [next, ...rest] = remaining;
+      setPreflightQueue(rest);
+      setConfigAlertState(next);
+    } else {
+      setPreflightAction(null);
+      if (action === "export") executeExportPDF();
+      if (action === "new") executeNewQuote();
+    }
+  };
+
+  const runPreflightCheck = (action: "export" | "new") => {
+    const mismatches = collectMismatches(latestGroupsRef.current);
+    if (mismatches.length === 0) {
+      if (action === "export") executeExportPDF();
+      if (action === "new") executeNewQuote();
+      return;
+    }
+    preflightGroupsRef.current = latestGroupsRef.current;
+    setPreflightAction(action);
+    const [first, ...rest] = mismatches;
+    setPreflightQueue(rest);
+    setConfigAlertState(first);
+  };
+
   const handleExportPDF = () => {
     if (isDirtyRef.current) { setPendingAction("export"); return; }
-    executeExportPDF();
+    runPreflightCheck("export");
   };
 
   const handleNewQuote = () => {
     if (isDirtyRef.current) { setPendingAction("new"); return; }
-    executeNewQuote();
+    runPreflightCheck("new");
   };
 
-  const handleUnsavedYes = async () => {
+  const handleUnsavedYes = () => {
     handleSave();
-    if (pendingAction === "export") await executeExportPDF();
-    if (pendingAction === "new") executeNewQuote();
+    const action = pendingAction;
     setPendingAction(null);
+    if (action) runPreflightCheck(action);
   };
 
-  const handleUnsavedNo = async () => {
-    if (pendingAction === "export") await executeExportPDF();
-    if (pendingAction === "new") executeNewQuote();
+  const handleUnsavedNo = () => {
+    const action = pendingAction;
     setPendingAction(null);
+    if (action) runPreflightCheck(action);
   };
 
   useEffect(() => {
