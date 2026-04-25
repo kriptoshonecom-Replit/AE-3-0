@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import MediaPickerModal from "@/components/MediaPickerModal";
 
@@ -31,6 +31,66 @@ interface ProductsData {
 function numberOrEmpty(v: unknown): string {
   const n = Number(v);
   return Number.isNaN(n) ? "" : String(n);
+}
+
+/* ─── Inline Editable Cell ───────────────────────────── */
+interface InlineCellProps {
+  value: string | number;
+  type: "number" | "text";
+  step?: number;
+  min?: number;
+  prefix?: string;
+  suffix?: string;
+  className?: string;
+  onSave: (raw: string) => void;
+}
+
+function InlineCell({ value, type, step = 1, min = 0, prefix = "", suffix = "", className = "", onSave }: InlineCellProps) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(String(value));
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { setDraft(String(value)); }, [value]);
+
+  function startEdit() {
+    setDraft(String(value));
+    setEditing(true);
+    requestAnimationFrame(() => { inputRef.current?.select(); });
+  }
+
+  function commit() {
+    setEditing(false);
+    if (draft !== String(value)) onSave(draft);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") { e.currentTarget.blur(); }
+    if (e.key === "Escape") { setDraft(String(value)); setEditing(false); }
+  }
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        type={type}
+        value={draft}
+        step={step}
+        min={min}
+        autoFocus
+        className={`inline-cell-input ${className}`}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={handleKeyDown}
+        onClick={(e) => e.stopPropagation()}
+      />
+    );
+  }
+
+  return (
+    <span className={`inline-cell-display ${className}`} onClick={startEdit} title="Click to edit">
+      {prefix}{value}{suffix}
+    </span>
+  );
 }
 
 /* ─── Move Product Modal ─────────────────────────────── */
@@ -466,6 +526,41 @@ export default function ProductsConfigPage() {
 
   useEffect(() => { void load(); }, [load]);
 
+  async function patchItem(catId: string, itemId: string, field: string, raw: string) {
+    const numFields = ["price", "pci", "produration", "traduration", "instaduration", "stageduration"];
+    const val = numFields.includes(field) ? Number(raw) : raw;
+    // Optimistic update
+    setData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        categories: prev.categories.map((cat) =>
+          cat.id !== catId ? cat : {
+            ...cat,
+            items: cat.items.map((item) =>
+              item.id !== itemId ? item : { ...item, [field]: val },
+            ),
+          },
+        ),
+      };
+    });
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/admin/products/categories/${catId}/items/${itemId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ [field]: val }),
+        },
+      );
+      if (res.ok) {
+        const d = await res.json() as ProductsData;
+        setData(d);
+      }
+    } catch { /* silent — optimistic state stays until next reload */ }
+  }
+
   async function handleDeleteItem(catId: string, itemId: string, itemName: string) {
     if (!window.confirm(`Delete product "${itemName}"? This cannot be undone.`)) return;
     try {
@@ -555,13 +650,55 @@ export default function ProductsConfigPage() {
                           )}
                         </td>
                         <td><span className={`admin-type-badge type-${item.type}`}>{item.type ?? "—"}</span></td>
-                        <td>${(item.price ?? 0).toFixed(2)}</td>
-                        <td>{(item.pci ?? 0).toFixed(2)}</td>
-                        <td>{item.produration ?? 0}h</td>
-                        <td>{item.traduration ?? 0}h</td>
-                        <td>{item.instaduration ?? 0}h</td>
-                        <td>{item.stageduration ?? 0}h</td>
-                        <td className="admin-td-desc">{item.text ?? "—"}</td>
+                        <td>
+                          <InlineCell
+                            value={(item.price ?? 0).toFixed(2)}
+                            type="number" step={0.01} min={0} prefix="$"
+                            onSave={(v) => patchItem(currentCat.id, item.id, "price", v)}
+                          />
+                        </td>
+                        <td>
+                          <InlineCell
+                            value={(item.pci ?? 0).toFixed(2)}
+                            type="number" step={0.01} min={0}
+                            onSave={(v) => patchItem(currentCat.id, item.id, "pci", v)}
+                          />
+                        </td>
+                        <td>
+                          <InlineCell
+                            value={item.produration ?? 0}
+                            type="number" step={1} min={0} suffix="h"
+                            onSave={(v) => patchItem(currentCat.id, item.id, "produration", v)}
+                          />
+                        </td>
+                        <td>
+                          <InlineCell
+                            value={item.traduration ?? 0}
+                            type="number" step={1} min={0} suffix="h"
+                            onSave={(v) => patchItem(currentCat.id, item.id, "traduration", v)}
+                          />
+                        </td>
+                        <td>
+                          <InlineCell
+                            value={item.instaduration ?? 0}
+                            type="number" step={1} min={0} suffix="h"
+                            onSave={(v) => patchItem(currentCat.id, item.id, "instaduration", v)}
+                          />
+                        </td>
+                        <td>
+                          <InlineCell
+                            value={item.stageduration ?? 0}
+                            type="number" step={1} min={0} suffix="h"
+                            onSave={(v) => patchItem(currentCat.id, item.id, "stageduration", v)}
+                          />
+                        </td>
+                        <td className="admin-td-desc">
+                          <InlineCell
+                            value={item.text ?? ""}
+                            type="text" className="inline-cell-desc"
+                            onSave={(v) => patchItem(currentCat.id, item.id, "text", v)}
+                          />
+                        </td>
                         <td>
                           <div className="admin-actions">
                             <button className="admin-btn-move" onClick={() => setMovingItem(item)}>

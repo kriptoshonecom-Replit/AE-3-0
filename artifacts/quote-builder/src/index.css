@@ -2641,6 +2641,47 @@ textarea:focus::placeholder {
   font-size: 12px;
 }
 
+/* ── Inline editable cells ─────────────────────────────── */
+.inline-cell-display {
+  display: inline-block;
+  min-width: 28px;
+  padding: 3px 5px;
+  border-radius: 5px;
+  cursor: text;
+  border: 1px solid transparent;
+  transition: border-color 0.12s, background 0.12s;
+  white-space: nowrap;
+  color: inherit;
+  font-size: inherit;
+}
+
+.inline-cell-display:hover {
+  border-color: var(--border);
+  background: var(--bg-2, #f5f5f7);
+}
+
+.inline-cell-input {
+  width: 72px;
+  padding: 3px 6px;
+  border: 1.5px solid var(--accent);
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.inline-cell-input.inline-cell-desc {
+  width: 180px;
+}
+
+/* Prevent td from collapsing when input is active */
+td:has(.inline-cell-input) {
+  overflow: visible;
+}
+
 .admin-user-avatar-sm {
   width: 28px;
   height: 28px;
