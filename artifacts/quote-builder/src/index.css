@@ -3769,3 +3769,62 @@ td:has(.inline-cell-input) {
   border-top: 1px dashed var(--border);
   padding-top: 8px;
 }
+
+/* ── StatusPass: Blended Rate bar ────────────────────────── */
+.sp-blended-bar {
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+
+.sp-blended-model-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  border-radius: 20px;
+  padding: 3px 9px;
+}
+
+.sp-blended-fields {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.sp-blended-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 160px;
+  flex: 1;
+}
+
+.sp-blended-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg));
+  border: 1.5px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: 8px;
+  padding: 8px 22px;
+  min-width: 110px;
+  flex-shrink: 0;
+}
+
+.sp-blended-result-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}

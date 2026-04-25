@@ -258,6 +258,80 @@ function CalcBar({ annualRevenue, avgTicket, numSites, computedTxnCount }: CalcB
   );
 }
 
+/* ── Site count → model ID ───────────────────────────────── */
+function modelIdFromSites(sites: number): { id: string; label: string } {
+  if (sites > 0 && sites < 10) return { id: "smb", label: "SMB (< 10 sites)" };
+  if (sites >= 10 && sites <= 50) return { id: "mid-market", label: "Mid-Market (10–50 sites)" };
+  if (sites > 50) return { id: "enterprise", label: "Enterprise (50+ sites)" };
+  return { id: "", label: "" };
+}
+
+/* ── Blended Rate bar ────────────────────────────────────── */
+interface BlendedRateBarProps {
+  numSites: string;
+  rawTxnCount: number;
+  computedTxnCount: number;
+  categories: PayCategory[];
+  activeCatId: string;
+}
+
+function BlendedRateBar({ numSites, rawTxnCount, computedTxnCount, categories, activeCatId }: BlendedRateBarProps) {
+  const sites = parseFloat(numSites);
+  const { id: modelId, label: modelLabel } = sites > 0 ? modelIdFromSites(sites) : { id: "", label: "" };
+
+  const activeCat = categories.find((c) => c.id === activeCatId);
+  const model = activeCat?.models.find((m) => m.id === modelId);
+  const tier1Rate = model?.tiers[0]?.txnRate ?? 0;
+  const txnFees = tier1Rate * computedTxnCount;
+  const blendedRate = rawTxnCount > 0 && txnFees > 0 ? txnFees / rawTxnCount : 0;
+
+  const hasValues = rawTxnCount > 0 && computedTxnCount > 0 && modelId !== "";
+
+  return (
+    <div className="sp-blended-bar">
+      <div className="sp-calc-header">
+        <div className="sp-calc-title">Blended Rate</div>
+        {modelLabel && (
+          <div className="sp-blended-model-tag">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+              <rect x="1" y="1" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.3" />
+              <path d="M3.5 6h5M6 3.5v5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+            {modelLabel}
+          </div>
+        )}
+      </div>
+
+      <div className="sp-blended-fields">
+        <div className="sp-blended-field">
+          <label className="sp-calc-label">TXN Fees (Tier 1)</label>
+          <div className={`sp-calc-readonly ${!hasValues ? "sp-calc-empty" : ""}`}>
+            {hasValues ? `$${txnFees.toFixed(2)}` : "—"}
+          </div>
+        </div>
+
+        <div className="sp-calc-sep">÷</div>
+
+        <div className="sp-blended-field">
+          <label className="sp-calc-label">TXN # (before rounding)</label>
+          <div className={`sp-calc-readonly ${!hasValues ? "sp-calc-empty" : ""}`}>
+            {hasValues ? rawTxnCount.toFixed(4) : "—"}
+          </div>
+        </div>
+
+        <div className="sp-calc-sep">=</div>
+
+        <div className={`sp-blended-result ${!hasValues ? "sp-calc-result-empty" : ""}`}>
+          <div className="sp-calc-result-label">Blended Rate</div>
+          <div className="sp-blended-result-value">
+            {hasValues ? `$${blendedRate.toFixed(4)}` : "—"}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main Page ────────────────────────────────────────────── */
 export default function StatusPassConfigPage() {
   const [, setLocation] = useLocation();
@@ -272,14 +346,15 @@ export default function StatusPassConfigPage() {
     setCalcCtx(readCalcContext());
   }, []);
 
-  const computedTxnCount: number = (() => {
+  const rawTxnCount: number = (() => {
     const rev = parseDollar(calcCtx.annualRevenue);
     const ticket = parseDollar(calcCtx.avgTicket);
     const sites = parseFloat(calcCtx.numSites);
     if (!rev || !ticket || !sites || ticket === 0) return 0;
-    const raw = (rev / ticket / 12) * sites;
-    return Math.round(raw / 10) * 10;
+    return (rev / ticket / 12) * sites;
   })();
+
+  const computedTxnCount: number = rawTxnCount > 0 ? Math.round(rawTxnCount / 10) * 10 : 0;
 
   useEffect(() => {
     setLoading(true);
@@ -386,6 +461,15 @@ export default function StatusPassConfigPage() {
                   avgTicket={calcCtx.avgTicket}
                   numSites={calcCtx.numSites}
                   computedTxnCount={computedTxnCount}
+                />
+
+                {/* Blended Rate */}
+                <BlendedRateBar
+                  numSites={calcCtx.numSites}
+                  rawTxnCount={rawTxnCount}
+                  computedTxnCount={computedTxnCount}
+                  categories={data.categories}
+                  activeCatId={activeCat}
                 />
 
                 {/* Info banner */}
