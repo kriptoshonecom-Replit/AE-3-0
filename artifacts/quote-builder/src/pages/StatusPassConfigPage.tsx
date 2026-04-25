@@ -31,16 +31,16 @@ function fmtVol(n: number): string {
   return n.toLocaleString("en-US");
 }
 
-function fmtRate(n: number): string {
-  return `$${n.toFixed(4)}`;
-}
-
 function fmtFee(n: number): string {
   if (n === 0) return "$ —";
   return `$${n.toFixed(2)}`;
 }
 
-/* ── Inline editable cell (local) ────────────────────────── */
+function parseDollar(raw: string): number {
+  return parseFloat(raw.replace(/[^0-9.]/g, "")) || 0;
+}
+
+/* ── Inline editable cell ────────────────────────────────── */
 interface InlineCellProps {
   value: string;
   inputType?: "number" | "text";
@@ -103,12 +103,12 @@ function InlineCell({ value, inputType = "number", step = 1, min = 0, width = 90
 interface TierTableProps {
   model: TierModel;
   catId: string;
+  computedTxnCount: number;
   onTierSave: (catId: string, modelId: string, tierIdx: number, field: string, raw: string) => void;
 }
 
-function TierTable({ model, catId, onTierSave }: TierTableProps) {
-  const totalTxnCount = model.tiers.reduce((s, t) => s + t.txnCount, 0);
-  const totalTxnFee = model.tiers.reduce((s, t) => s + t.txnRate * t.txnCount, 0);
+function TierTable({ model, catId, computedTxnCount, onTierSave }: TierTableProps) {
+  const tier1Fee = model.tiers.length > 0 ? model.tiers[0].txnRate * computedTxnCount : 0;
 
   return (
     <div className="sp-table-wrap">
@@ -126,7 +126,8 @@ function TierTable({ model, catId, onTierSave }: TierTableProps) {
         <tbody>
           {model.tiers.map((tier, idx) => {
             const isLast = tier.highVolume === tier.lowVolume;
-            const txnFee = tier.txnRate * tier.txnCount;
+            const rowTxnCount = idx === 0 ? computedTxnCount : 0;
+            const rowTxnFee = idx === 0 ? tier.txnRate * computedTxnCount : 0;
             return (
               <tr key={idx}>
                 <td className="sp-td-tier">{idx + 1}</td>
@@ -155,8 +156,10 @@ function TierTable({ model, catId, onTierSave }: TierTableProps) {
                     onSave={(v) => onTierSave(catId, model.id, idx, "txnRate", v)}
                   />
                 </td>
-                <td className="sp-td-count">{tier.txnCount || "—"}</td>
-                <td className="sp-td-fee">{fmtFee(txnFee)}</td>
+                <td className="sp-td-count">
+                  {idx === 0 ? (computedTxnCount > 0 ? computedTxnCount : "—") : "—"}
+                </td>
+                <td className="sp-td-fee">{fmtFee(rowTxnFee)}</td>
               </tr>
             );
           })}
@@ -164,11 +167,85 @@ function TierTable({ model, catId, onTierSave }: TierTableProps) {
         <tfoot>
           <tr className="sp-total-row">
             <td colSpan={4} className="sp-total-label">Total</td>
-            <td className="sp-td-count">{totalTxnCount}</td>
-            <td className="sp-td-fee">{fmtFee(totalTxnFee)}</td>
+            <td className="sp-td-count sp-total-num">
+              {computedTxnCount > 0 ? computedTxnCount : "—"}
+            </td>
+            <td className="sp-td-fee sp-total-fee">{fmtFee(tier1Fee)}</td>
           </tr>
         </tfoot>
       </table>
+    </div>
+  );
+}
+
+/* ── Calculator bar ───────────────────────────────────────── */
+interface CalcBarProps {
+  annualRevenue: string;
+  avgTicket: string;
+  numSites: string;
+  computedTxnCount: number;
+  onChange: (field: "annualRevenue" | "avgTicket" | "numSites", val: string) => void;
+}
+
+function CalcBar({ annualRevenue, avgTicket, numSites, computedTxnCount, onChange }: CalcBarProps) {
+  return (
+    <div className="sp-calc-bar">
+      <div className="sp-calc-title">Txn # Calculator</div>
+      <div className="sp-calc-fields">
+        <div className="sp-calc-field">
+          <label className="sp-calc-label">Annual Store Revenue</label>
+          <div className="sp-calc-input-wrap">
+            <span className="sp-calc-prefix">$</span>
+            <input
+              type="number"
+              className="sp-calc-input"
+              placeholder="0"
+              value={annualRevenue}
+              min={0}
+              step={1000}
+              onChange={(e) => onChange("annualRevenue", e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="sp-calc-sep">÷</div>
+        <div className="sp-calc-field">
+          <label className="sp-calc-label">Average Ticket Amount</label>
+          <div className="sp-calc-input-wrap">
+            <span className="sp-calc-prefix">$</span>
+            <input
+              type="number"
+              className="sp-calc-input"
+              placeholder="0"
+              value={avgTicket}
+              min={0}
+              step={0.01}
+              onChange={(e) => onChange("avgTicket", e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="sp-calc-sep">÷ 12 ×</div>
+        <div className="sp-calc-field">
+          <label className="sp-calc-label">Number of Sites</label>
+          <div className="sp-calc-input-wrap">
+            <span className="sp-calc-prefix">#</span>
+            <input
+              type="number"
+              className="sp-calc-input"
+              placeholder="0"
+              value={numSites}
+              min={0}
+              step={1}
+              onChange={(e) => onChange("numSites", e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="sp-calc-result">
+          <div className="sp-calc-result-label">Txn #</div>
+          <div className="sp-calc-result-value">
+            {computedTxnCount > 0 ? computedTxnCount.toLocaleString() : "—"}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -181,6 +258,24 @@ export default function StatusPassConfigPage() {
   const [error, setError] = useState("");
   const [activeCat, setActiveCat] = useState("voyix-pay-yes");
   const [activeModel, setActiveModel] = useState("smb");
+
+  const [annualRevenue, setAnnualRevenue] = useState("");
+  const [avgTicket, setAvgTicket] = useState("");
+  const [numSites, setNumSites] = useState("");
+
+  const computedTxnCount: number = (() => {
+    const rev = parseFloat(annualRevenue);
+    const ticket = parseFloat(avgTicket);
+    const sites = parseFloat(numSites);
+    if (!rev || !ticket || !sites || ticket === 0) return 0;
+    return Math.round((rev / ticket / 12) * sites);
+  })();
+
+  function handleCalcChange(field: "annualRevenue" | "avgTicket" | "numSites", val: string) {
+    if (field === "annualRevenue") setAnnualRevenue(val);
+    if (field === "avgTicket") setAvgTicket(val);
+    if (field === "numSites") setNumSites(val);
+  }
 
   useEffect(() => {
     setLoading(true);
@@ -251,56 +346,68 @@ export default function StatusPassConfigPage() {
 
       {data && (
         <div className="admin-content">
-          {/* Category tabs */}
-          <div className="admin-cat-tabs sp-cat-tabs">
-            {data.categories.map((cat) => (
-              <button
-                key={cat.id}
-                className={`admin-cat-tab ${activeCat === cat.id ? "admin-cat-tab-active" : ""}`}
-                onClick={() => { setActiveCat(cat.id); setActiveModel("smb"); }}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
+          <div className="sp-page-inner">
+            {/* Category tabs */}
+            <div className="admin-cat-tabs sp-cat-tabs">
+              {data.categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  className={`admin-cat-tab ${activeCat === cat.id ? "admin-cat-tab-active" : ""}`}
+                  onClick={() => { setActiveCat(cat.id); setActiveModel("smb"); }}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
 
-          {currentCat && (
-            <>
-              {/* Model sub-tabs */}
-              <div className="sp-model-tabs">
-                {currentCat.models.map((m) => (
-                  <button
-                    key={m.id}
-                    className={`sp-model-tab ${activeModel === m.id ? "sp-model-tab-active" : ""}`}
-                    onClick={() => setActiveModel(m.id)}
-                  >
-                    <span className="sp-model-tab-name">{m.name}</span>
-                    <span className="sp-model-tab-desc">{m.description}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Info banner */}
-              {currentModel && (
-                <div className="sp-model-banner">
-                  <span className="sp-banner-cat">{currentCat.name}</span>
-                  <span className="sp-banner-sep">›</span>
-                  <span className="sp-banner-model">{currentModel.name}</span>
-                  <span className="sp-banner-desc">— {currentModel.description}</span>
-                  <span className="sp-banner-hint">Click any cell in Low Volume, High Volume, or Txn $ to edit</span>
+            {currentCat && (
+              <>
+                {/* Model sub-tabs */}
+                <div className="sp-model-tabs">
+                  {currentCat.models.map((m) => (
+                    <button
+                      key={m.id}
+                      className={`sp-model-tab ${activeModel === m.id ? "sp-model-tab-active" : ""}`}
+                      onClick={() => setActiveModel(m.id)}
+                    >
+                      <span className="sp-model-tab-name">{m.name}</span>
+                      <span className="sp-model-tab-desc">{m.description}</span>
+                    </button>
+                  ))}
                 </div>
-              )}
 
-              {/* Tier table */}
-              {currentModel && (
-                <TierTable
-                  model={currentModel}
-                  catId={currentCat.id}
-                  onTierSave={handleTierSave}
+                {/* Calculator bar */}
+                <CalcBar
+                  annualRevenue={annualRevenue}
+                  avgTicket={avgTicket}
+                  numSites={numSites}
+                  computedTxnCount={computedTxnCount}
+                  onChange={handleCalcChange}
                 />
-              )}
-            </>
-          )}
+
+                {/* Info banner */}
+                {currentModel && (
+                  <div className="sp-model-banner">
+                    <span className="sp-banner-cat">{currentCat.name}</span>
+                    <span className="sp-banner-sep">›</span>
+                    <span className="sp-banner-model">{currentModel.name}</span>
+                    <span className="sp-banner-desc">— {currentModel.description}</span>
+                    <span className="sp-banner-hint">Click any cell in Low Volume, High Volume, or Txn $ to edit</span>
+                  </div>
+                )}
+
+                {/* Tier table */}
+                {currentModel && (
+                  <TierTable
+                    model={currentModel}
+                    catId={currentCat.id}
+                    computedTxnCount={computedTxnCount}
+                    onTierSave={handleTierSave}
+                  />
+                )}
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -3586,3 +3586,134 @@ td:has(.inline-cell-input) {
   gap: 10px;
   padding-top: 2px;
 }
+
+/* ── StatusPass: page inner container (matches quote builder width) ── */
+.sp-page-inner {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* ── StatusPass: calculator bar ─────────────────────────── */
+.sp-calc-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+
+.sp-calc-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-3);
+  margin-bottom: 10px;
+}
+
+.sp-calc-fields {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sp-calc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 160px;
+  flex: 1;
+}
+
+.sp-calc-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.sp-calc-input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  overflow: hidden;
+  height: 34px;
+}
+
+.sp-calc-prefix {
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+  background: var(--bg-2);
+  border-right: 1px solid var(--border);
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.sp-calc-input {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 8px !important;
+  font-size: 13px !important;
+  color: var(--text-1) !important;
+  height: 100% !important;
+  flex: 1 !important;
+  width: 0;
+  min-width: 0;
+}
+
+.sp-calc-input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.sp-calc-sep {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-3);
+  padding-bottom: 7px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sp-calc-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border));
+  border-radius: 8px;
+  padding: 6px 18px;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+.sp-calc-result-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--accent);
+}
+
+.sp-calc-result-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-1);
+  line-height: 1;
+}
+
+/* ── StatusPass: total row right-align fix ───────────────── */
+.sp-total-num {
+  text-align: right !important;
+}
+
+.sp-total-fee {
+  text-align: right !important;
+}
