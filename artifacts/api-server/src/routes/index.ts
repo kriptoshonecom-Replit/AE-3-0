@@ -6,6 +6,7 @@ import productsRouter from "./products";
 import pitAdminRouter from "./pitAdmin";
 import adminMediaRouter from "./adminMedia";
 import alertConfigsRouter from "./adminAlertConfigs";
+import statusPassRouter from "./adminStatusPass";
 
 const router: IRouter = Router();
 
@@ -15,6 +16,7 @@ router.use("/admin", adminRouter);
 router.use("/admin", pitAdminRouter);
 router.use("/admin", adminMediaRouter);
 router.use(alertConfigsRouter);
+router.use(statusPassRouter);
 router.use(productsRouter);
 
 export default router;

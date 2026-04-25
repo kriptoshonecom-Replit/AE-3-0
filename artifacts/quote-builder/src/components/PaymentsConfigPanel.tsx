@@ -118,7 +118,12 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
     onChange({ ...meta, contractBuyOut: !meta.contractBuyOut });
   };
 
+  const toggleNcrPay = () => {
+    onChange({ ...meta, ncrPay: !meta.ncrPay });
+  };
+
   const on = meta.contractBuyOut ?? false;
+  const ncrPayOn = meta.ncrPay ?? false;
 
   return (
     <div className="quote-meta-form">
@@ -144,6 +149,25 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
           </div>
         </div>
 
+        {/* 1b — NCR Pay toggle */}
+        <div className="field-group">
+          <label>NCR Pay</label>
+          <div className="payments-toggle-row">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={ncrPayOn}
+              className={`pit-toggle-switch ${ncrPayOn ? "pit-toggle-on" : "pit-toggle-off"}`}
+              onClick={toggleNcrPay}
+            >
+              <span className="pit-toggle-thumb" />
+            </button>
+            <span className={`pit-yn-state ${ncrPayOn ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
+              {ncrPayOn ? "Yes" : "No"}
+            </span>
+          </div>
+        </div>
+
         {/* 2 — Cost of BuyOut */}
         <div className="field-group">
           <label>Cost of BuyOut</label>
@@ -162,7 +186,7 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
 
         {/* 3 — Annual Store Revenue */}
         <div className="field-group">
-          <label>Annual Store Revenue</label>
+          <label>Annual Store Ravenue</label>
           <input
             type="text"
             placeholder="Card Transaction Dollar Value"

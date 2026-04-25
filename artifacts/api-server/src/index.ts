@@ -81,6 +81,16 @@ async function runMigrations() {
   await pool.query(`
     ALTER TABLE alert_configs ADD COLUMN IF NOT EXISTS lookup_logic TEXT NOT NULL DEFAULT 'and'
   `);
+  await pool.query(`
+    ALTER TABLE alert_configs ADD COLUMN IF NOT EXISTS info_only BOOLEAN NOT NULL DEFAULT false
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS status_pass_config (
+      id TEXT PRIMARY KEY,
+      data JSONB NOT NULL,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+    )
+  `);
   logger.info("DB migrations complete");
 }
 

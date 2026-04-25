@@ -67,6 +67,7 @@ export interface QuoteMeta {
   annualStoreRevenue?: string;
   averageTicketAmount?: string;
   contractBuyOut?: boolean;
+  ncrPay?: boolean;
   costOfBuyOut?: string;
   numberOfSites?: string;
   basisPoint?: string;

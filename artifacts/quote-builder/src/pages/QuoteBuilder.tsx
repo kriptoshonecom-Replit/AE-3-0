@@ -700,6 +700,18 @@ export default function QuoteBuilder() {
                 </svg>
                 Alert Configuration
               </button>
+              <button
+                type="button"
+                className="sidebar-admin-link"
+                onClick={() => { setLocation("/admin/status-pass"); setSidebarOpen(false); }}
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                  <path d="M1.5 7h13" stroke="currentColor" strokeWidth="1.2" />
+                  <path d="M5.5 7v5.5M10.5 7v5.5" stroke="currentColor" strokeWidth="1.2" />
+                </svg>
+                StatusPass Config
+              </button>
             </div>
           )}
         </div>

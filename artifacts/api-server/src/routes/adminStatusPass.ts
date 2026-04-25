@@ -1,0 +1,235 @@
+import { Router } from "express";
+import { db } from "@workspace/db";
+import { statusPassConfigTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
+import { requireAdmin } from "../middlewares/requireAdmin";
+import pino from "pino";
+
+const logger = pino();
+const router = Router();
+const CONFIG_ID = "default";
+
+interface Tier {
+  lowVolume: number;
+  highVolume: number;
+  txnRate: number;
+  txnCount: number;
+}
+
+interface TierModel {
+  id: string;
+  name: string;
+  description: string;
+  tiers: Tier[];
+}
+
+interface PayCategory {
+  id: string;
+  name: string;
+  models: TierModel[];
+}
+
+interface StatusPassData {
+  categories: PayCategory[];
+}
+
+const DEFAULT_DATA: StatusPassData = {
+  categories: [
+    {
+      id: "voyix-pay-yes",
+      name: "Voyix Pay Yes",
+      models: [
+        {
+          id: "smb",
+          name: "SMB",
+          description: "Less than 10 sites",
+          tiers: [
+            { lowVolume: 0,       highVolume: 2500,   txnRate: 0.0500, txnCount: 20 },
+            { lowVolume: 2501,    highVolume: 5000,   txnRate: 0.0480, txnCount: 0 },
+            { lowVolume: 5001,    highVolume: 7500,   txnRate: 0.0460, txnCount: 0 },
+            { lowVolume: 7501,    highVolume: 10000,  txnRate: 0.0440, txnCount: 0 },
+            { lowVolume: 10001,   highVolume: 15000,  txnRate: 0.0420, txnCount: 0 },
+            { lowVolume: 15001,   highVolume: 20000,  txnRate: 0.0400, txnCount: 0 },
+            { lowVolume: 20001,   highVolume: 25000,  txnRate: 0.0380, txnCount: 0 },
+            { lowVolume: 25001,   highVolume: 35000,  txnRate: 0.0360, txnCount: 0 },
+            { lowVolume: 35001,   highVolume: 50000,  txnRate: 0.0350, txnCount: 0 },
+            { lowVolume: 50001,   highVolume: 65000,  txnRate: 0.0340, txnCount: 0 },
+            { lowVolume: 65001,   highVolume: 85000,  txnRate: 0.0330, txnCount: 0 },
+            { lowVolume: 85001,   highVolume: 105000, txnRate: 0.0320, txnCount: 0 },
+            { lowVolume: 105001,  highVolume: 105001, txnRate: 0.0300, txnCount: 0 },
+          ],
+        },
+        {
+          id: "mid-market",
+          name: "Mid-Market",
+          description: "10 to 50 sites",
+          tiers: [
+            { lowVolume: 0,       highVolume: 20000,  txnRate: 0.0400, txnCount: 20 },
+            { lowVolume: 20001,   highVolume: 30000,  txnRate: 0.0380, txnCount: 0 },
+            { lowVolume: 30001,   highVolume: 40000,  txnRate: 0.0360, txnCount: 0 },
+            { lowVolume: 40001,   highVolume: 50000,  txnRate: 0.0350, txnCount: 0 },
+            { lowVolume: 50001,   highVolume: 75000,  txnRate: 0.0325, txnCount: 0 },
+            { lowVolume: 75001,   highVolume: 100000, txnRate: 0.0300, txnCount: 0 },
+            { lowVolume: 100001,  highVolume: 125000, txnRate: 0.0285, txnCount: 0 },
+            { lowVolume: 125001,  highVolume: 150000, txnRate: 0.0270, txnCount: 0 },
+            { lowVolume: 150001,  highVolume: 200000, txnRate: 0.0255, txnCount: 0 },
+            { lowVolume: 200001,  highVolume: 250000, txnRate: 0.0240, txnCount: 0 },
+            { lowVolume: 250001,  highVolume: 300000, txnRate: 0.0225, txnCount: 0 },
+            { lowVolume: 300001,  highVolume: 400000, txnRate: 0.0215, txnCount: 0 },
+            { lowVolume: 400001,  highVolume: 400001, txnRate: 0.0200, txnCount: 0 },
+          ],
+        },
+        {
+          id: "enterprise",
+          name: "Enterprise",
+          description: "50+ sites",
+          tiers: [
+            { lowVolume: 0,          highVolume: 125000,    txnRate: 0.0285, txnCount: 20 },
+            { lowVolume: 125001,     highVolume: 175000,    txnRate: 0.0260, txnCount: 0 },
+            { lowVolume: 175001,     highVolume: 225000,    txnRate: 0.0250, txnCount: 0 },
+            { lowVolume: 225001,     highVolume: 300000,    txnRate: 0.0225, txnCount: 0 },
+            { lowVolume: 300001,     highVolume: 500000,    txnRate: 0.0200, txnCount: 0 },
+            { lowVolume: 500001,     highVolume: 750000,    txnRate: 0.0180, txnCount: 0 },
+            { lowVolume: 750001,     highVolume: 1000000,   txnRate: 0.0160, txnCount: 0 },
+            { lowVolume: 1000001,    highVolume: 2000000,   txnRate: 0.0140, txnCount: 0 },
+            { lowVolume: 2000001,    highVolume: 5000000,   txnRate: 0.0120, txnCount: 0 },
+            { lowVolume: 5000001,    highVolume: 10000000,  txnRate: 0.0100, txnCount: 0 },
+            { lowVolume: 10000001,   highVolume: 15000000,  txnRate: 0.0080, txnCount: 0 },
+            { lowVolume: 15000001,   highVolume: 25000000,  txnRate: 0.0070, txnCount: 0 },
+            { lowVolume: 25000001,   highVolume: 25000001,  txnRate: 0.0060, txnCount: 0 },
+          ],
+        },
+      ],
+    },
+    {
+      id: "voyix-pay-no",
+      name: "Voyix Pay No",
+      models: [
+        {
+          id: "smb",
+          name: "SMB",
+          description: "Less than 10 sites",
+          tiers: [
+            { lowVolume: 0,       highVolume: 2500,   txnRate: 0.1000, txnCount: 20 },
+            { lowVolume: 2501,    highVolume: 5000,   txnRate: 0.0950, txnCount: 0 },
+            { lowVolume: 5001,    highVolume: 7500,   txnRate: 0.0900, txnCount: 0 },
+            { lowVolume: 7501,    highVolume: 10000,  txnRate: 0.0850, txnCount: 0 },
+            { lowVolume: 10001,   highVolume: 15000,  txnRate: 0.0800, txnCount: 0 },
+            { lowVolume: 15001,   highVolume: 25000,  txnRate: 0.0725, txnCount: 0 },
+            { lowVolume: 25001,   highVolume: 35000,  txnRate: 0.0675, txnCount: 0 },
+            { lowVolume: 35001,   highVolume: 50000,  txnRate: 0.0625, txnCount: 0 },
+            { lowVolume: 50001,   highVolume: 75000,  txnRate: 0.0600, txnCount: 0 },
+            { lowVolume: 75001,   highVolume: 100000, txnRate: 0.0575, txnCount: 0 },
+            { lowVolume: 100001,  highVolume: 150000, txnRate: 0.0535, txnCount: 0 },
+            { lowVolume: 150001,  highVolume: 200000, txnRate: 0.0520, txnCount: 0 },
+            { lowVolume: 200001,  highVolume: 200001, txnRate: 0.0500, txnCount: 0 },
+          ],
+        },
+        {
+          id: "mid-market",
+          name: "Mid-Market",
+          description: "10 to 50 sites",
+          tiers: [
+            { lowVolume: 0,       highVolume: 25000,   txnRate: 0.0475, txnCount: 20 },
+            { lowVolume: 25001,   highVolume: 40000,   txnRate: 0.0425, txnCount: 0 },
+            { lowVolume: 40001,   highVolume: 60000,   txnRate: 0.0400, txnCount: 0 },
+            { lowVolume: 60001,   highVolume: 90000,   txnRate: 0.0360, txnCount: 0 },
+            { lowVolume: 90001,   highVolume: 125000,  txnRate: 0.0340, txnCount: 0 },
+            { lowVolume: 125001,  highVolume: 175000,  txnRate: 0.0300, txnCount: 0 },
+            { lowVolume: 175001,  highVolume: 250000,  txnRate: 0.0285, txnCount: 0 },
+            { lowVolume: 250001,  highVolume: 300000,  txnRate: 0.0270, txnCount: 0 },
+            { lowVolume: 300001,  highVolume: 400000,  txnRate: 0.0255, txnCount: 0 },
+            { lowVolume: 400001,  highVolume: 500000,  txnRate: 0.0240, txnCount: 0 },
+            { lowVolume: 500001,  highVolume: 700000,  txnRate: 0.0225, txnCount: 0 },
+            { lowVolume: 700001,  highVolume: 1000000, txnRate: 0.0215, txnCount: 0 },
+            { lowVolume: 1000001, highVolume: 1000001, txnRate: 0.0200, txnCount: 0 },
+          ],
+        },
+        {
+          id: "enterprise",
+          name: "Enterprise",
+          description: "50+ sites",
+          tiers: [
+            { lowVolume: 0,          highVolume: 250000,    txnRate: 0.0285, txnCount: 20 },
+            { lowVolume: 250001,     highVolume: 350000,    txnRate: 0.0260, txnCount: 0 },
+            { lowVolume: 350001,     highVolume: 500000,    txnRate: 0.0250, txnCount: 0 },
+            { lowVolume: 500001,     highVolume: 750000,    txnRate: 0.0225, txnCount: 0 },
+            { lowVolume: 750001,     highVolume: 1250000,   txnRate: 0.0200, txnCount: 0 },
+            { lowVolume: 1250001,    highVolume: 2500000,   txnRate: 0.0180, txnCount: 0 },
+            { lowVolume: 2500001,    highVolume: 3500000,   txnRate: 0.0160, txnCount: 0 },
+            { lowVolume: 3500001,    highVolume: 5000000,   txnRate: 0.0140, txnCount: 0 },
+            { lowVolume: 5000001,    highVolume: 7500000,   txnRate: 0.0120, txnCount: 0 },
+            { lowVolume: 7500001,    highVolume: 10000000,  txnRate: 0.0100, txnCount: 0 },
+            { lowVolume: 10000001,   highVolume: 15000000,  txnRate: 0.0080, txnCount: 0 },
+            { lowVolume: 15000001,   highVolume: 25000000,  txnRate: 0.0070, txnCount: 0 },
+            { lowVolume: 25000001,   highVolume: 25000001,  txnRate: 0.0060, txnCount: 0 },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+async function readConfig(): Promise<StatusPassData> {
+  const [row] = await db
+    .select()
+    .from(statusPassConfigTable)
+    .where(eq(statusPassConfigTable.id, CONFIG_ID))
+    .limit(1);
+  if (!row) {
+    await db.insert(statusPassConfigTable).values({
+      id: CONFIG_ID,
+      data: DEFAULT_DATA as unknown as Record<string, unknown>,
+    });
+    return DEFAULT_DATA;
+  }
+  return row.data as StatusPassData;
+}
+
+async function writeConfig(data: StatusPassData) {
+  await db
+    .insert(statusPassConfigTable)
+    .values({ id: CONFIG_ID, data: data as unknown as Record<string, unknown> })
+    .onConflictDoUpdate({
+      target: statusPassConfigTable.id,
+      set: { data: data as unknown as Record<string, unknown>, updatedAt: new Date() },
+    });
+}
+
+router.get("/admin/status-pass", requireAdmin, async (_req, res) => {
+  try {
+    const data = await readConfig();
+    res.json(data);
+  } catch (err) {
+    logger.error(err, "status-pass get error");
+    res.status(500).json({ error: "Failed to load config" });
+  }
+});
+
+router.patch(
+  "/admin/status-pass/categories/:catId/models/:modelId/tiers/:tierIdx",
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const { catId, modelId, tierIdx } = req.params;
+      const idx = parseInt(tierIdx, 10);
+      const updates = req.body as Partial<Pick<Tier, "lowVolume" | "highVolume" | "txnRate">>;
+
+      const data = await readConfig();
+      const cat = data.categories.find((c) => c.id === catId);
+      if (!cat) { res.status(404).json({ error: "Category not found" }); return; }
+      const model = cat.models.find((m) => m.id === modelId);
+      if (!model) { res.status(404).json({ error: "Model not found" }); return; }
+      if (idx < 0 || idx >= model.tiers.length) { res.status(400).json({ error: "Tier index out of range" }); return; }
+
+      model.tiers[idx] = { ...model.tiers[idx], ...updates };
+      await writeConfig(data);
+      res.json(data);
+    } catch (err) {
+      logger.error(err, "status-pass patch tier error");
+      res.status(500).json({ error: "Failed to update tier" });
+    }
+  },
+);
+
+export default router;

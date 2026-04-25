@@ -4,3 +4,4 @@ export * from "./productCatalog";
 export * from "./pitCatalog";
 export * from "./mediaFiles";
 export * from "./alertConfigs";
+export * from "./statusPassConfig";
