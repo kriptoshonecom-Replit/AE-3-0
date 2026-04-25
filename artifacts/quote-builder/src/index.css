@@ -3717,3 +3717,55 @@ td:has(.inline-cell-input) {
 .sp-total-fee {
   text-align: right !important;
 }
+
+/* ── StatusPass calc bar: read-only display ──────────────── */
+.sp-calc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sp-calc-source {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-3);
+  font-style: italic;
+}
+
+.sp-calc-readonly {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-2);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+  user-select: none;
+}
+
+.sp-calc-readonly.sp-calc-empty {
+  color: var(--text-3);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.sp-calc-result-empty {
+  opacity: 0.45;
+}
+
+.sp-calc-hint {
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: var(--text-3);
+  font-style: italic;
+  border-top: 1px dashed var(--border);
+  padding-top: 8px;
+}

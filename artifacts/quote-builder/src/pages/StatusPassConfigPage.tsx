@@ -40,6 +40,26 @@ function parseDollar(raw: string): number {
   return parseFloat(raw.replace(/[^0-9.]/g, "")) || 0;
 }
 
+function fmtCurrency(raw: string): string {
+  const n = parseDollar(raw);
+  if (!n) return "—";
+  return `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+interface CalcContext {
+  annualRevenue: string;
+  avgTicket: string;
+  numSites: string;
+}
+
+function readCalcContext(): CalcContext {
+  try {
+    const raw = localStorage.getItem("cpq_sp_context");
+    if (raw) return JSON.parse(raw) as CalcContext;
+  } catch { /* ignore */ }
+  return { annualRevenue: "", avgTicket: "", numSites: "" };
+}
+
 /* ── Inline editable cell ────────────────────────────────── */
 interface InlineCellProps {
   value: string;
@@ -178,74 +198,62 @@ function TierTable({ model, catId, computedTxnCount, onTierSave }: TierTableProp
   );
 }
 
-/* ── Calculator bar ───────────────────────────────────────── */
+/* ── Calculator bar (read-only — values from Payments Config Panel) ── */
 interface CalcBarProps {
   annualRevenue: string;
   avgTicket: string;
   numSites: string;
   computedTxnCount: number;
-  onChange: (field: "annualRevenue" | "avgTicket" | "numSites", val: string) => void;
 }
 
-function CalcBar({ annualRevenue, avgTicket, numSites, computedTxnCount, onChange }: CalcBarProps) {
+function CalcBar({ annualRevenue, avgTicket, numSites, computedTxnCount }: CalcBarProps) {
+  const hasValues = parseDollar(annualRevenue) > 0 && parseDollar(avgTicket) > 0 && parseFloat(numSites) > 0;
+
   return (
     <div className="sp-calc-bar">
-      <div className="sp-calc-title">Txn # Calculator</div>
+      <div className="sp-calc-header">
+        <div className="sp-calc-title">Txn # Calculator</div>
+        <div className="sp-calc-source">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M6 1v5l3 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.3" />
+          </svg>
+          Values pulled from Payments Configuration Panel
+        </div>
+      </div>
       <div className="sp-calc-fields">
         <div className="sp-calc-field">
           <label className="sp-calc-label">Annual Store Revenue</label>
-          <div className="sp-calc-input-wrap">
-            <span className="sp-calc-prefix">$</span>
-            <input
-              type="number"
-              className="sp-calc-input"
-              placeholder="0"
-              value={annualRevenue}
-              min={0}
-              step={1000}
-              onChange={(e) => onChange("annualRevenue", e.target.value)}
-            />
+          <div className={`sp-calc-readonly ${!parseDollar(annualRevenue) ? "sp-calc-empty" : ""}`}>
+            {fmtCurrency(annualRevenue)}
           </div>
         </div>
         <div className="sp-calc-sep">÷</div>
         <div className="sp-calc-field">
           <label className="sp-calc-label">Average Ticket Amount</label>
-          <div className="sp-calc-input-wrap">
-            <span className="sp-calc-prefix">$</span>
-            <input
-              type="number"
-              className="sp-calc-input"
-              placeholder="0"
-              value={avgTicket}
-              min={0}
-              step={0.01}
-              onChange={(e) => onChange("avgTicket", e.target.value)}
-            />
+          <div className={`sp-calc-readonly ${!parseDollar(avgTicket) ? "sp-calc-empty" : ""}`}>
+            {fmtCurrency(avgTicket)}
           </div>
         </div>
         <div className="sp-calc-sep">÷ 12 ×</div>
         <div className="sp-calc-field">
           <label className="sp-calc-label">Number of Sites</label>
-          <div className="sp-calc-input-wrap">
-            <span className="sp-calc-prefix">#</span>
-            <input
-              type="number"
-              className="sp-calc-input"
-              placeholder="0"
-              value={numSites}
-              min={0}
-              step={1}
-              onChange={(e) => onChange("numSites", e.target.value)}
-            />
+          <div className={`sp-calc-readonly ${!parseFloat(numSites) ? "sp-calc-empty" : ""}`}>
+            {parseFloat(numSites) > 0 ? parseFloat(numSites).toLocaleString() : "—"}
           </div>
         </div>
-        <div className="sp-calc-result">
+        <div className={`sp-calc-result ${!hasValues ? "sp-calc-result-empty" : ""}`}>
           <div className="sp-calc-result-label">Txn #</div>
           <div className="sp-calc-result-value">
             {computedTxnCount > 0 ? computedTxnCount.toLocaleString() : "—"}
           </div>
         </div>
       </div>
+      {!hasValues && (
+        <div className="sp-calc-hint">
+          Fill in Annual Store Revenue, Average Ticket Amount, and Number of Sites in the Payments Configuration Panel to compute Txn #.
+        </div>
+      )}
     </div>
   );
 }
@@ -258,24 +266,19 @@ export default function StatusPassConfigPage() {
   const [error, setError] = useState("");
   const [activeCat, setActiveCat] = useState("voyix-pay-yes");
   const [activeModel, setActiveModel] = useState("smb");
+  const [calcCtx, setCalcCtx] = useState<CalcContext>(() => readCalcContext());
 
-  const [annualRevenue, setAnnualRevenue] = useState("");
-  const [avgTicket, setAvgTicket] = useState("");
-  const [numSites, setNumSites] = useState("");
+  useEffect(() => {
+    setCalcCtx(readCalcContext());
+  }, []);
 
   const computedTxnCount: number = (() => {
-    const rev = parseFloat(annualRevenue);
-    const ticket = parseFloat(avgTicket);
-    const sites = parseFloat(numSites);
+    const rev = parseDollar(calcCtx.annualRevenue);
+    const ticket = parseDollar(calcCtx.avgTicket);
+    const sites = parseFloat(calcCtx.numSites);
     if (!rev || !ticket || !sites || ticket === 0) return 0;
     return Math.round((rev / ticket / 12) * sites);
   })();
-
-  function handleCalcChange(field: "annualRevenue" | "avgTicket" | "numSites", val: string) {
-    if (field === "annualRevenue") setAnnualRevenue(val);
-    if (field === "avgTicket") setAvgTicket(val);
-    if (field === "numSites") setNumSites(val);
-  }
 
   useEffect(() => {
     setLoading(true);
@@ -378,11 +381,10 @@ export default function StatusPassConfigPage() {
 
                 {/* Calculator bar */}
                 <CalcBar
-                  annualRevenue={annualRevenue}
-                  avgTicket={avgTicket}
-                  numSites={numSites}
+                  annualRevenue={calcCtx.annualRevenue}
+                  avgTicket={calcCtx.avgTicket}
+                  numSites={calcCtx.numSites}
                   computedTxnCount={computedTxnCount}
-                  onChange={handleCalcChange}
                 />
 
                 {/* Info banner */}
