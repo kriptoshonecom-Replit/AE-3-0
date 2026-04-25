@@ -277,7 +277,8 @@ export default function StatusPassConfigPage() {
     const ticket = parseDollar(calcCtx.avgTicket);
     const sites = parseFloat(calcCtx.numSites);
     if (!rev || !ticket || !sites || ticket === 0) return 0;
-    return Math.round((rev / ticket / 12) * sites);
+    const raw = (rev / ticket / 12) * sites;
+    return Math.round(raw / 10) * 10;
   })();
 
   useEffect(() => {
