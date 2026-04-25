@@ -119,6 +119,28 @@ function InlineCell({ value, inputType = "number", step = 1, min = 0, width = 90
   );
 }
 
+/* ── Tiered bucket distribution ──────────────────────────── */
+interface TierBucket {
+  txnCount: number;
+  txnFee: number;
+}
+
+function computeTierBuckets(tiers: Tier[], totalTxns: number): TierBucket[] {
+  let remaining = totalTxns;
+  return tiers.map((tier, idx) => {
+    const isLast = tier.highVolume === tier.lowVolume;
+    // Capacity = how many TXNs this tier can absorb
+    const capacity = isLast
+      ? Infinity
+      : idx === 0
+      ? tier.highVolume                                   // Tier 1: 0 → highVolume
+      : tier.highVolume - tiers[idx - 1].highVolume;     // Tier n: prev.high → this.high
+    const used = Math.min(remaining, capacity);
+    remaining = Math.max(0, remaining - used);
+    return { txnCount: used, txnFee: used * tier.txnRate };
+  });
+}
+
 /* ── Tier Table ───────────────────────────────────────────── */
 interface TierTableProps {
   model: TierModel;
@@ -128,7 +150,9 @@ interface TierTableProps {
 }
 
 function TierTable({ model, catId, computedTxnCount, onTierSave }: TierTableProps) {
-  const tier1Fee = model.tiers.length > 0 ? model.tiers[0].txnRate * computedTxnCount : 0;
+  const buckets = computeTierBuckets(model.tiers, computedTxnCount);
+  const totalFee = buckets.reduce((s, b) => s + b.txnFee, 0);
+  const totalCount = buckets.reduce((s, b) => s + b.txnCount, 0);
 
   return (
     <div className="sp-table-wrap">
@@ -146,8 +170,7 @@ function TierTable({ model, catId, computedTxnCount, onTierSave }: TierTableProp
         <tbody>
           {model.tiers.map((tier, idx) => {
             const isLast = tier.highVolume === tier.lowVolume;
-            const rowTxnCount = idx === 0 ? computedTxnCount : 0;
-            const rowTxnFee = idx === 0 ? tier.txnRate * computedTxnCount : 0;
+            const { txnCount: rowTxnCount, txnFee: rowTxnFee } = buckets[idx];
             return (
               <tr key={idx}>
                 <td className="sp-td-tier">{idx + 1}</td>
@@ -177,7 +200,7 @@ function TierTable({ model, catId, computedTxnCount, onTierSave }: TierTableProp
                   />
                 </td>
                 <td className="sp-td-count">
-                  {idx === 0 ? (computedTxnCount > 0 ? computedTxnCount : "—") : "—"}
+                  {computedTxnCount > 0 && rowTxnCount > 0 ? fmtVol(rowTxnCount) : "—"}
                 </td>
                 <td className="sp-td-fee">{fmtFee(rowTxnFee)}</td>
               </tr>
@@ -188,9 +211,9 @@ function TierTable({ model, catId, computedTxnCount, onTierSave }: TierTableProp
           <tr className="sp-total-row">
             <td colSpan={4} className="sp-total-label">Total</td>
             <td className="sp-td-count sp-total-num">
-              {computedTxnCount > 0 ? computedTxnCount : "—"}
+              {computedTxnCount > 0 ? fmtVol(totalCount) : "—"}
             </td>
-            <td className="sp-td-fee sp-total-fee">{fmtFee(tier1Fee)}</td>
+            <td className="sp-td-fee sp-total-fee">{fmtFee(totalFee)}</td>
           </tr>
         </tfoot>
       </table>
@@ -281,7 +304,8 @@ function BlendedRateBar({ numSites, rawTxnCount, computedTxnCount, categories, a
 
   const activeCat = categories.find((c) => c.id === activeCatId);
   const model = activeCat?.models.find((m) => m.id === modelId);
-  const txnFees = (model?.tiers ?? []).reduce((sum, t) => sum + t.txnRate * computedTxnCount, 0);
+  const buckets = model ? computeTierBuckets(model.tiers, computedTxnCount) : [];
+  const txnFees = buckets.reduce((sum, b) => sum + b.txnFee, 0);
   const blendedRate = rawTxnCount > 0 && txnFees > 0 ? txnFees / rawTxnCount : 0;
 
   const hasValues = rawTxnCount > 0 && computedTxnCount > 0 && modelId !== "";
