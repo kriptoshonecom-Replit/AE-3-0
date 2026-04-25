@@ -281,8 +281,7 @@ function BlendedRateBar({ numSites, rawTxnCount, computedTxnCount, categories, a
 
   const activeCat = categories.find((c) => c.id === activeCatId);
   const model = activeCat?.models.find((m) => m.id === modelId);
-  const tier1Rate = model?.tiers[0]?.txnRate ?? 0;
-  const txnFees = tier1Rate * computedTxnCount;
+  const txnFees = (model?.tiers ?? []).reduce((sum, t) => sum + t.txnRate * computedTxnCount, 0);
   const blendedRate = rawTxnCount > 0 && txnFees > 0 ? txnFees / rawTxnCount : 0;
 
   const hasValues = rawTxnCount > 0 && computedTxnCount > 0 && modelId !== "";
