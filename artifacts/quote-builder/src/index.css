@@ -3460,12 +3460,12 @@ td:has(.inline-cell-input) {
 
 .sp-global-readonly {
   font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
+  font-weight: 400;
+  color: #ffffff;
   padding: 3px 6px;
   border-radius: 5px;
-  border: 1px solid var(--border);
-  background: var(--bg);
+  border: 1px solid var(--accent);
+  background: var(--accent);
   min-width: 60px;
   display: inline-block;
   text-align: right;
