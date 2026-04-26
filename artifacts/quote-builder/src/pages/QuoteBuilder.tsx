@@ -366,6 +366,8 @@ export default function QuoteBuilder() {
         requestedUpfrontAmount: meta.requestedUpfrontAmount ?? "",
         basisPoint: meta.basisPoint ?? "",
         voyixPayTransactionFee: meta.voyixPayTransactionFee ?? "",
+        aeCurrentMonthlySpend: meta.aeCurrentMonthlySpend ?? "",
+        aeCurrentVoyixPaySpend: meta.aeCurrentVoyixPaySpend ?? "",
       }),
     );
   };

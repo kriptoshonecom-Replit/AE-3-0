@@ -58,16 +58,25 @@ interface CalcContext {
   requestedUpfrontAmount: string;
   basisPoint: string;
   voyixPayTransactionFee: string;
+  aeCurrentMonthlySpend: string;
+  aeCurrentVoyixPaySpend: string;
 }
+
+const EMPTY_CTX: CalcContext = {
+  quoteId: "", quoteName: "", annualRevenue: "", avgTicket: "", numSites: "",
+  requestedSubscriptionAmount: "", requestedUpfrontAmount: "",
+  basisPoint: "", voyixPayTransactionFee: "",
+  aeCurrentMonthlySpend: "", aeCurrentVoyixPaySpend: "",
+};
 
 function readCalcContext(): CalcContext {
   try {
     // Remove any stale value left in localStorage from previous app versions
     localStorage.removeItem("cpq_sp_context");
     const raw = sessionStorage.getItem("cpq_sp_context");
-    if (raw) return { quoteId: "", quoteName: "", requestedSubscriptionAmount: "", requestedUpfrontAmount: "", basisPoint: "", voyixPayTransactionFee: "", ...JSON.parse(raw) } as CalcContext;
+    if (raw) return { ...EMPTY_CTX, ...JSON.parse(raw) } as CalcContext;
   } catch { /* ignore */ }
-  return { quoteId: "", quoteName: "", annualRevenue: "", avgTicket: "", numSites: "", requestedSubscriptionAmount: "", requestedUpfrontAmount: "", basisPoint: "", voyixPayTransactionFee: "" };
+  return { ...EMPTY_CTX };
 }
 
 /* ── Inline editable cell ────────────────────────────────── */
@@ -510,6 +519,106 @@ function TotalRevenueBar({ calcCtx, annualTxnCount, blendedRate }: TotalRevenueB
   );
 }
 
+/* ── Prior Spend vs Requested Pricing ───────────────────── */
+interface PriorSpendBarProps {
+  calcCtx: CalcContext;
+  annualTxnCount: number;
+  blendedRate: number;
+}
+
+function PriorSpendBar({ calcCtx, annualTxnCount, blendedRate }: PriorSpendBarProps) {
+  const [threshold, setThreshold] = useState<number>(15);
+
+  // Prior Monthly Spend = Current Monthly Spend + Current Voyix Pay Spend
+  const priorMonthly =
+    parseDollar(calcCtx.aeCurrentMonthlySpend) +
+    parseDollar(calcCtx.aeCurrentVoyixPaySpend);
+
+  // Proposed Monthly Spend = Subscription M1 + Payments Revenue M1 + Gateway Revenue M1
+  const annualRevenue = parseDollar(calcCtx.annualRevenue);
+  const bpDecimal     = (parseFloat(calcCtx.basisPoint) || 0) / 10000;
+  const voyixFee      = parseFloat(calcCtx.voyixPayTransactionFee) || 0;
+
+  const subM1         = parseDollar(calcCtx.requestedSubscriptionAmount);
+  const paymentsRevM1 = annualRevenue > 0 || annualTxnCount > 0
+    ? ((bpDecimal * annualRevenue) + (voyixFee * annualTxnCount)) / 12
+    : 0;
+  const gatewayRevM1  = annualTxnCount > 0 && blendedRate > 0
+    ? (annualTxnCount * blendedRate) / 12
+    : 0;
+  const proposedMonthly = subM1 + paymentsRevM1 + gatewayRevM1;
+
+  // Variance (%) = (Proposed - Prior) / Prior × 100
+  const variance = priorMonthly > 0
+    ? ((proposedMonthly - priorMonthly) / priorMonthly) * 100
+    : null;
+
+  // PASS/FAIL: variance < threshold → FAIL, variance >= threshold → PASS
+  const result: "PASS" | "FAIL" | null =
+    variance !== null ? (variance < threshold ? "FAIL" : "PASS") : null;
+
+  const fmtPct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
+
+  return (
+    <div className="sp-ps-bar">
+      <div className="sp-calc-header">
+        <div className="sp-calc-title">Prior Spend vs Requested Pricing</div>
+      </div>
+      <div className="sp-ps-grid">
+        <div className="sp-ps-field">
+          <span className="sp-ps-label">Prior Monthly Spend</span>
+          <span className="sp-ps-value">
+            {priorMonthly > 0 ? fmtMoney(priorMonthly) : "—"}
+          </span>
+          <span className="sp-ps-hint">
+            Current Monthly + Current Voyix Pay
+          </span>
+        </div>
+
+        <div className="sp-ps-field">
+          <span className="sp-ps-label">Proposed Monthly Spend</span>
+          <span className="sp-ps-value">
+            {proposedMonthly > 0 ? fmtMoney(proposedMonthly) : "—"}
+          </span>
+          <span className="sp-ps-hint">
+            Subscription + Payments Revenue + Gateway Revenue
+          </span>
+        </div>
+
+        <div className="sp-ps-field">
+          <span className="sp-ps-label">Variance (%)</span>
+          <span className={`sp-ps-value ${variance !== null ? (variance >= 0 ? "sp-ps-positive" : "sp-ps-negative") : ""}`}>
+            {variance !== null ? fmtPct(variance) : "—"}
+          </span>
+          <span className="sp-ps-hint">
+            (Proposed − Prior) ÷ Prior
+          </span>
+        </div>
+
+        <div className="sp-ps-field">
+          <span className="sp-ps-label">Threshold (%)</span>
+          <div className="sp-ps-threshold-wrap">
+            <input
+              className="sp-ps-threshold-input"
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              value={threshold}
+              onChange={(e) => setThreshold(parseFloat(e.target.value) || 0)}
+            />
+            <span className="sp-ps-threshold-unit">%</span>
+          </div>
+        </div>
+
+        <div className={`sp-ps-badge sp-ps-badge-${result?.toLowerCase() ?? "pending"}`}>
+          {result ?? "—"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main Page ────────────────────────────────────────────── */
 export default function StatusPassConfigPage() {
   const [, setLocation] = useLocation();
@@ -748,6 +857,13 @@ export default function StatusPassConfigPage() {
 
                 {/* Total Revenue */}
                 <TotalRevenueBar
+                  calcCtx={calcCtx}
+                  annualTxnCount={annualTxnCount}
+                  blendedRate={blendedRate}
+                />
+
+                {/* Prior Spend vs Requested Pricing */}
+                <PriorSpendBar
                   calcCtx={calcCtx}
                   annualTxnCount={annualTxnCount}
                   blendedRate={blendedRate}
