@@ -2644,6 +2644,7 @@ textarea:focus::placeholder {
 /* ── Inline editable cells ─────────────────────────────── */
 .inline-cell-display {
   display: inline-block;
+  border-color: var(--accent);
   min-width: 28px;
   padding: 3px 5px;
   border-radius: 5px;
@@ -2663,7 +2664,7 @@ textarea:focus::placeholder {
 .inline-cell-input {
   width: 72px;
   padding: 3px 6px;
-  border: 1.5px solid var(--accent);
+  border: 1.5px solid var(--bg);
   border-radius: 5px;
   font-size: 13px;
   font-family: inherit;
