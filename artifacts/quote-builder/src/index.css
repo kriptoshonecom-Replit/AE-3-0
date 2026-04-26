@@ -2648,7 +2648,7 @@ textarea:focus::placeholder {
   padding: 3px 5px;
   border-radius: 5px;
   cursor: text;
-  border: 1px solid transparent;
+  border: 1px solid var(--border);
   transition: border-color 0.12s, background 0.12s;
   white-space: nowrap;
   color: inherit;
