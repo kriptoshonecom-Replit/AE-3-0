@@ -2303,7 +2303,7 @@ textarea:focus::placeholder {
   height: 36px;
   padding: 0 10px;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: var(--radius);
   font-size: 13.5px;
   font-family: inherit;
   color: var(--text);
@@ -2319,10 +2319,10 @@ textarea:focus::placeholder {
 
 .edit-field-group select {
   width: 100%;
-  height: 38px;
+  height: 36px;
   padding: 0 32px 0 10px;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: var(--radius);
   font-size: 13.5px;
   font-family: inherit;
   color: var(--text);
@@ -2350,7 +2350,7 @@ textarea:focus::placeholder {
   width: 100%;
   padding: 8px 10px;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: var(--radius);
   font-size: 13.5px;
   font-family: inherit;
   color: var(--text);
@@ -2414,7 +2414,7 @@ textarea:focus::placeholder {
 }
 
 .edit-modal-save:hover:not(:disabled) {
-  opacity: 0.88;
+  background: var(--accent-hover);
 }
 
 .edit-modal-save:disabled {
@@ -2892,7 +2892,7 @@ td:has(.inline-cell-input) {
   height: 36px;
   padding: 0 10px;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: var(--radius);
   font-size: 13.5px;
   font-family: inherit;
   color: var(--text);
@@ -3463,9 +3463,9 @@ td:has(.inline-cell-input) {
 .sp-global-readonly {
   font-size: 13px;
   font-weight: 400;
-  color: #ffffff;
+  color: var(--accent-fg);
   padding: 3px 6px;
-  border-radius: 5px;
+  border-radius: var(--radius);
   border: 1px solid var(--accent);
   background: var(--accent);
   min-width: 60px;
@@ -3903,9 +3903,9 @@ td:has(.inline-cell-input) {
   margin-left: auto;
   font-size: 12px;
   font-weight: 600;
-  color: var(--muted);
+  color: var(--text-3);
   padding: 5px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius);
   transition: color 0.15s, background 0.15s;
 }
 .sp-refresh-btn:hover:not(:disabled) {
@@ -3922,8 +3922,8 @@ td:has(.inline-cell-input) {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 14px 18px;
-  margin-bottom: 14px;
+  padding: 20px 24px;
+  margin-bottom: 18px;
 }
 
 .sp-tr-table-wrap {
@@ -3941,8 +3941,8 @@ td:has(.inline-cell-input) {
   text-align: left;
   padding: 7px 10px 7px 0;
   font-size: 11px;
-  font-weight: 600;
-  color: var(--muted);
+  font-weight: 700;
+  color: var(--text-3);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   min-width: 220px;
@@ -3953,8 +3953,8 @@ td:has(.inline-cell-input) {
   text-align: right;
   padding: 7px 12px;
   font-size: 11px;
-  font-weight: 600;
-  color: var(--muted);
+  font-weight: 700;
+  color: var(--text-3);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   white-space: nowrap;
@@ -3979,7 +3979,7 @@ td:has(.inline-cell-input) {
 .sp-tr-td-val {
   padding: 9px 12px;
   text-align: right;
-  color: var(--muted);
+  color: var(--text-2);
   font-size: 13px;
 }
 
@@ -4172,7 +4172,7 @@ td:has(.inline-cell-input) {
   display: flex;
   align-items: center;
 }
-.lib-drawer-close:hover { background: var(--surface-hover, #f0f0f0); }
+.lib-drawer-close:hover { background: var(--bg); color: var(--text); }
 .lib-drawer-error {
   margin: 10px 24px 0;
   padding: 10px 14px;
@@ -4200,20 +4200,21 @@ td:has(.inline-cell-input) {
   gap: 5px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--text-2);
 }
 .lib-input {
   padding: 8px 11px;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: var(--radius);
   font-size: 13px;
   background: var(--surface);
   color: var(--text);
   outline: none;
   width: 100%;
   box-sizing: border-box;
+  transition: border-color 0.15s;
 }
-.lib-input:focus { border-color: var(--accent, #3b82f6); }
+.lib-input:focus { border-color: var(--accent); }
 .lib-textarea { resize: vertical; min-height: 80px; }
 .lib-drawer-footer {
   padding: 16px 24px;
@@ -4367,11 +4368,12 @@ td:has(.inline-cell-input) {
   padding: 5px 8px;
   font-size: 16px;
   font-weight: 700;
-  border: 1.5px solid var(--border-strong);
-  border-radius: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
   text-align: right;
+  transition: border-color 0.15s;
 }
 
 .sp-ps-threshold-input:focus {
