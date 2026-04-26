@@ -3934,3 +3934,21 @@ td:has(.inline-cell-input) {
   color: var(--accent);
   padding-top: 10px;
 }
+
+/* ── StatusPass: Quote badge in topbar ───────────────────── */
+.sp-quote-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}

@@ -47,17 +47,21 @@ function fmtCurrency(raw: string): string {
 }
 
 interface CalcContext {
+  quoteId: string;
+  quoteName: string;
   annualRevenue: string;
   avgTicket: string;
   numSites: string;
+  requestedSubscriptionAmount: string;
+  requestedUpfrontAmount: string;
 }
 
 function readCalcContext(): CalcContext {
   try {
     const raw = localStorage.getItem("cpq_sp_context");
-    if (raw) return JSON.parse(raw) as CalcContext;
+    if (raw) return { quoteId: "", quoteName: "", requestedSubscriptionAmount: "", requestedUpfrontAmount: "", ...JSON.parse(raw) } as CalcContext;
   } catch { /* ignore */ }
-  return { annualRevenue: "", avgTicket: "", numSites: "" };
+  return { quoteId: "", quoteName: "", annualRevenue: "", avgTicket: "", numSites: "", requestedSubscriptionAmount: "", requestedUpfrontAmount: "" };
 }
 
 /* ── Inline editable cell ────────────────────────────────── */
@@ -418,6 +422,11 @@ export default function StatusPassConfigPage() {
 
   useEffect(() => {
     setCalcCtx(readCalcContext());
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "cpq_sp_context") setCalcCtx(readCalcContext());
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   const rawTxnCount: number = (() => {
@@ -499,6 +508,15 @@ export default function StatusPassConfigPage() {
           Back to Quotes
         </button>
         <h1 className="admin-page-title">StatusPass Configuration</h1>
+        {calcCtx.quoteName && (
+          <div className="sp-quote-badge">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+              <rect x="1" y="1" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.3"/>
+              <path d="M3.5 4h5M3.5 6h5M3.5 8h3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
+            </svg>
+            {calcCtx.quoteName}
+          </div>
+        )}
         <button
           className="btn-ghost sp-refresh-btn"
           onClick={loadData}

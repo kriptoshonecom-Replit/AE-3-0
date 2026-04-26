@@ -294,7 +294,7 @@ export default function QuoteBuilder() {
         if (q.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...q.meta.yesNoToggles });
         setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
         setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });
-        localStorage.setItem("cpq_sp_context", JSON.stringify({ annualRevenue: q.meta.annualStoreRevenue ?? "", avgTicket: q.meta.averageTicketAmount ?? "", numSites: q.meta.numberOfSites ?? "" }));
+        syncCalcContext(q.meta);
         setInitialized(true);
         return;
       }
@@ -306,7 +306,7 @@ export default function QuoteBuilder() {
       if (q.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...q.meta.yesNoToggles });
       setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
       setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });
-      localStorage.setItem("cpq_sp_context", JSON.stringify({ annualRevenue: q.meta.annualStoreRevenue ?? "", avgTicket: q.meta.averageTicketAmount ?? "", numSites: q.meta.numberOfSites ?? "" }));
+      syncCalcContext(q.meta);
     }
     setInitialized(true);
   }, [userId, initialized]);
@@ -326,9 +326,13 @@ export default function QuoteBuilder() {
     localStorage.setItem(
       "cpq_sp_context",
       JSON.stringify({
+        quoteId: meta.id ?? "",
+        quoteName: meta.companyName || meta.customerName || meta.quoteNumber || "Untitled Quote",
         annualRevenue: meta.annualStoreRevenue ?? "",
         avgTicket: meta.averageTicketAmount ?? "",
         numSites: meta.numberOfSites ?? "",
+        requestedSubscriptionAmount: meta.requestedSubscriptionAmount ?? "",
+        requestedUpfrontAmount: meta.requestedUpfrontAmount ?? "",
       }),
     );
   };
@@ -598,6 +602,7 @@ export default function QuoteBuilder() {
     setYesNoToggles({ ...DEFAULT_YES_NO, ...(q.meta.yesNoToggles ?? {}) });
     setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
     setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });
+    syncCalcContext(q.meta);
     setSidebarOpen(false);
   };
 
