@@ -428,6 +428,13 @@ export default function StatusPassConfigPage() {
     setCalcCtx(readCalcContext());
   }, []);
 
+  const annualTxnCount: number = (() => {
+    const rev = parseDollar(calcCtx.annualRevenue);
+    const ticket = parseDollar(calcCtx.avgTicket);
+    if (!rev || !ticket || ticket === 0) return 0;
+    return rev / ticket;
+  })();
+
   const rawTxnCount: number = (() => {
     const rev = parseDollar(calcCtx.annualRevenue);
     const ticket = parseDollar(calcCtx.avgTicket);
@@ -591,6 +598,16 @@ export default function StatusPassConfigPage() {
                       width={70}
                       onSave={(v) => handleGlobalSave("processingCost", v)}
                     />
+                  </div>
+                </div>
+                <div className="sp-global-field">
+                  <span className="sp-global-label">Annual TXN #</span>
+                  <div className="sp-global-value">
+                    <span className={`sp-global-readonly ${annualTxnCount === 0 ? "sp-global-readonly-empty" : ""}`}>
+                      {annualTxnCount > 0
+                        ? Math.round(annualTxnCount).toLocaleString("en-US")
+                        : "—"}
+                    </span>
                   </div>
                 </div>
               </div>

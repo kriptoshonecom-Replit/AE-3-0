@@ -3458,6 +3458,25 @@ td:has(.inline-cell-input) {
   margin-right: 1px;
 }
 
+.sp-global-readonly {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  padding: 3px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  min-width: 60px;
+  display: inline-block;
+  text-align: right;
+}
+
+.sp-global-readonly-empty {
+  color: var(--text-3);
+  font-weight: 400;
+  text-align: center;
+}
+
 .admin-cat-tab {
   padding: 8px 20px;
   border-radius: 6px;
