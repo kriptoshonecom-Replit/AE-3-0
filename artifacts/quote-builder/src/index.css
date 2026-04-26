@@ -3850,3 +3850,87 @@ td:has(.inline-cell-input) {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ── StatusPass: Total Revenue table ─────────────────────── */
+.sp-tr-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+
+.sp-tr-table-wrap {
+  overflow-x: auto;
+  margin-top: 12px;
+}
+
+.sp-tr-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.sp-tr-th-label {
+  text-align: left;
+  padding: 7px 10px 7px 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  min-width: 220px;
+  border-bottom: 1.5px solid var(--border);
+}
+
+.sp-tr-th-col {
+  text-align: right;
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  border-bottom: 1.5px solid var(--border);
+}
+
+.sp-tr-row {
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.sp-tr-row:last-child {
+  border-bottom: none;
+}
+
+.sp-tr-td-label {
+  padding: 9px 10px 9px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.sp-tr-td-val {
+  padding: 9px 12px;
+  text-align: right;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.sp-tr-total-row {
+  border-top: 2px solid var(--border);
+}
+
+.sp-tr-total-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  padding-top: 10px;
+}
+
+.sp-tr-total-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  padding-top: 10px;
+}

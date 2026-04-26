@@ -355,6 +355,57 @@ function BlendedRateBar({ numSites, rawTxnCount, computedTxnCount, categories, a
   );
 }
 
+/* ── Total Revenue section ───────────────────────────────── */
+const TR_ROWS = [
+  { label: "Requested Subscription Amount" },
+  { label: "Requested Upfront Amount (PIT Related)" },
+  { label: "Payments Revenue (net)" },
+  { label: "Gateway Revenue" },
+];
+
+const TR_COLS = ["Month 1", "Year 1", "Year 2", "Year 3", "Total"];
+
+function TotalRevenueBar() {
+  return (
+    <div className="sp-tr-bar">
+      <div className="sp-calc-header">
+        <div className="sp-calc-title">Total Revenue</div>
+      </div>
+
+      <div className="sp-tr-table-wrap">
+        <table className="sp-tr-table">
+          <thead>
+            <tr>
+              <th className="sp-tr-th-label"></th>
+              {TR_COLS.map((col) => (
+                <th key={col} className="sp-tr-th-col">{col}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {TR_ROWS.map((row) => (
+              <tr key={row.label} className="sp-tr-row">
+                <td className="sp-tr-td-label">{row.label}</td>
+                {TR_COLS.map((col) => (
+                  <td key={col} className="sp-tr-td-val">—</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="sp-tr-total-row">
+              <td className="sp-tr-td-label sp-tr-total-label">Total</td>
+              {TR_COLS.map((col) => (
+                <td key={col} className="sp-tr-td-val sp-tr-total-val">—</td>
+              ))}
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main Page ────────────────────────────────────────────── */
 export default function StatusPassConfigPage() {
   const [, setLocation] = useLocation();
@@ -513,6 +564,9 @@ export default function StatusPassConfigPage() {
                   categories={data.categories}
                   activeCatId={activeCat}
                 />
+
+                {/* Total Revenue */}
+                <TotalRevenueBar />
 
                 {/* Info banner */}
                 {currentModel && (
