@@ -379,13 +379,20 @@ export default function StatusPassConfigPage() {
 
   const computedTxnCount: number = rawTxnCount > 0 ? Math.round(rawTxnCount / 10) * 10 : 0;
 
-  useEffect(() => {
+  function loadData() {
     setLoading(true);
+    setError("");
     fetch(`${API_BASE}/api/admin/status-pass`, { credentials: "include" })
-      .then((r) => r.ok ? r.json() : Promise.reject("load failed"))
+      .then((r) => {
+        if (r.status === 401) throw new Error("Session expired — please sign in again.");
+        if (!r.ok) throw new Error("Failed to load configuration.");
+        return r.json();
+      })
       .then((d: StatusPassData) => { setData(d); setLoading(false); })
-      .catch(() => { setError("Failed to load configuration"); setLoading(false); });
-  }, []);
+      .catch((e: Error) => { setError(e.message); setLoading(false); });
+  }
+
+  useEffect(() => { loadData(); }, []);
 
   async function handleTierSave(catId: string, modelId: string, tierIdx: number, field: string, raw: string) {
     const numVal = Number(raw);
@@ -441,6 +448,18 @@ export default function StatusPassConfigPage() {
           Back to Quotes
         </button>
         <h1 className="admin-page-title">StatusPass Configuration</h1>
+        <button
+          className="btn-ghost sp-refresh-btn"
+          onClick={loadData}
+          disabled={loading}
+          title="Reload data from server"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ transform: loading ? "rotate(360deg)" : "none", transition: "transform 0.5s" }}>
+            <path d="M12 7A5 5 0 1 1 7 2a5 5 0 0 1 3.54 1.46L12 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M12 2v3h-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Refresh
+        </button>
       </div>
 
       {loading && <div className="admin-loading"><div className="spinner" /></div>}

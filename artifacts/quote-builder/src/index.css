@@ -3828,3 +3828,25 @@ td:has(.inline-cell-input) {
   letter-spacing: -0.02em;
   line-height: 1;
 }
+
+/* ── StatusPass: Refresh button ──────────────────────────── */
+.sp-refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 5px 10px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+.sp-refresh-btn:hover:not(:disabled) {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.sp-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
