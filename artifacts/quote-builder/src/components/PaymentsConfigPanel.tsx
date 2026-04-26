@@ -23,8 +23,9 @@ function stripFormat(value: string): string {
 function useBpsField(value: string, onChange: (val: string) => void) {
   const [focused, setFocused] = useState(false);
   const raw = value.replace(/[^0-9.]/g, "");
+  // 1 bp = 0.0001, so divide whole-number input by 10,000
   const display =
-    !focused && raw !== "" ? `${(parseFloat(raw) / 100).toFixed(2)}%` : raw;
+    !focused && raw !== "" ? (parseFloat(raw) / 10000).toFixed(4) : raw;
 
   return {
     value: display,
