@@ -23,15 +23,15 @@ function stripFormat(value: string): string {
 function useBpsField(value: string, onChange: (val: string) => void) {
   const [focused, setFocused] = useState(false);
   const raw = value.replace(/[^0-9.]/g, "");
-  // 1 bp = 0.0001, so divide whole-number input by 10,000
+  // 1 bp = 0.0001, so divide whole-number input by 10,000 for display only
   const display =
     !focused && raw !== "" ? (parseFloat(raw) / 10000).toFixed(4) : raw;
 
   return {
     value: display,
-    onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
+    onFocus: () => {
+      // Switch to edit mode — do NOT write back the formatted display value
       setFocused(true);
-      onChange(e.target.value.replace(/[^0-9.]/g, ""));
     },
     onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
       onChange(e.target.value),
