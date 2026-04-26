@@ -402,29 +402,65 @@ interface TotalRevenueBarProps {
 }
 
 function TotalRevenueBar({ calcCtx, annualTxnCount, blendedRate }: TotalRevenueBarProps) {
-  const subscriptionAmt  = parseDollar(calcCtx.requestedSubscriptionAmount);
-  const upfrontAmt       = parseDollar(calcCtx.requestedUpfrontAmount);
-  const annualRevenue    = parseDollar(calcCtx.annualRevenue);
-  const bpDecimal        = (parseFloat(calcCtx.basisPoint) || 0) / 10000;
-  const voyixFee         = parseFloat(calcCtx.voyixPayTransactionFee) || 0;
+  const subscriptionAmt = parseDollar(calcCtx.requestedSubscriptionAmount);
+  const upfrontAmt      = parseDollar(calcCtx.requestedUpfrontAmount);
+  const annualRevenue   = parseDollar(calcCtx.annualRevenue);
+  const bpDecimal       = (parseFloat(calcCtx.basisPoint) || 0) / 10000;
+  const voyixFee        = parseFloat(calcCtx.voyixPayTransactionFee) || 0;
 
-  // Month 1 values
+  // Month 1 — monthly slice of each recurring value
+  const subM1         = subscriptionAmt;
+  const upfrontM1     = upfrontAmt;
   const paymentsRevM1 = annualRevenue > 0 || annualTxnCount > 0
     ? ((bpDecimal * annualRevenue) + (voyixFee * annualTxnCount)) / 12
     : 0;
   const gatewayRevM1  = annualTxnCount > 0 && blendedRate > 0
     ? (annualTxnCount * blendedRate) / 12
     : 0;
-  const totalM1 = subscriptionAmt + upfrontAmt + paymentsRevM1 + gatewayRevM1;
 
-  const hasAny = subscriptionAmt > 0 || upfrontAmt > 0 || paymentsRevM1 > 0 || gatewayRevM1 > 0;
+  // Year 1 — recurring rows ×12; upfront is one-time (stays as M1 value, not ×12)
+  const subY1         = subM1 * 12;
+  const upfrontY1     = upfrontM1;   // one-time only
+  const paymentsRevY1 = paymentsRevM1 * 12;
+  const gatewayRevY1  = gatewayRevM1 * 12;
 
-  const rows: { label: string; m1: number }[] = [
-    { label: "Requested Subscription Amount",      m1: subscriptionAmt },
-    { label: "Requested Upfront Amount (PIT Related)", m1: upfrontAmt },
-    { label: "Payments Revenue (net)",              m1: paymentsRevM1 },
-    { label: "Gateway Revenue",                     m1: gatewayRevM1 },
+  // Year 2 & 3 — same as Year 1 for recurring rows; upfront is gone (one-time)
+  const subY2         = subY1;
+  const upfrontY2     = 0;
+  const paymentsRevY2 = paymentsRevY1;
+  const gatewayRevY2  = gatewayRevY1;
+
+  const subY3         = subY1;
+  const upfrontY3     = 0;
+  const paymentsRevY3 = paymentsRevY1;
+  const gatewayRevY3  = gatewayRevY1;
+
+  // Totals per row = Y1 + Y2 + Y3
+  const subTotal         = subY1 + subY2 + subY3;
+  const upfrontTotal     = upfrontY1 + upfrontY2 + upfrontY3;
+  const paymentsRevTotal = paymentsRevY1 + paymentsRevY2 + paymentsRevY3;
+  const gatewayRevTotal  = gatewayRevY1 + gatewayRevY2 + gatewayRevY3;
+
+  // Column totals (sum of all rows per column)
+  const totalM1 = subM1 + upfrontM1 + paymentsRevM1 + gatewayRevM1;
+  const totalY1 = subY1 + upfrontY1 + paymentsRevY1 + gatewayRevY1;
+  const totalY2 = subY2 + upfrontY2 + paymentsRevY2 + gatewayRevY2;
+  const totalY3 = subY3 + upfrontY3 + paymentsRevY3 + gatewayRevY3;
+  const grandTotal = totalY1 + totalY2 + totalY3;
+
+  const hasAny = subM1 > 0 || upfrontM1 > 0 || paymentsRevM1 > 0 || gatewayRevM1 > 0;
+
+  // [label, m1, y1, y2, y3, rowTotal]
+  const rows: [string, number, number, number, number, number][] = [
+    ["Requested Subscription Amount",       subM1,         subY1,         subY2,         subY3,         subTotal],
+    ["Requested Upfront Amount (PIT Related)", upfrontM1,  upfrontY1,     upfrontY2,     upfrontY3,     upfrontTotal],
+    ["Payments Revenue (net)",              paymentsRevM1, paymentsRevY1, paymentsRevY2, paymentsRevY3, paymentsRevTotal],
+    ["Gateway Revenue",                     gatewayRevM1,  gatewayRevY1,  gatewayRevY2,  gatewayRevY3,  gatewayRevTotal],
   ];
+
+  const val = (n: number) => (
+    <td className="sp-tr-td-val sp-tr-td-live">{fmtMoney(n)}</td>
+  );
 
   return (
     <div className="sp-tr-bar">
@@ -446,26 +482,25 @@ function TotalRevenueBar({ calcCtx, annualTxnCount, blendedRate }: TotalRevenueB
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row.label} className="sp-tr-row">
-                <td className="sp-tr-td-label">{row.label}</td>
-                <td className="sp-tr-td-val sp-tr-td-live">{fmtMoney(row.m1)}</td>
-                {/* Year 1–3 and Total to be implemented later */}
-                <td className="sp-tr-td-val sp-tr-td-future">—</td>
-                <td className="sp-tr-td-val sp-tr-td-future">—</td>
-                <td className="sp-tr-td-val sp-tr-td-future">—</td>
-                <td className="sp-tr-td-val sp-tr-td-future">—</td>
+            {rows.map(([label, m1, y1, y2, y3, rowTotal]) => (
+              <tr key={label} className="sp-tr-row">
+                <td className="sp-tr-td-label">{label}</td>
+                {val(m1)}
+                {val(y1)}
+                {val(y2)}
+                {val(y3)}
+                {val(rowTotal)}
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr className="sp-tr-total-row">
               <td className="sp-tr-td-label sp-tr-total-label">Total</td>
-              <td className="sp-tr-td-val sp-tr-total-val sp-tr-td-live">{hasAny ? fmtMoney(totalM1) : "—"}</td>
-              <td className="sp-tr-td-val sp-tr-total-val sp-tr-td-future">—</td>
-              <td className="sp-tr-td-val sp-tr-total-val sp-tr-td-future">—</td>
-              <td className="sp-tr-td-val sp-tr-total-val sp-tr-td-future">—</td>
-              <td className="sp-tr-td-val sp-tr-total-val sp-tr-td-future">—</td>
+              <td className="sp-tr-td-val sp-tr-total-val">{hasAny ? fmtMoney(totalM1) : "—"}</td>
+              <td className="sp-tr-td-val sp-tr-total-val">{hasAny ? fmtMoney(totalY1) : "—"}</td>
+              <td className="sp-tr-td-val sp-tr-total-val">{hasAny ? fmtMoney(totalY2) : "—"}</td>
+              <td className="sp-tr-td-val sp-tr-total-val">{hasAny ? fmtMoney(totalY3) : "—"}</td>
+              <td className="sp-tr-td-val sp-tr-total-val">{hasAny ? fmtMoney(grandTotal) : "—"}</td>
             </tr>
           </tfoot>
         </table>
