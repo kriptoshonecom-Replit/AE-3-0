@@ -25,6 +25,8 @@ interface PayCategory {
 
 interface StatusPassData {
   categories: PayCategory[];
+  paymentCosts: number;
+  processingCost: number;
 }
 
 function fmtVol(n: number): string {
@@ -492,6 +494,20 @@ export default function StatusPassConfigPage() {
     } catch { /* silent — optimistic state retained */ }
   }
 
+  async function handleGlobalSave(field: "paymentCosts" | "processingCost", raw: string) {
+    const numVal = parseFloat(raw);
+    if (isNaN(numVal) || numVal < 0) return;
+    setData((prev) => prev ? { ...prev, [field]: numVal } : prev);
+    try {
+      await fetch(`${API_BASE}/api/admin/status-pass/global`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ [field]: numVal }),
+      });
+    } catch { /* silent — optimistic state retained */ }
+  }
+
   const currentCat = data?.categories.find((c) => c.id === activeCat);
   const currentModel = currentCat?.models.find((m) => m.id === activeModel);
 
@@ -534,17 +550,50 @@ export default function StatusPassConfigPage() {
       {data && (
         <div className="admin-content">
           <div className="sp-page-inner">
-            {/* Category tabs */}
-            <div className="admin-cat-tabs sp-cat-tabs">
-              {data.categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  className={`admin-cat-tab ${activeCat === cat.id ? "admin-cat-tab-active" : ""}`}
-                  onClick={() => { setActiveCat(cat.id); setActiveModel("smb"); }}
-                >
-                  {cat.name}
-                </button>
-              ))}
+            {/* Category tabs + global fields */}
+            <div className="sp-cat-tabs-row">
+              <div className="admin-cat-tabs sp-cat-tabs">
+                {data.categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    className={`admin-cat-tab ${activeCat === cat.id ? "admin-cat-tab-active" : ""}`}
+                    onClick={() => { setActiveCat(cat.id); setActiveModel("smb"); }}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+
+              <div className="sp-global-fields">
+                <div className="sp-global-field">
+                  <span className="sp-global-label">Payment costs</span>
+                  <div className="sp-global-value">
+                    <InlineCell
+                      value={String(data.paymentCosts ?? 2.25)}
+                      inputType="number"
+                      step={0.01}
+                      min={0}
+                      width={60}
+                      onSave={(v) => handleGlobalSave("paymentCosts", v)}
+                    />
+                    <span className="sp-global-unit">%</span>
+                  </div>
+                </div>
+                <div className="sp-global-field">
+                  <span className="sp-global-label">Processing cost</span>
+                  <div className="sp-global-value">
+                    <span className="sp-global-unit sp-global-unit-prefix">$</span>
+                    <InlineCell
+                      value={String(data.processingCost ?? 0.0125)}
+                      inputType="number"
+                      step={0.0001}
+                      min={0}
+                      width={70}
+                      onSave={(v) => handleGlobalSave("processingCost", v)}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
             {currentCat && (

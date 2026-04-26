@@ -3407,10 +3407,55 @@ td:has(.inline-cell-input) {
 }
 
 /* ── StatusPass Config Page ───────────────────────────── */
+.sp-cat-tabs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
 .sp-cat-tabs {
   display: flex;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 0;
+}
+
+.sp-global-fields {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.sp-global-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sp-global-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+}
+
+.sp-global-value {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.sp-global-unit {
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.sp-global-unit-prefix {
+  margin-right: 1px;
 }
 
 .admin-cat-tab {

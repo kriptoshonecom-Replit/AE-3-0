@@ -31,11 +31,15 @@ interface PayCategory {
 
 interface StatusPassData {
   categories: PayCategory[];
+  paymentCosts: number;
+  processingCost: number;
 }
 
 const DATA_VERSION = "3.1";
 
 const DEFAULT_DATA: StatusPassData = {
+  paymentCosts: 2.25,
+  processingCost: 0.0125,
   categories: [
     {
       id: "voyix-pay-yes",
@@ -192,7 +196,15 @@ async function readConfig(): Promise<StatusPassData> {
       });
     return DEFAULT_DATA;
   }
-  return row.data as StatusPassData;
+
+  // Merge stored data with defaults for any new top-level fields added after initial seed
+  const stored = row.data as Partial<StatusPassData>;
+  return {
+    paymentCosts: DEFAULT_DATA.paymentCosts,
+    processingCost: DEFAULT_DATA.processingCost,
+    ...stored,
+    categories: stored.categories ?? DEFAULT_DATA.categories,
+  };
 }
 
 async function writeConfig(data: StatusPassData) {
@@ -212,6 +224,21 @@ router.get("/admin/status-pass", requireAdmin, async (_req, res) => {
   } catch (err) {
     logger.error(err, "status-pass get error");
     res.status(500).json({ error: "Failed to load config" });
+  }
+});
+
+router.patch("/admin/status-pass/global", requireAdmin, async (req, res) => {
+  try {
+    const { paymentCosts, processingCost } = req.body as Partial<Pick<StatusPassData, "paymentCosts" | "processingCost">>;
+    const data = await readConfig();
+    if (paymentCosts !== undefined) data.paymentCosts = paymentCosts;
+    if (processingCost !== undefined) data.processingCost = processingCost;
+    const versionedData = { ...data, _version: DATA_VERSION };
+    await writeConfig(versionedData as StatusPassData);
+    res.json(data);
+  } catch (err) {
+    logger.error(err, "status-pass patch global error");
+    res.status(500).json({ error: "Failed to update" });
   }
 });
 
