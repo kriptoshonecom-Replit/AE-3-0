@@ -62,7 +62,7 @@ function fmtDate(s: string | null | undefined) {
   });
 }
 
-function PassFailBadge({ status }: { status: string | null }) {
+function StatusBadge({ status }: { status: string | null }) {
   if (!status) return <span className="lib-badge lib-badge-none">—</span>;
   if (status === "pass") return <span className="lib-badge lib-badge-pass">PASS</span>;
   return <span className="lib-badge lib-badge-fail">FAIL</span>;
@@ -139,7 +139,8 @@ function EditDrawer({ row, onClose, onSaved }: EditDrawerProps) {
           <div>
             <h2 className="lib-drawer-title">Edit Quote</h2>
             <p className="lib-drawer-sub">
-              Creator: {row.creatorName ?? "—"} &nbsp;·&nbsp; {row.creatorEmail ?? ""}
+              Creator: {row.creatorName ?? "—"}
+              {row.creatorEmail ? ` · ${row.creatorEmail}` : ""}
             </p>
           </div>
           <button type="button" className="lib-drawer-close" onClick={onClose} title="Close">
@@ -154,97 +155,52 @@ function EditDrawer({ row, onClose, onSaved }: EditDrawerProps) {
           </button>
         </div>
 
-        {error && <div className="lib-drawer-error">{error}</div>}
+        {error && <div className="edit-modal-error" style={{ margin: "10px 24px 0" }}>{error}</div>}
 
         <form className="lib-drawer-form" onSubmit={handleSave}>
           <div className="lib-form-row2">
             <label className="lib-label">
               Quote #
-              <input
-                className="lib-input"
-                value={quoteNumber}
-                onChange={(e) => setQuoteNumber(e.target.value)}
-              />
+              <input className="lib-input" value={quoteNumber} onChange={(e) => setQuoteNumber(e.target.value)} />
             </label>
             <label className="lib-label">
               Opp #
-              <input
-                className="lib-input"
-                value={oppNumber}
-                onChange={(e) => setOppNumber(e.target.value)}
-              />
+              <input className="lib-input" value={oppNumber} onChange={(e) => setOppNumber(e.target.value)} />
             </label>
           </div>
           <div className="lib-form-row2">
             <label className="lib-label">
               Company Name
-              <input
-                className="lib-input"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-              />
+              <input className="lib-input" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
             </label>
             <label className="lib-label">
               Customer Name
-              <input
-                className="lib-input"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-              />
+              <input className="lib-input" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
             </label>
           </div>
           <div className="lib-form-row2">
             <label className="lib-label">
               Sales Rep
-              <input
-                className="lib-input"
-                value={salesRep}
-                onChange={(e) => setSalesRep(e.target.value)}
-              />
+              <input className="lib-input" value={salesRep} onChange={(e) => setSalesRep(e.target.value)} />
             </label>
             <label className="lib-label">
               Valid Until
-              <input
-                className="lib-input"
-                type="date"
-                value={validUntil}
-                onChange={(e) => setValidUntil(e.target.value)}
-              />
+              <input className="lib-input" type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} />
             </label>
           </div>
           <div className="lib-form-row2">
             <label className="lib-label">
               Discount (%)
-              <input
-                className="lib-input"
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                value={discount}
-                onChange={(e) => setDiscount(e.target.value)}
-              />
+              <input className="lib-input" type="number" min="0" max="100" step="0.01" value={discount} onChange={(e) => setDiscount(e.target.value)} />
             </label>
             <label className="lib-label">
               Tax (%)
-              <input
-                className="lib-input"
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                value={tax}
-                onChange={(e) => setTax(e.target.value)}
-              />
+              <input className="lib-input" type="number" min="0" max="100" step="0.01" value={tax} onChange={(e) => setTax(e.target.value)} />
             </label>
           </div>
           <label className="lib-label">
             Pass / Fail Status
-            <select
-              className="lib-input"
-              value={passStatus}
-              onChange={(e) => setPassStatus(e.target.value)}
-            >
+            <select className="lib-input" value={passStatus} onChange={(e) => setPassStatus(e.target.value)}>
               <option value="">— Not Set —</option>
               <option value="pass">Pass</option>
               <option value="fail">Fail</option>
@@ -252,19 +208,14 @@ function EditDrawer({ row, onClose, onSaved }: EditDrawerProps) {
           </label>
           <label className="lib-label">
             Notes
-            <textarea
-              className="lib-input lib-textarea"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={4}
-            />
+            <textarea className="lib-input lib-textarea" value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} />
           </label>
 
           <div className="lib-drawer-footer">
-            <button type="button" className="btn-ghost" onClick={onClose}>
+            <button type="button" className="edit-modal-cancel" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="btn-primary" disabled={saving}>
+            <button type="submit" className="edit-modal-save" disabled={saving}>
               {saving ? "Saving…" : "Save Changes"}
             </button>
           </div>
@@ -287,9 +238,7 @@ export default function QuoteLibraryPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/api/admin/quotes`, {
-        credentials: "include",
-      });
+      const res = await fetch(`${API_BASE}/api/admin/quotes`, { credentials: "include" });
       if (!res.ok) {
         const d = (await res.json()) as { error?: string };
         throw new Error(d.error ?? "Failed to load");
@@ -303,9 +252,7 @@ export default function QuoteLibraryPage() {
     }
   }, []);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
   async function handleDelete(id: string) {
     if (!window.confirm("Permanently delete this quote?")) return;
@@ -327,127 +274,74 @@ export default function QuoteLibraryPage() {
   const filtered = quotes.filter((row) => {
     const s = search.trim().toLowerCase();
     if (!s) return true;
-    return [
-      row.quoteNumber,
-      row.companyName,
-      row.customerName,
-      row.creatorName,
-      row.creatorEmail,
-    ].some((v) => v?.toLowerCase().includes(s));
+    return [row.quoteNumber, row.companyName, row.customerName, row.creatorName, row.creatorEmail]
+      .some((v) => v?.toLowerCase().includes(s));
   });
 
   return (
-    <div className="admin-page-wrap">
+    <div className="admin-page">
+      {/* ── Top bar ── */}
       <div className="admin-topbar">
         <button
           type="button"
-          className="btn-ghost"
+          className="btn-ghost admin-back-btn"
           onClick={() => setLocation("/")}
-          style={{ display: "flex", alignItems: "center", gap: 6 }}
         >
-          <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
-            <path
-              d="M9 2L4 7l5 5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           Back to Quotes
         </button>
+
         <h1 className="admin-page-title">Quote Library</h1>
-        <button
-          className="btn-ghost sp-refresh-btn"
-          onClick={load}
-          disabled={loading}
-          title="Reload"
-        >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M13 8A5 5 0 0 1 3.3 11.5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-            <path
-              d="M3 8A5 5 0 0 1 12.7 4.5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-            <path
-              d="M12 2v3h-3"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M4 14v-3h3"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Refresh
-        </button>
+
+        <div className="admin-topbar-right">
+          <span className="admin-badge">{quotes.length} total</span>
+          <button
+            className="admin-btn-add-secondary"
+            onClick={() => void load()}
+            disabled={loading}
+            title="Reload quotes"
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ marginRight: 4 }}>
+              <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.8 0 3.4.87 4.4 2.2M13.5 2v3.5H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Refresh
+          </button>
+        </div>
       </div>
 
-      <div className="admin-page-content">
-        <div className="lib-toolbar">
-          <div className="ql-search-wrap" style={{ maxWidth: 340 }}>
-            <svg
-              className="ql-search-icon"
-              width="13"
-              height="13"
-              viewBox="0 0 14 14"
-              fill="none"
-            >
+      {/* ── Content ── */}
+      <div className="admin-content">
+        <div className="admin-toolbar">
+          <div className="ql-search-wrap admin-search" style={{ maxWidth: 320 }}>
+            <svg className="ql-search-icon" width="13" height="13" viewBox="0 0 14 14" fill="none">
               <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.4" />
-              <path
-                d="M9.5 9.5L12 12"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-              />
+              <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
             </svg>
             <input
-              className="ql-search"
               type="text"
+              className="ql-search"
               placeholder="Search quotes, customers, creators…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
             {search && (
-              <button
-                type="button"
-                className="ql-search-clear"
-                onClick={() => setSearch("")}
-              >
+              <button type="button" className="ql-search-clear" onClick={() => setSearch("")}>
                 <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-                  <path
-                    d="M2 2l10 10M12 2L2 12"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
+                  <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
               </button>
             )}
           </div>
-          <span className="lib-count">
-            {filtered.length} quote{filtered.length !== 1 ? "s" : ""}
-          </span>
         </div>
 
-        {loading && <div className="sp-loading">Loading all quotes…</div>}
-        {!loading && error && <div className="sp-error">{error}</div>}
+        {loading && <div className="admin-loading"><div className="spinner" /></div>}
+        {!loading && error && <div className="edit-modal-error">{error}</div>}
 
         {!loading && !error && (
-          <div className="lib-table-wrap">
-            <table className="lib-table">
+          <div className="admin-table-wrap">
+            <table className="admin-table">
               <thead>
                 <tr>
                   <th>Quote #</th>
@@ -458,96 +352,71 @@ export default function QuoteLibraryPage() {
                   <th>Updated</th>
                   <th>Updated By</th>
                   <th>Status</th>
-                  <th className="lib-th-right">Total MRR</th>
-                  <th className="lib-th-right">Actions</th>
+                  <th style={{ textAlign: "right" }}>Total MRR</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={10} className="lib-td-empty">
-                      {search ? `No quotes match "${search}"` : "No quotes have been synced yet"}
+                    <td colSpan={10} className="admin-table-empty">
+                      {search
+                        ? `No quotes match "${search}"`
+                        : "No quotes have been synced yet — open any quote in the builder to sync it here."}
                     </td>
                   </tr>
                 )}
                 {filtered.map((row) => (
-                  <tr key={row.id} className="lib-tr">
-                    <td className="lib-td-mono">
-                      {row.quoteNumber || (
-                        <span className="lib-muted">Untitled</span>
-                      )}
+                  <tr key={row.id}>
+                    <td className="admin-td-bold" style={{ fontFamily: "monospace", fontSize: 12 }}>
+                      {row.quoteNumber || <span style={{ color: "var(--text-3)" }}>Untitled</span>}
                     </td>
-                    <td>{row.companyName || <span className="lib-muted">—</span>}</td>
-                    <td>{row.customerName || <span className="lib-muted">—</span>}</td>
+                    <td>{row.companyName || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
+                    <td>{row.customerName || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
                     <td>
-                      <div className="lib-creator">
-                        <span className="lib-creator-name">
-                          {row.creatorName || "—"}
-                        </span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                        <span style={{ fontWeight: 500 }}>{row.creatorName || "—"}</span>
                         {row.creatorEmail && (
-                          <span className="lib-creator-email">
-                            {row.creatorEmail}
-                          </span>
+                          <span style={{ fontSize: 11, color: "var(--text-3)" }}>{row.creatorEmail}</span>
                         )}
                       </div>
                     </td>
-                    <td className="lib-td-date">{fmtDate(row.createdAt)}</td>
-                    <td className="lib-td-date">{fmtDate(row.updatedAt)}</td>
-                    <td>
-                      {row.updatedByName || (
-                        <span className="lib-muted">—</span>
-                      )}
+                    <td style={{ whiteSpace: "nowrap", fontSize: 12, color: "var(--text-2)" }}>
+                      {fmtDate(row.createdAt)}
+                    </td>
+                    <td style={{ whiteSpace: "nowrap", fontSize: 12, color: "var(--text-2)" }}>
+                      {fmtDate(row.updatedAt)}
+                    </td>
+                    <td style={{ fontSize: 12 }}>
+                      {row.updatedByName || <span style={{ color: "var(--text-3)" }}>—</span>}
                     </td>
                     <td>
-                      <PassFailBadge status={row.passStatus} />
+                      <StatusBadge status={row.passStatus} />
                     </td>
-                    <td className="lib-td-right">
-                      {row.data
-                        ? formatCurrency(computeTotal(row.data))
-                        : "—"}
+                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                      {row.data ? formatCurrency(computeTotal(row.data)) : "—"}
                     </td>
-                    <td className="lib-td-right">
-                      <div className="lib-actions">
+                    <td>
+                      <div className="admin-actions">
                         <button
                           type="button"
-                          className="lib-action-btn"
+                          className="admin-btn-edit"
                           onClick={() => setEditRow(row)}
                           title="Edit quote"
                         >
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 14 14"
-                            fill="none"
-                          >
-                            <path
-                              d="M9.5 2.5l2 2-7 7H2.5v-2l7-7z"
-                              stroke="currentColor"
-                              strokeWidth="1.3"
-                              strokeLinejoin="round"
-                            />
+                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                            <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                           Edit
                         </button>
                         <button
                           type="button"
-                          className="lib-action-btn lib-action-delete"
+                          className="admin-btn-delete"
                           onClick={() => handleDelete(row.id)}
                           title="Delete quote"
                         >
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 14 14"
-                            fill="none"
-                          >
-                            <path
-                              d="M2 3.5h10M5.5 3.5V2.5h3v1M3.5 3.5l.5 8h6l.5-8"
-                              stroke="currentColor"
-                              strokeWidth="1.3"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
+                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                            <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M13 4l-1 9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L3 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                           Delete
                         </button>
@@ -566,9 +435,7 @@ export default function QuoteLibraryPage() {
           row={editRow}
           onClose={() => setEditRow(null)}
           onSaved={(updated) => {
-            setQuotes((prev) =>
-              prev.map((r) => (r.id === updated.id ? updated : r))
-            );
+            setQuotes((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
             setEditRow(null);
           }}
         />
