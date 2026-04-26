@@ -354,7 +354,7 @@ export default function QuoteBuilder() {
   );
 
   const syncCalcContext = (meta: QuoteMeta) => {
-    localStorage.setItem(
+    sessionStorage.setItem(
       "cpq_sp_context",
       JSON.stringify({
         quoteId: meta.id ?? "",

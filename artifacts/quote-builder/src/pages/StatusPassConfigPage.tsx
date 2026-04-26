@@ -58,7 +58,9 @@ interface CalcContext {
 
 function readCalcContext(): CalcContext {
   try {
-    const raw = localStorage.getItem("cpq_sp_context");
+    // Remove any stale value left in localStorage from previous app versions
+    localStorage.removeItem("cpq_sp_context");
+    const raw = sessionStorage.getItem("cpq_sp_context");
     if (raw) return { quoteId: "", quoteName: "", requestedSubscriptionAmount: "", requestedUpfrontAmount: "", ...JSON.parse(raw) } as CalcContext;
   } catch { /* ignore */ }
   return { quoteId: "", quoteName: "", annualRevenue: "", avgTicket: "", numSites: "", requestedSubscriptionAmount: "", requestedUpfrontAmount: "" };
@@ -422,11 +424,6 @@ export default function StatusPassConfigPage() {
 
   useEffect(() => {
     setCalcCtx(readCalcContext());
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "cpq_sp_context") setCalcCtx(readCalcContext());
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   const rawTxnCount: number = (() => {
