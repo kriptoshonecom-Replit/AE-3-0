@@ -364,6 +364,8 @@ export default function QuoteBuilder() {
         numSites: meta.numberOfSites ?? "",
         requestedSubscriptionAmount: meta.requestedSubscriptionAmount ?? "",
         requestedUpfrontAmount: meta.requestedUpfrontAmount ?? "",
+        basisPoint: meta.basisPoint ?? "",
+        voyixPayTransactionFee: meta.voyixPayTransactionFee ?? "",
       }),
     );
   };

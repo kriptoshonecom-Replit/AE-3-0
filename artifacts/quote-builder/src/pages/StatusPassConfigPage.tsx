@@ -56,6 +56,8 @@ interface CalcContext {
   numSites: string;
   requestedSubscriptionAmount: string;
   requestedUpfrontAmount: string;
+  basisPoint: string;
+  voyixPayTransactionFee: string;
 }
 
 function readCalcContext(): CalcContext {
@@ -63,9 +65,9 @@ function readCalcContext(): CalcContext {
     // Remove any stale value left in localStorage from previous app versions
     localStorage.removeItem("cpq_sp_context");
     const raw = sessionStorage.getItem("cpq_sp_context");
-    if (raw) return { quoteId: "", quoteName: "", requestedSubscriptionAmount: "", requestedUpfrontAmount: "", ...JSON.parse(raw) } as CalcContext;
+    if (raw) return { quoteId: "", quoteName: "", requestedSubscriptionAmount: "", requestedUpfrontAmount: "", basisPoint: "", voyixPayTransactionFee: "", ...JSON.parse(raw) } as CalcContext;
   } catch { /* ignore */ }
-  return { quoteId: "", quoteName: "", annualRevenue: "", avgTicket: "", numSites: "", requestedSubscriptionAmount: "", requestedUpfrontAmount: "" };
+  return { quoteId: "", quoteName: "", annualRevenue: "", avgTicket: "", numSites: "", requestedSubscriptionAmount: "", requestedUpfrontAmount: "", basisPoint: "", voyixPayTransactionFee: "" };
 }
 
 /* ── Inline editable cell ────────────────────────────────── */
@@ -363,21 +365,74 @@ function BlendedRateBar({ numSites, rawTxnCount, computedTxnCount, categories, a
   );
 }
 
-/* ── Total Revenue section ───────────────────────────────── */
-const TR_ROWS = [
-  { label: "Requested Subscription Amount" },
-  { label: "Requested Upfront Amount (PIT Related)" },
-  { label: "Payments Revenue (net)" },
-  { label: "Gateway Revenue" },
-];
+/* ── Blended rate helper (shared with TotalRevenueBar) ───── */
+function computeBlendedRateValue(
+  categories: PayCategory[],
+  activeCatId: string,
+  numSites: string,
+  computedTxnCount: number,
+  rawTxnCount: number,
+): number {
+  const sites = parseFloat(numSites);
+  const { id: modelId } = sites > 0 ? modelIdFromSites(sites) : { id: "" };
+  const cat = categories.find((c) => c.id === activeCatId);
+  const model = cat?.models.find((m) => m.id === modelId);
+  const buckets = model ? computeTierBuckets(model.tiers, computedTxnCount) : [];
+  const txnFees = buckets.reduce((sum, b) => sum + b.txnFee, 0);
+  return rawTxnCount > 0 && txnFees > 0 ? txnFees / rawTxnCount : 0;
+}
 
+function fmtMoney(n: number): string {
+  if (!isFinite(n) || n === 0) return "—";
+  return n.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+/* ── Total Revenue section ───────────────────────────────── */
 const TR_COLS = ["Month 1", "Year 1", "Year 2", "Year 3", "Total"];
 
-function TotalRevenueBar() {
+interface TotalRevenueBarProps {
+  calcCtx: CalcContext;
+  annualTxnCount: number;
+  blendedRate: number;
+}
+
+function TotalRevenueBar({ calcCtx, annualTxnCount, blendedRate }: TotalRevenueBarProps) {
+  const subscriptionAmt  = parseDollar(calcCtx.requestedSubscriptionAmount);
+  const upfrontAmt       = parseDollar(calcCtx.requestedUpfrontAmount);
+  const annualRevenue    = parseDollar(calcCtx.annualRevenue);
+  const bpDecimal        = (parseFloat(calcCtx.basisPoint) || 0) / 10000;
+  const voyixFee         = parseFloat(calcCtx.voyixPayTransactionFee) || 0;
+
+  // Month 1 values
+  const paymentsRevM1 = annualRevenue > 0 || annualTxnCount > 0
+    ? ((bpDecimal * annualRevenue) + (voyixFee * annualTxnCount)) / 12
+    : 0;
+  const gatewayRevM1  = annualTxnCount > 0 && blendedRate > 0
+    ? (annualTxnCount * blendedRate) / 12
+    : 0;
+  const totalM1 = subscriptionAmt + upfrontAmt + paymentsRevM1 + gatewayRevM1;
+
+  const hasAny = subscriptionAmt > 0 || upfrontAmt > 0 || paymentsRevM1 > 0 || gatewayRevM1 > 0;
+
+  const rows: { label: string; m1: number }[] = [
+    { label: "Requested Subscription Amount",      m1: subscriptionAmt },
+    { label: "Requested Upfront Amount (PIT Related)", m1: upfrontAmt },
+    { label: "Payments Revenue (net)",              m1: paymentsRevM1 },
+    { label: "Gateway Revenue",                     m1: gatewayRevM1 },
+  ];
+
   return (
     <div className="sp-tr-bar">
       <div className="sp-calc-header">
         <div className="sp-calc-title">Total Revenue</div>
+        {!hasAny && (
+          <div className="sp-calc-source">Fill in quote fields to compute revenue</div>
+        )}
       </div>
 
       <div className="sp-tr-table-wrap">
@@ -391,21 +446,26 @@ function TotalRevenueBar() {
             </tr>
           </thead>
           <tbody>
-            {TR_ROWS.map((row) => (
+            {rows.map((row) => (
               <tr key={row.label} className="sp-tr-row">
                 <td className="sp-tr-td-label">{row.label}</td>
-                {TR_COLS.map((col) => (
-                  <td key={col} className="sp-tr-td-val">—</td>
-                ))}
+                <td className="sp-tr-td-val sp-tr-td-live">{fmtMoney(row.m1)}</td>
+                {/* Year 1–3 and Total to be implemented later */}
+                <td className="sp-tr-td-val sp-tr-td-future">—</td>
+                <td className="sp-tr-td-val sp-tr-td-future">—</td>
+                <td className="sp-tr-td-val sp-tr-td-future">—</td>
+                <td className="sp-tr-td-val sp-tr-td-future">—</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr className="sp-tr-total-row">
               <td className="sp-tr-td-label sp-tr-total-label">Total</td>
-              {TR_COLS.map((col) => (
-                <td key={col} className="sp-tr-td-val sp-tr-total-val">—</td>
-              ))}
+              <td className="sp-tr-td-val sp-tr-total-val sp-tr-td-live">{hasAny ? fmtMoney(totalM1) : "—"}</td>
+              <td className="sp-tr-td-val sp-tr-total-val sp-tr-td-future">—</td>
+              <td className="sp-tr-td-val sp-tr-total-val sp-tr-td-future">—</td>
+              <td className="sp-tr-td-val sp-tr-total-val sp-tr-td-future">—</td>
+              <td className="sp-tr-td-val sp-tr-total-val sp-tr-td-future">—</td>
             </tr>
           </tfoot>
         </table>
@@ -517,6 +577,10 @@ export default function StatusPassConfigPage() {
 
   const currentCat = data?.categories.find((c) => c.id === activeCat);
   const currentModel = currentCat?.models.find((m) => m.id === activeModel);
+
+  const blendedRate = data
+    ? computeBlendedRateValue(data.categories, activeCat, calcCtx.numSites, computedTxnCount, rawTxnCount)
+    : 0;
 
   return (
     <div className="admin-page">
@@ -647,7 +711,11 @@ export default function StatusPassConfigPage() {
                 />
 
                 {/* Total Revenue */}
-                <TotalRevenueBar />
+                <TotalRevenueBar
+                  calcCtx={calcCtx}
+                  annualTxnCount={annualTxnCount}
+                  blendedRate={blendedRate}
+                />
 
                 {/* Info banner */}
                 {currentModel && (

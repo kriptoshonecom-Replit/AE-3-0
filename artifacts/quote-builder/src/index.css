@@ -3981,6 +3981,17 @@ td:has(.inline-cell-input) {
   font-size: 13px;
 }
 
+.sp-tr-td-live {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.sp-tr-td-future {
+  color: var(--text-3);
+  font-style: italic;
+  font-size: 12px;
+}
+
 .sp-tr-total-row {
   border-top: 2px solid var(--border);
 }
