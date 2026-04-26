@@ -2645,6 +2645,7 @@ textarea:focus::placeholder {
 .inline-cell-display {
   display: inline-block;
   border-color: var(--accent);
+  background-color: var(--bg);
   min-width: 28px;
   padding: 3px 5px;
   border-radius: 5px;
@@ -2669,7 +2670,7 @@ textarea:focus::placeholder {
   font-size: 13px;
   font-family: inherit;
   color: var(--text);
-  background: var(--bg);
+  
   outline: none;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
 }
