@@ -33,6 +33,8 @@ interface StatusPassData {
   categories: PayCategory[];
 }
 
+const DATA_VERSION = "3.1";
+
 const DEFAULT_DATA: StatusPassData = {
   categories: [
     {
@@ -176,11 +178,18 @@ async function readConfig(): Promise<StatusPassData> {
     .from(statusPassConfigTable)
     .where(eq(statusPassConfigTable.id, CONFIG_ID))
     .limit(1);
-  if (!row) {
-    await db.insert(statusPassConfigTable).values({
-      id: CONFIG_ID,
-      data: DEFAULT_DATA as unknown as Record<string, unknown>,
-    });
+
+  const storedVersion = (row?.data as Record<string, unknown>)?._version as string | undefined;
+  if (!row || storedVersion !== DATA_VERSION) {
+    // No record or stale version — seed / overwrite with current defaults
+    const seedData = { ...DEFAULT_DATA, _version: DATA_VERSION } as unknown as Record<string, unknown>;
+    await db
+      .insert(statusPassConfigTable)
+      .values({ id: CONFIG_ID, data: seedData })
+      .onConflictDoUpdate({
+        target: statusPassConfigTable.id,
+        set: { data: seedData, updatedAt: new Date() },
+      });
     return DEFAULT_DATA;
   }
   return row.data as StatusPassData;
@@ -223,7 +232,8 @@ router.patch(
       if (idx < 0 || idx >= model.tiers.length) { res.status(400).json({ error: "Tier index out of range" }); return; }
 
       model.tiers[idx] = { ...model.tiers[idx], ...updates };
-      await writeConfig(data);
+      const versionedData = { ...data, _version: DATA_VERSION };
+      await writeConfig(versionedData as StatusPassData);
       res.json(data);
     } catch (err) {
       logger.error(err, "status-pass patch tier error");
