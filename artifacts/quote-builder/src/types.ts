@@ -75,6 +75,8 @@ export interface QuoteMeta {
   paymentsSpecialist?: string;
   requestedSubscriptionAmount?: string;
   requestedUpfrontAmount?: string;
+  creatorName?: string;
+  updatedByName?: string;
 }
 
 export interface PitLineItem {

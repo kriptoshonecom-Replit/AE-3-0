@@ -62,7 +62,7 @@ body {
   top: 0;
   left: 0;
   height: 100%;
-  width: 280px;
+  width: 340px;
   overflow: hidden;
   background: var(--surface);
   border-right: 1px solid var(--border);
@@ -76,7 +76,7 @@ body {
 }
 
 .sidebar-inner {
-  width: 280px;
+  width: 340px;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -3952,3 +3952,270 @@ td:has(.inline-cell-input) {
   text-overflow: ellipsis;
   max-width: 220px;
 }
+
+/* ── Quote Library admin page ────────────────────────────── */
+.lib-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.lib-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+.lib-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.lib-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.lib-table thead th {
+  background: var(--surface-2, #f5f5f5);
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.lib-th-right {
+  text-align: right !important;
+}
+.lib-table tbody .lib-tr:hover {
+  background: var(--surface-hover, rgba(0,0,0,0.025));
+}
+.lib-table tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  color: var(--text);
+}
+.lib-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.lib-td-mono { font-family: monospace; font-size: 12px; }
+.lib-td-date { white-space: nowrap; font-size: 12px; color: var(--text-muted); }
+.lib-td-right { text-align: right; white-space: nowrap; }
+.lib-td-empty { text-align: center; color: var(--text-muted); padding: 40px 0 !important; font-style: italic; }
+.lib-muted { color: var(--text-muted); }
+.lib-creator { display: flex; flex-direction: column; gap: 2px; }
+.lib-creator-name { font-size: 13px; font-weight: 500; }
+.lib-creator-email { font-size: 11px; color: var(--text-muted); }
+
+/* Pass/Fail badges */
+.lib-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.lib-badge-none { background: var(--surface-2, #f0f0f0); color: var(--text-muted); }
+.lib-badge-pass { background: #d1fae5; color: #065f46; }
+.lib-badge-fail { background: #fee2e2; color: #991b1b; }
+
+/* Action buttons */
+.lib-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.lib-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.lib-action-btn:hover { background: var(--surface-hover, #f0f0f0); }
+.lib-action-delete { color: #b91c1c; border-color: #fca5a5; }
+.lib-action-delete:hover { background: #fee2e2; }
+
+/* Edit drawer */
+.lib-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 200;
+  display: flex;
+  justify-content: flex-end;
+}
+.lib-drawer {
+  background: var(--bg);
+  width: 440px;
+  max-width: 95vw;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.18);
+}
+.lib-drawer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.lib-drawer-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 2px;
+}
+.lib-drawer-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+.lib-drawer-close {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+}
+.lib-drawer-close:hover { background: var(--surface-hover, #f0f0f0); }
+.lib-drawer-error {
+  margin: 10px 24px 0;
+  padding: 10px 14px;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.lib-drawer-form {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.lib-form-row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.lib-label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.lib-input {
+  padding: 8px 11px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+.lib-input:focus { border-color: var(--accent, #3b82f6); }
+.lib-textarea { resize: vertical; min-height: 80px; }
+.lib-drawer-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ── Enriched QuoteList sidebar items ─────────────────────── */
+.ql-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 11px 14px;
+  text-align: left;
+}
+.ql-item-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ql-item-top-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.ql-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ql-item-total {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.ql-item-company {
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ql-item-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.ql-item-meta-row svg { flex-shrink: 0; opacity: 0.55; }
+.ql-meta-val { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 110px; }
+.ql-meta-sep { opacity: 0.4; }
+.ql-meta-admin { color: #7c3aed; font-weight: 600; }
+.ql-item-status-row { margin-top: 2px; }
+.ql-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.ql-status-pass { background: #d1fae5; color: #065f46; }
+.ql-status-fail { background: #fee2e2; color: #991b1b; }
+
+/* Highlight for Quote Library nav link */
+.sidebar-admin-link--highlight {
+  background: rgba(59,130,246,0.07);
+  color: #2563eb !important;
+}
+.sidebar-admin-link--highlight svg { color: #2563eb; }
+.sidebar-admin-link--highlight:hover { background: rgba(59,130,246,0.14); }

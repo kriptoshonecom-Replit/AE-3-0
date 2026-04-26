@@ -7,6 +7,8 @@ import pitAdminRouter from "./pitAdmin";
 import adminMediaRouter from "./adminMedia";
 import alertConfigsRouter from "./adminAlertConfigs";
 import statusPassRouter from "./adminStatusPass";
+import quotesSyncRouter from "./quotesSync";
+import adminQuotesRouter from "./adminQuotes";
 
 const router: IRouter = Router();
 
@@ -18,5 +20,7 @@ router.use("/admin", adminMediaRouter);
 router.use(alertConfigsRouter);
 router.use(statusPassRouter);
 router.use(productsRouter);
+router.use(quotesSyncRouter);
+router.use(adminQuotesRouter);
 
 export default router;

@@ -28,6 +28,7 @@ import QuoteSummary from "../components/QuoteSummary";
 import QuoteList from "../components/QuoteList";
 import AddGroupModal from "../components/AddGroupModal";
 import { saveQuote, loadAllQuotes, getActiveQuoteId, loadQuote } from "../utils/storage";
+import { syncQuoteToServer, fetchServerQuotes } from "../utils/serverSync";
 import { exportQuoteToPDF } from "../utils/pdfExport";
 import { generateId, todayString, thirtyDaysOut } from "../utils/calculations";
 
@@ -311,11 +312,41 @@ export default function QuoteBuilder() {
     setInitialized(true);
   }, [userId, initialized]);
 
+  /* Pull server quotes after init — merge any admin-edited or newer versions */
+  useEffect(() => {
+    if (!initialized || !userId) return;
+    (async () => {
+      const serverQuotes = await fetchServerQuotes();
+      if (!serverQuotes.length) return;
+      const localAll = loadAllQuotes(userId);
+      const localMap = new Map(localAll.map((q) => [q.meta.id, q]));
+      let changed = false;
+      for (const sq of serverQuotes) {
+        const lq = localMap.get(sq.meta.id);
+        if (!lq || (!isDirtyRef.current && sq.meta.updatedAt >= lq.meta.updatedAt)) {
+          localMap.set(sq.meta.id, sq);
+          changed = true;
+        }
+      }
+      if (changed) {
+        const merged = Array.from(localMap.values());
+        localStorage.setItem(`quote_builder_quotes__${userId}`, JSON.stringify(merged));
+        setRefreshTrigger((n) => n + 1);
+        const activeId = getActiveQuoteId(userId);
+        if (activeId && !isDirtyRef.current) {
+          const updated = localMap.get(activeId);
+          if (updated) { setQuote(updated); syncCalcContext(updated.meta); }
+        }
+      }
+    })();
+  }, [initialized, userId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const autosave = useCallback(
     (q: Quote, markDirty = true) => {
       if (!userId) return;
       const updated = { ...q, meta: { ...q.meta, updatedAt: todayString() } };
       saveQuote(updated, userId);
+      syncQuoteToServer(updated);
       setRefreshTrigger((n) => n + 1);
       if (markDirty) isDirtyRef.current = true;
     },
@@ -655,6 +686,7 @@ export default function QuoteBuilder() {
             onNew={handleNewQuote}
             refreshTrigger={refreshTrigger}
             userId={userId}
+            userFullName={user?.fullName}
           />
 
           {user?.role === "admin" && (
@@ -730,6 +762,17 @@ export default function QuoteBuilder() {
                   <path d="M5.5 7v5.5M10.5 7v5.5" stroke="currentColor" strokeWidth="1.2" />
                 </svg>
                 StatusPass Config
+              </button>
+              <button
+                type="button"
+                className="sidebar-admin-link sidebar-admin-link--highlight"
+                onClick={() => { setLocation("/admin/quote-library"); setSidebarOpen(false); }}
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                  <path d="M4.5 5.5h7M4.5 8h7M4.5 10.5h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                </svg>
+                Quote Library
               </button>
             </div>
           )}

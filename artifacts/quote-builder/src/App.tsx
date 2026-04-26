@@ -12,6 +12,7 @@ import PitConfigPage from "@/pages/PitConfigPage";
 import MediaFilesPage from "@/pages/MediaFilesPage";
 import AlertConfigPage from "@/pages/AlertConfigPage";
 import StatusPassConfigPage from "@/pages/StatusPassConfigPage";
+import QuoteLibraryPage from "@/pages/QuoteLibraryPage";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,9 @@ function AppRoutes() {
           </Route>
           <Route path="/admin/status-pass">
             <AdminRoute><StatusPassConfigPage /></AdminRoute>
+          </Route>
+          <Route path="/admin/quote-library">
+            <AdminRoute><QuoteLibraryPage /></AdminRoute>
           </Route>
         </Switch>
       </QueryClientProvider>

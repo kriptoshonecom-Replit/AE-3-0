@@ -15,19 +15,28 @@ const DEFAULT_OPT_PROGRAMS: Record<string, boolean> = {
   "consumer-marketing": true,
   "insight-or-console": true,
   "aloha-api": true,
-  "kitchen": true,
-  "orderpay": true,
+  kitchen: true,
+  orderpay: true,
   "aloha-delivery": true,
 };
 
 function quoteGrandTotal(q: Quote): number {
   const productsTotal = quoteTotal(q);
   const pitCat = pitData.categories.find((c) => c.id === (q.meta.pitType ?? ""));
-  const pitTotal = pitCat ? pitCat.lineItems.reduce((s, i) => s + i.duration * PIT_HOURLY_RATE, 0) : 0;
+  const pitTotal = pitCat
+    ? pitCat.lineItems.reduce((s, i) => s + i.duration * PIT_HOURLY_RATE, 0)
+    : 0;
   const yesNoToggles = { ...DEFAULT_YES_NO, ...(q.meta.yesNoToggles ?? {}) };
   const optToggles = { ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) };
   const productPitTotal = computeProductRelatedPitTotal(q.groups, yesNoToggles, optToggles);
   return productsTotal + pitTotal + productPitTotal;
+}
+
+function fmtShortDate(s: string | undefined | null): string {
+  if (!s) return "—";
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return s;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 interface Props {
@@ -36,9 +45,17 @@ interface Props {
   onNew: () => void;
   refreshTrigger: number;
   userId: string;
+  userFullName?: string;
 }
 
-export default function QuoteList({ currentId, onSelect, onNew, refreshTrigger, userId }: Props) {
+export default function QuoteList({
+  currentId,
+  onSelect,
+  onNew,
+  refreshTrigger,
+  userId,
+  userFullName,
+}: Props) {
   const quotes = useMemo(() => loadAllQuotes(userId), [refreshTrigger, userId]);
   const [search, setSearch] = useState("");
 
@@ -48,7 +65,8 @@ export default function QuoteList({ currentId, onSelect, onNew, refreshTrigger, 
     return quotes.filter(
       (quote) =>
         (quote.meta.quoteNumber || "").toLowerCase().includes(q) ||
-        (quote.meta.customerName || "").toLowerCase().includes(q)
+        (quote.meta.customerName || "").toLowerCase().includes(q) ||
+        (quote.meta.companyName || "").toLowerCase().includes(q)
     );
   }, [quotes, search]);
 
@@ -58,7 +76,12 @@ export default function QuoteList({ currentId, onSelect, onNew, refreshTrigger, 
         <span className="ql-title">Saved Quotes</span>
         <button className="btn-new-quote" type="button" onClick={onNew}>
           <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-            <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path
+              d="M7 2v10M2 7h10"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
           </svg>
           New
         </button>
@@ -79,57 +102,129 @@ export default function QuoteList({ currentId, onSelect, onNew, refreshTrigger, 
         {search && (
           <button type="button" className="ql-search-clear" onClick={() => setSearch("")}>
             <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path
+                d="M2 2l10 10M12 2L2 12"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
         )}
       </div>
 
-      {quotes.length === 0 && (
-        <p className="ql-empty">No saved quotes yet.</p>
-      )}
-
+      {quotes.length === 0 && <p className="ql-empty">No saved quotes yet.</p>}
       {quotes.length > 0 && filtered.length === 0 && (
-        <p className="ql-empty">No quotes match "{search}".</p>
+        <p className="ql-empty">No quotes match &ldquo;{search}&rdquo;.</p>
       )}
 
       <div className="ql-items">
-        {filtered.map((q) => (
-          <button
-            key={q.meta.id}
-            type="button"
-            className={`ql-item ${q.meta.id === currentId ? "active" : ""}`}
-            onClick={() => onSelect(q)}
-          >
-            <div className="ql-item-left">
-              <span className="ql-item-title">{q.meta.quoteNumber || "Untitled Quote"}</span>
-              {q.meta.customerName && (
-                <span className="ql-item-customer">{q.meta.customerName}</span>
+        {filtered.map((q) => {
+          const creator = q.meta.creatorName || userFullName || "—";
+          const updatedBy = q.meta.updatedByName;
+          const passStatus = (q.meta as Record<string, unknown>).passStatus as string | undefined;
+
+          return (
+            <button
+              key={q.meta.id}
+              type="button"
+              className={`ql-item ${q.meta.id === currentId ? "active" : ""}`}
+              onClick={() => onSelect(q)}
+            >
+              {/* ── Row 1: title + total + delete ── */}
+              <div className="ql-item-top">
+                <span className="ql-item-title">
+                  {q.meta.quoteNumber || "Untitled Quote"}
+                </span>
+                <div className="ql-item-top-right">
+                  <span className="ql-item-total">{formatCurrency(quoteGrandTotal(q))}</span>
+                  <button
+                    type="button"
+                    className="ql-delete"
+                    title="Delete quote"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm("Delete this quote?")) {
+                        deleteQuote(q.meta.id, userId);
+                        if (q.meta.id === currentId) onNew();
+                        else window.location.reload();
+                      }
+                    }}
+                  >
+                    <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+                      <path
+                        d="M2 2l10 10M12 2L2 12"
+                        stroke="currentColor"
+                        strokeWidth="1.4"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* ── Row 2: company / customer ── */}
+              {(q.meta.companyName || q.meta.customerName) && (
+                <span className="ql-item-company">
+                  {q.meta.companyName || q.meta.customerName}
+                </span>
               )}
-              <span className="ql-item-date">{q.meta.updatedAt}</span>
-            </div>
-            <div className="ql-item-right">
-              <span className="ql-item-total">{formatCurrency(quoteGrandTotal(q))}</span>
-              <button
-                type="button"
-                className="ql-delete"
-                title="Delete quote"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (window.confirm("Delete this quote?")) {
-                    deleteQuote(q.meta.id, userId);
-                    if (q.meta.id === currentId) onNew();
-                    else window.location.reload();
-                  }
-                }}
-              >
-                <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                  <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+
+              {/* ── Row 3: creator + created date ── */}
+              <div className="ql-item-meta-row">
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                  <circle cx="6" cy="4" r="2.5" stroke="currentColor" strokeWidth="1.1" />
+                  <path
+                    d="M1.5 11c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4"
+                    stroke="currentColor"
+                    strokeWidth="1.1"
+                    strokeLinecap="round"
+                  />
                 </svg>
-              </button>
-            </div>
-          </button>
-        ))}
+                <span className="ql-meta-val">{creator}</span>
+                <span className="ql-meta-sep">·</span>
+                <span className="ql-meta-val">{fmtShortDate(q.meta.createdAt)}</span>
+              </div>
+
+              {/* ── Row 4: updated info ── */}
+              <div className="ql-item-meta-row">
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                  <path
+                    d="M10 6A4 4 0 1 1 6 2"
+                    stroke="currentColor"
+                    strokeWidth="1.1"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M10 2v3H7"
+                    stroke="currentColor"
+                    strokeWidth="1.1"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="ql-meta-val">{fmtShortDate(q.meta.updatedAt)}</span>
+                {updatedBy && (
+                  <>
+                    <span className="ql-meta-sep">·</span>
+                    <span className="ql-meta-val ql-meta-admin">by {updatedBy}</span>
+                  </>
+                )}
+              </div>
+
+              {/* ── Row 5: pass/fail badge (placeholder) ── */}
+              {passStatus ? (
+                <div className="ql-item-status-row">
+                  <span
+                    className={`ql-status-badge ql-status-${passStatus}`}
+                  >
+                    {passStatus === "pass" ? "PASS" : "FAIL"}
+                  </span>
+                </div>
+              ) : null}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

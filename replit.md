@@ -30,10 +30,16 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Per-line quantity, unit price override, and optional notes
 - Quote metadata: title, customer name/email, valid until, discount %, tax %
 - Subtotals per group and grand total summary
-- Auto-save to localStorage (keyed by userId from JWT)
-- Multiple quotes sidebar (create, switch, delete)
+- Auto-save to localStorage (keyed by userId from JWT) + debounced server sync via `POST /api/quotes/sync`
+- On app init, server quotes are fetched and merged with localStorage (admin-edited versions win)
+- Multiple quotes sidebar (create, switch, delete) — width 340px
+  - Each sidebar item shows: creator name, created date, updated date, "updated by" (admin edits shown in purple), Pass/Fail badge
+- Quote Library admin page (`/admin/quote-library`): table of all users' quotes with search, creator info, Pass/Fail status, edit drawer
+  - Edit drawer: admin can update quote #, opp #, company, customer, sales rep, valid until, discount, tax, notes, Pass/Fail
+  - Admin edits write back to DB and are pulled by users on next load
 - PDF export via jsPDF
 - License sync modal (triggers on device qty change or 5s after device selection)
+- StatusPass page shows quote-name badge (synced via localStorage `cpq_sp_context`)
 
 ### API Server (`artifacts/api-server`)
 - Express 5 on port 8080
@@ -45,8 +51,9 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Product image upload: admin uploads PNG via `POST /api/admin/products/upload-image`; files are stored in **Replit Object Storage** (GCS bucket, env var `DEFAULT_OBJECT_STORAGE_BUCKET_ID`) under the `products/` prefix, served at `GET /api/images/products/:slug`. The same bucket is used in both dev and production so images are always in sync. Legacy filesystem images (`uploads/` and `quote-builder/public/`) still served as fallback.
 
 ### Database (`lib/db`)
-- Tables: `users` (id, email, password_hash, full_name, created_at), `verification_codes` (id, user_id, code, type, expires_at, used, created_at)
-- Push schema: `pnpm --filter @workspace/db run push`
+- Tables: `users`, `verification_codes`, `product_catalog`, `pit_catalog`, `media_files`, `alert_configs`, `status_pass_config`, **`quotes`** (id varchar, user_id, data jsonb, quote_number, company_name, customer_name, created_at, updated_at, updated_by_user_id, updated_by_name, pass_status)
+- `quotes.data` stores the full Quote JSON blob; `quotes.updated_by_name` tracks admin edits
+- Push schema: `cd lib/db && pnpm run push`
 
 ## Key Commands
 
