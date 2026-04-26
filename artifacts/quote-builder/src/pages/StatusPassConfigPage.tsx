@@ -327,7 +327,7 @@ function BlendedRateBar({ numSites, rawTxnCount, computedTxnCount, categories, a
 
       <div className="sp-blended-fields">
         <div className="sp-blended-field">
-          <label className="sp-calc-label">TXN Fees (Tier 1)</label>
+          <label className="sp-calc-label">TXN Fees</label>
           <div className={`sp-calc-readonly ${!hasValues ? "sp-calc-empty" : ""}`}>
             {hasValues ? `$${txnFees.toFixed(2)}` : "—"}
           </div>
