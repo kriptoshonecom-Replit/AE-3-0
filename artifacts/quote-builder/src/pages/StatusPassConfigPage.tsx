@@ -405,12 +405,8 @@ function TotalRevenueBar({ calcCtx, annualTxnCount, blendedRate }: TotalRevenueB
   const subscriptionAmt = parseDollar(calcCtx.requestedSubscriptionAmount);
   const upfrontAmt      = parseDollar(calcCtx.requestedUpfrontAmount);
   const annualRevenue   = parseDollar(calcCtx.annualRevenue);
-  // basisPoint is stored as a whole number (e.g. "30" = 30 bp).
-  // Guard against previously-corrupted values stored as decimals (e.g. "0.0030"):
-  // if the raw value is >= 1 it is a whole-number entry → divide by 10,000.
-  // if it is already < 1 it was already expressed as a decimal → use as-is.
-  const bpRaw           = parseFloat(calcCtx.basisPoint) || 0;
-  const bpDecimal       = bpRaw >= 1 ? bpRaw / 10000 : bpRaw;
+  // basisPoint is always stored as a whole number (e.g. 30 = 30 bp = 0.0030).
+  const bpDecimal       = (parseFloat(calcCtx.basisPoint) || 0) / 10000;
   const voyixFee        = parseFloat(calcCtx.voyixPayTransactionFee) || 0;
 
   // Month 1 — monthly slice of each recurring value
