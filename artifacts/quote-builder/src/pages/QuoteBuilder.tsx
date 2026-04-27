@@ -172,6 +172,21 @@ export default function QuoteBuilder() {
 
   const [pitHourlyRate, setPitHourlyRate] = useState<number>(PIT_HOURLY_RATE);
 
+  // ── Status Pass stamp ──────────────────────────────────────
+  const [stampStatus, setStampStatus] = useState<"pass" | "fail" | null>(null);
+  useEffect(() => {
+    const prior = sessionStorage.getItem("aloha-sp-result-prior");
+    const y1    = sessionStorage.getItem("aloha-sp-result-year1");
+    const y3    = sessionStorage.getItem("aloha-sp-result-year3");
+    if (prior === "PASS" && y1 === "PASS" && y3 === "PASS") {
+      setStampStatus("pass");
+    } else if (prior || y1 || y3) {
+      setStampStatus("fail");
+    } else {
+      setStampStatus(null);
+    }
+  }, []);
+
   const [heatmapItems, setHeatmapItems] = useState<HeatmapItem[]>(() => {
     const cat = (pitDataStatic.categories as Array<{ id: string; lineItems: Array<{ id: string; name: string; price?: number }> }>).find(
       (c) => c.id === "heatmap",
@@ -1014,6 +1029,12 @@ export default function QuoteBuilder() {
                   heatmapTotal={computeHeatmapTotal(heatmapToggles, heatmapItems.length > 0 ? heatmapItems : undefined)}
                   legacyTotal={0}
                 />
+                {stampStatus && (
+                  <div
+                    className="summary-stamp-overlay"
+                    style={{ backgroundImage: `url(/${stampStatus}.png)` }}
+                  />
+                )}
               </section>
             )}
           </div>

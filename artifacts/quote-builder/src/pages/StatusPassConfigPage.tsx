@@ -836,6 +836,10 @@ function PriorSpendBar({ calcCtx, annualTxnCount, blendedRate }: PriorSpendBarPr
   const result: "PASS" | "FAIL" | null =
     variance !== null ? (variance < threshold ? "FAIL" : "PASS") : null;
 
+  useEffect(() => {
+    sessionStorage.setItem("aloha-sp-result-prior", result ?? "");
+  }, [result]);
+
   const fmtPct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 
   return (
@@ -954,6 +958,10 @@ function Year1PricingBar({ calcCtx, data, annualTxnCount, blendedRate }: Year1Pr
   // PASS: variance > threshold; FAIL otherwise
   const result: "PASS" | "FAIL" | null =
     pctY1 !== null ? (pctY1 > threshold ? "PASS" : "FAIL") : null;
+
+  useEffect(() => {
+    sessionStorage.setItem("aloha-sp-result-year1", result ?? "");
+  }, [result]);
 
   const fmtPct = (n: number) => `${n.toFixed(1)}%`;
 
@@ -1074,6 +1082,10 @@ function Year3PricingBar({ calcCtx, data, annualTxnCount, blendedRate }: Year3Pr
   // PASS: variance > threshold; FAIL otherwise
   const result: "PASS" | "FAIL" | null =
     pctTotal !== null ? (pctTotal > threshold ? "PASS" : "FAIL") : null;
+
+  useEffect(() => {
+    sessionStorage.setItem("aloha-sp-result-year3", result ?? "");
+  }, [result]);
 
   const fmtPct = (n: number) => `${n.toFixed(1)}%`;
 

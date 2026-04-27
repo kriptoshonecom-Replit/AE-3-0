@@ -896,6 +896,18 @@ button {
 
 .summary-section {
   align-items: flex-end;
+  position: relative;
+}
+
+.summary-stamp-overlay {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  z-index: 10;
+  border-radius: 8px;
 }
 
 .summary-panel {
