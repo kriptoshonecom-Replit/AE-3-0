@@ -951,9 +951,9 @@ function Year1PricingBar({ calcCtx, data, annualTxnCount, blendedRate }: Year1Pr
   const marY1  = revY1 - costY1;
   const pctY1  = revY1 > 0 ? (marY1 / revY1) * 100 : null;
 
-  // PASS: variance < threshold; FAIL otherwise
+  // PASS: variance > threshold; FAIL otherwise
   const result: "PASS" | "FAIL" | null =
-    pctY1 !== null ? (pctY1 < threshold ? "PASS" : "FAIL") : null;
+    pctY1 !== null ? (pctY1 > threshold ? "PASS" : "FAIL") : null;
 
   const fmtPct = (n: number) => `${n.toFixed(1)}%`;
 
