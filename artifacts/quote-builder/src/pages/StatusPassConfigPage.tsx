@@ -1007,6 +1007,126 @@ function Year1PricingBar({ calcCtx, data, annualTxnCount, blendedRate }: Year1Pr
   );
 }
 
+/* ── Year 3 Requested Pricing approval ───────────────────── */
+interface Year3PricingBarProps {
+  calcCtx: CalcContext;
+  data: StatusPassData;
+  annualTxnCount: number;
+  blendedRate: number;
+}
+
+function Year3PricingBar({ calcCtx, data, annualTxnCount, blendedRate }: Year3PricingBarProps) {
+  const [threshold, setThreshold] = useState<number>(40);
+
+  // ── Recompute Margin % Total (mirrors MarginBar grand-total column) ──
+  const subscriptionAmt = parseDollar(calcCtx.requestedSubscriptionAmount);
+  const upfrontAmt      = parseDollar(calcCtx.requestedUpfrontAmount);
+  const annualRevenue   = parseDollar(calcCtx.annualRevenue);
+  const bpDecimal       = (parseFloat(calcCtx.basisPoint) || 0) / 10000;
+  const voyixFee        = parseFloat(calcCtx.voyixPayTransactionFee) || 0;
+
+  const subM1         = subscriptionAmt;
+  const upfrontM1     = upfrontAmt;
+  const paymentsRevM1 = annualRevenue > 0 || annualTxnCount > 0
+    ? ((bpDecimal * annualRevenue) + (voyixFee * annualTxnCount)) / 12 : 0;
+  const gatewayRevM1  = annualTxnCount > 0 && blendedRate > 0
+    ? (annualTxnCount * blendedRate) / 12 : 0;
+
+  const revY1         = (subM1 * 12) + upfrontM1 + (paymentsRevM1 * 12) + (gatewayRevM1 * 12);
+  const revY2         = (subM1 * 12) + (paymentsRevM1 * 12) + (gatewayRevM1 * 12);
+  const revY3         = revY2;
+  const revGrandTotal = revY1 + revY2 + revY3;
+
+  const costBuffer     = (data.costBuffer ?? 12) / 100;
+  const gatewayCost    = data.gatewayCost ?? 0.005;
+  const processingCost = data.processingCost ?? 0.0125;
+
+  const swHwM1     = (calcCtx.productPciSum ?? 0) * (1 + costBuffer);
+  const hwmM1      = calcCtx.hwmCostMonthly ?? 0;
+  const paysCostM1 = annualTxnCount > 0
+    ? (annualTxnCount * (gatewayCost + (calcCtx.ncrPay ? processingCost : 0))) / 12 : 0;
+
+  const pitTot     = calcCtx.pitTotal ?? 0;
+  const prodPitTot = calcCtx.productPitTotal ?? 0;
+  const hmTot      = calcCtx.heatmapTotal ?? 0;
+  let instY1: number, instY2: number, instY3: number;
+  if (calcCtx.recurringPit) {
+    const pitMo = (((pitTot + prodPitTot) / 120) * 4) / 2;
+    const hmOT  = hmTot / 2;
+    instY1 = pitMo * 12 + hmOT; instY2 = pitMo * 12; instY3 = pitMo * 12;
+  } else {
+    const ot = (pitTot + prodPitTot + hmTot) / 2;
+    instY1 = ot; instY2 = 0; instY3 = 0;
+  }
+  const buyoutM1 = parseDollar(calcCtx.costOfBuyOut ?? "");
+  const swHwY    = swHwM1 * 12;
+  const hwmY     = hwmM1  * 12;
+  const paysY    = paysCostM1 * 12;
+
+  const costY1         = swHwY + hwmY + paysY + instY1 + buyoutM1;
+  const costY2         = swHwY + hwmY + paysY + instY2;
+  const costY3         = swHwY + hwmY + paysY + instY3;
+  const costGrandTotal = costY1 + costY2 + costY3;
+
+  const marTotal  = revGrandTotal - costGrandTotal;
+  const pctTotal  = revGrandTotal > 0 ? (marTotal / revGrandTotal) * 100 : null;
+
+  // PASS: variance > threshold; FAIL otherwise
+  const result: "PASS" | "FAIL" | null =
+    pctTotal !== null ? (pctTotal > threshold ? "PASS" : "FAIL") : null;
+
+  const fmtPct = (n: number) => `${n.toFixed(1)}%`;
+
+  return (
+    <div className="sp-ps-bar">
+      <div className="sp-calc-header">
+        <div className="sp-calc-title">Year 3 Requested Pricing</div>
+      </div>
+      <div className="sp-ps-grid">
+        <div className="sp-ps-field">
+          <span className="sp-ps-label">Year 3 %</span>
+          <span className="sp-ps-value">
+            {pctTotal !== null ? fmtPct(pctTotal) : "—"}
+          </span>
+          <span className="sp-ps-hint">
+            Margin % Total (Y1 + Y2 + Y3)
+          </span>
+        </div>
+
+        <div className="sp-ps-field">
+          <span className="sp-ps-label">Variance (%)</span>
+          <span className={`sp-ps-value ${pctTotal !== null ? (pctTotal >= 0 ? "sp-ps-positive" : "sp-ps-negative") : ""}`}>
+            {pctTotal !== null ? fmtPct(pctTotal) : "—"}
+          </span>
+          <span className="sp-ps-hint">
+            Margin $ ÷ Total Revenue (3-year total)
+          </span>
+        </div>
+
+        <div className="sp-ps-field">
+          <span className="sp-ps-label">Threshold (%)</span>
+          <div className="sp-ps-threshold-wrap">
+            <input
+              className="sp-ps-threshold-input"
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              value={threshold}
+              onChange={(e) => setThreshold(parseFloat(e.target.value) || 0)}
+            />
+            <span className="sp-ps-threshold-unit">%</span>
+          </div>
+        </div>
+
+        <div className={`sp-ps-badge sp-ps-badge-${result?.toLowerCase() ?? "pending"}`}>
+          {result ?? "—"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main Page ────────────────────────────────────────────── */
 export default function StatusPassConfigPage() {
   const [, setLocation] = useLocation();
@@ -1302,6 +1422,14 @@ export default function StatusPassConfigPage() {
 
                 {/* Year 1 Requested Pricing */}
                 <Year1PricingBar
+                  calcCtx={calcCtx}
+                  data={data}
+                  annualTxnCount={annualTxnCount}
+                  blendedRate={blendedRate}
+                />
+
+                {/* Year 3 Requested Pricing */}
+                <Year3PricingBar
                   calcCtx={calcCtx}
                   data={data}
                   annualTxnCount={annualTxnCount}
