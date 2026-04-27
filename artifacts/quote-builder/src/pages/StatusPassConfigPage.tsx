@@ -26,6 +26,7 @@ interface PayCategory {
 interface StatusPassData {
   categories: PayCategory[];
   paymentCosts: number;
+  gatewayCost: number;
   processingCost: number;
 }
 
@@ -706,7 +707,7 @@ export default function StatusPassConfigPage() {
     } catch { /* silent — optimistic state retained */ }
   }
 
-  async function handleGlobalSave(field: "paymentCosts" | "processingCost", raw: string) {
+  async function handleGlobalSave(field: "paymentCosts" | "gatewayCost" | "processingCost", raw: string) {
     const numVal = parseFloat(raw);
     if (isNaN(numVal) || numVal < 0) return;
     setData((prev) => prev ? { ...prev, [field]: numVal } : prev);
@@ -793,6 +794,20 @@ export default function StatusPassConfigPage() {
                       onSave={(v) => handleGlobalSave("paymentCosts", v)}
                     />
                     <span className="sp-global-unit">%</span>
+                  </div>
+                </div>
+                <div className="sp-global-field">
+                  <span className="sp-global-label">Gateway cost</span>
+                  <div className="sp-global-value">
+                    <span className="sp-global-unit sp-global-unit-prefix">$</span>
+                    <InlineCell
+                      value={String(data.gatewayCost ?? 0.005)}
+                      inputType="number"
+                      step={0.001}
+                      min={0}
+                      width={70}
+                      onSave={(v) => handleGlobalSave("gatewayCost", v)}
+                    />
                   </div>
                 </div>
                 <div className="sp-global-field">

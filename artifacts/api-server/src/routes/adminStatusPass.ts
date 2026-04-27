@@ -32,6 +32,7 @@ interface PayCategory {
 interface StatusPassData {
   categories: PayCategory[];
   paymentCosts: number;
+  gatewayCost: number;
   processingCost: number;
 }
 
@@ -39,6 +40,7 @@ const DATA_VERSION = "3.1";
 
 const DEFAULT_DATA: StatusPassData = {
   paymentCosts: 2.25,
+  gatewayCost: 0.005,
   processingCost: 0.0125,
   categories: [
     {
@@ -201,6 +203,7 @@ async function readConfig(): Promise<StatusPassData> {
   const stored = row.data as Partial<StatusPassData>;
   return {
     paymentCosts: DEFAULT_DATA.paymentCosts,
+    gatewayCost: DEFAULT_DATA.gatewayCost,
     processingCost: DEFAULT_DATA.processingCost,
     ...stored,
     categories: stored.categories ?? DEFAULT_DATA.categories,
@@ -229,9 +232,10 @@ router.get("/admin/status-pass", requireAdmin, async (_req, res) => {
 
 router.patch("/admin/status-pass/global", requireAdmin, async (req, res) => {
   try {
-    const { paymentCosts, processingCost } = req.body as Partial<Pick<StatusPassData, "paymentCosts" | "processingCost">>;
+    const { paymentCosts, gatewayCost, processingCost } = req.body as Partial<Pick<StatusPassData, "paymentCosts" | "gatewayCost" | "processingCost">>;
     const data = await readConfig();
     if (paymentCosts !== undefined) data.paymentCosts = paymentCosts;
+    if (gatewayCost !== undefined) data.gatewayCost = gatewayCost;
     if (processingCost !== undefined) data.processingCost = processingCost;
     const versionedData = { ...data, _version: DATA_VERSION };
     await writeConfig(versionedData as StatusPassData);
