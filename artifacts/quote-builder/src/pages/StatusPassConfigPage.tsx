@@ -666,6 +666,138 @@ function TotalCostBar({ calcCtx, data, annualTxnCount }: TotalCostBarProps) {
   );
 }
 
+/* ── Margin $ vs % section ───────────────────────────────── */
+interface MarginBarProps {
+  calcCtx: CalcContext;
+  data: StatusPassData;
+  annualTxnCount: number;
+  blendedRate: number;
+}
+
+function MarginBar({ calcCtx, data, annualTxnCount, blendedRate }: MarginBarProps) {
+  // ── Recompute revenue column totals (mirrors TotalRevenueBar) ──
+  const subscriptionAmt = parseDollar(calcCtx.requestedSubscriptionAmount);
+  const upfrontAmt      = parseDollar(calcCtx.requestedUpfrontAmount);
+  const annualRevenue   = parseDollar(calcCtx.annualRevenue);
+  const bpDecimal       = (parseFloat(calcCtx.basisPoint) || 0) / 10000;
+  const voyixFee        = parseFloat(calcCtx.voyixPayTransactionFee) || 0;
+
+  const subM1         = subscriptionAmt;
+  const upfrontM1     = upfrontAmt;
+  const paymentsRevM1 = annualRevenue > 0 || annualTxnCount > 0
+    ? ((bpDecimal * annualRevenue) + (voyixFee * annualTxnCount)) / 12 : 0;
+  const gatewayRevM1  = annualTxnCount > 0 && blendedRate > 0
+    ? (annualTxnCount * blendedRate) / 12 : 0;
+
+  const revM1         = subM1 + upfrontM1 + paymentsRevM1 + gatewayRevM1;
+  const revY1         = (subM1 * 12) + upfrontM1 + (paymentsRevM1 * 12) + (gatewayRevM1 * 12);
+  const revY2         = (subM1 * 12) + (paymentsRevM1 * 12) + (gatewayRevM1 * 12);
+  const revY3         = revY2;
+  const revGrandTotal = revY1 + revY2 + revY3;
+
+  // ── Recompute cost column totals (mirrors TotalCostBar) ──
+  const costBuffer     = (data.costBuffer ?? 12) / 100;
+  const gatewayCost    = data.gatewayCost ?? 0.005;
+  const processingCost = data.processingCost ?? 0.0125;
+
+  const swHwM1    = (calcCtx.productPciSum ?? 0) * (1 + costBuffer);
+  const hwmM1     = calcCtx.hwmCostMonthly ?? 0;
+  const paysCostM1 = annualTxnCount > 0
+    ? (annualTxnCount * (gatewayCost + (calcCtx.ncrPay ? processingCost : 0))) / 12 : 0;
+
+  const pitTot    = calcCtx.pitTotal ?? 0;
+  const prodPitTot = calcCtx.productPitTotal ?? 0;
+  const hmTot     = calcCtx.heatmapTotal ?? 0;
+  let instM1: number, instY1: number, instY2: number, instY3: number;
+  if (calcCtx.recurringPit) {
+    const pitMo = (((pitTot + prodPitTot) / 120) * 4) / 2;
+    const hmOT  = hmTot / 2;
+    instM1 = pitMo + hmOT; instY1 = pitMo * 12 + hmOT; instY2 = pitMo * 12; instY3 = pitMo * 12;
+  } else {
+    const ot = (pitTot + prodPitTot + hmTot) / 2;
+    instM1 = ot; instY1 = ot; instY2 = 0; instY3 = 0;
+  }
+  const buyoutM1  = parseDollar(calcCtx.costOfBuyOut ?? "");
+  const swHwY     = swHwM1 * 12;
+  const hwmY      = hwmM1  * 12;
+  const paysY     = paysCostM1 * 12;
+
+  const costM1         = swHwM1 + hwmM1 + paysCostM1 + instM1 + buyoutM1;
+  const costY1         = swHwY  + hwmY  + paysY + instY1 + buyoutM1;
+  const costY2         = swHwY  + hwmY  + paysY + instY2;
+  const costY3         = swHwY  + hwmY  + paysY + instY3;
+  const costGrandTotal = costY1 + costY2 + costY3;
+
+  // ── Margin $ per column ──
+  const marM1    = revM1         - costM1;
+  const marY1    = revY1         - costY1;
+  const marY2    = revY2         - costY2;
+  const marY3    = revY3         - costY3;
+  const marTotal = revGrandTotal - costGrandTotal;
+
+  // ── Margin % per column ──
+  const pct = (rev: number, mar: number) => rev > 0 ? mar / rev : 0;
+  const pctM1    = pct(revM1,         marM1);
+  const pctY1    = pct(revY1,         marY1);
+  const pctY2    = pct(revY2,         marY2);
+  const pctY3    = pct(revY3,         marY3);
+  const pctTotal = pct(revGrandTotal, marTotal);
+
+  const hasAny = revM1 > 0 || costM1 > 0;
+
+  const fmtPct = (n: number) =>
+    !isFinite(n) || n === 0 ? "—" : `${(n * 100).toFixed(1)}%`;
+
+  const dollarCell = (n: number) => (
+    <td className="sp-tr-td-val sp-tr-td-live">{fmtMoney(n)}</td>
+  );
+  const pctCell = (n: number) => (
+    <td className="sp-tr-td-val sp-tr-td-live">{hasAny ? fmtPct(n) : "—"}</td>
+  );
+
+  return (
+    <div className="sp-tr-bar">
+      <div className="sp-calc-header">
+        <div className="sp-calc-title">Margin $ vs %</div>
+        {!hasAny && (
+          <div className="sp-calc-source">Fill in quote fields to compute margin</div>
+        )}
+      </div>
+
+      <div className="sp-tr-table-wrap">
+        <table className="sp-tr-table">
+          <thead>
+            <tr>
+              <th className="sp-tr-th-label"></th>
+              {TR_COLS.map((col) => (
+                <th key={col} className="sp-tr-th-col">{col}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="sp-tr-row">
+              <td className="sp-tr-td-label">Margin $</td>
+              {dollarCell(marM1)}
+              {dollarCell(marY1)}
+              {dollarCell(marY2)}
+              {dollarCell(marY3)}
+              {dollarCell(marTotal)}
+            </tr>
+            <tr className="sp-tr-row">
+              <td className="sp-tr-td-label">Margin %</td>
+              {pctCell(pctM1)}
+              {pctCell(pctY1)}
+              {pctCell(pctY2)}
+              {pctCell(pctY3)}
+              {pctCell(pctTotal)}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 /* ── Prior Spend vs Requested Pricing ───────────────────── */
 interface PriorSpendBarProps {
   calcCtx: CalcContext;
@@ -1042,6 +1174,14 @@ export default function StatusPassConfigPage() {
                   calcCtx={calcCtx}
                   data={data}
                   annualTxnCount={annualTxnCount}
+                />
+
+                {/* Margin $ vs % */}
+                <MarginBar
+                  calcCtx={calcCtx}
+                  data={data}
+                  annualTxnCount={annualTxnCount}
+                  blendedRate={blendedRate}
                 />
 
                 {/* Prior Spend vs Requested Pricing */}
