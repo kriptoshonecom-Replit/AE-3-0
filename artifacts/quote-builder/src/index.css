@@ -902,12 +902,41 @@ button {
 .summary-stamp-overlay {
   position: absolute;
   inset: 0;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
   z-index: 10;
   border-radius: 8px;
+}
+
+.summary-stamp-img {
+  width: 190px;
+  height: 190px;
+  object-fit: contain;
+  transform: rotate(-12deg);
+  opacity: 0.88;
+}
+
+.summary-stamp-css {
+  width: 175px;
+  height: 175px;
+  border-radius: 50%;
+  border: 5px double;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-12deg);
+  font-size: 40px;
+  font-weight: 900;
+  font-family: 'Arial Black', Impact, sans-serif;
+  letter-spacing: 4px;
+  opacity: 0.82;
+}
+
+.summary-stamp-css-pass {
+  color: #15803d;
+  border-color: #15803d;
 }
 
 .summary-panel {

@@ -1036,10 +1036,13 @@ export default function QuoteBuilder() {
                   legacyTotal={0}
                 />
                 {stampStatus && (
-                  <div
-                    className="summary-stamp-overlay"
-                    style={{ backgroundImage: `url(/${stampStatus}.png)` }}
-                  />
+                  <div className="summary-stamp-overlay">
+                    {stampStatus === "fail" ? (
+                      <img className="summary-stamp-img" src="/fail.png" alt="FAIL" />
+                    ) : (
+                      <div className="summary-stamp-css summary-stamp-css-pass">PASS</div>
+                    )}
+                  </div>
                 )}
               </section>
             )}
