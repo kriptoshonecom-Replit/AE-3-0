@@ -1,0 +1,73 @@
+Now we are going to create a section called: "Total Cost" and will be placed right below "Total Revenue" section on "StatusPass Configuration" Page.
+
+The section will have "six" rows, and "six" columns, the same layout like you made for "Total Revenue" section. Month1, Year1, Year2, Year3, Total
+
+We will calculate a monthly value first.
+
+----First Row | "SW/HW Cost"
+
+This row will look-up the following:
+
+- "Cost Buffer"
+- "Products "PCI" Attribute and their selected Quantity"
+
+Calculation Logic:
+
+(Product "PCI attribute" X selected Quantity = "$ Amount").
+Create SUM of All Selected Products For new given value "$ Amount".
+Multiply that value with (1+"Cost Buffer").
+
+additional Logic:
+Line Items: Aloha Essentials 3.0 TS and Aloha Essentials 3.0 QS they have "tier bucket pricing)
+IF Quantity>1 use original value for first and every next Quantity will be $6.3
+IF Quantity=1 first Original value is used $45
+
+----Second Row | "HWM Cost"
+
+This row will look-up the following:
+
+- "Products "HWMC" Attribute and their selected Quantity"
+
+Calculation Logic:
+
+(Product "HWMC attribute" X selected Quantity = "$ Amount").
+Create SUM of All Selected Products For new given value "$ Amount".
+
+----Third Row | "Payments Cost"
+
+This row will look-up the following:
+
+- "Annual TXN #"
+- "Gateway cost"
+- "Processing cost"
+- "NCR Pay toggle"
+
+Calculation Logic:
+If "NCR Pay toggle" YES=>
+"Annual TXN #" X ( "Gateway cost" + "Processing cost" )
+If "NCR Pay toggle" NO=>
+"Annual TXN #" X "Gateway cost"
+
+Given Value Divide with 12 to get monthly amount.
+
+
+----Fourth Row | "Installation Cost"
+
+This row will look-up the following:
+
+- "Summary section "PIT" Value"
+- "Summary section "Product Related PIT" Value"
+- "Heatmap & Cabling section"
+
+Calculation Logic for one-time:
+("Summary section "PIT" Value" + "Summary section "Product Related PIT" Value" + "Heatmap & Cabling section" If product Selected) / 2
+
+If Recuring is selected:
+(((("Summary section "PIT" Value" + "Summary section "Product Related PIT" Value") / 120) X 4 ) / 2) + ("Heatmap & Cabling section" If product Selected / 2)
+
+
+----Fifth Row | "Buyout Cost"
+
+This row will look-up the following:
+
+- "Cost of BuyOut Value Field"

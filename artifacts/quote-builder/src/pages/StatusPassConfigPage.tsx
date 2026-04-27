@@ -62,6 +62,15 @@ interface CalcContext {
   voyixPayTransactionFee: string;
   aeCurrentMonthlySpend: string;
   aeCurrentVoyixPaySpend: string;
+  // Extended cost fields
+  productPciSum: number;
+  hwmCostMonthly: number;
+  ncrPay: boolean;
+  pitTotal: number;
+  productPitTotal: number;
+  heatmapTotal: number;
+  recurringPit: boolean;
+  costOfBuyOut: string;
 }
 
 const EMPTY_CTX: CalcContext = {
@@ -69,6 +78,9 @@ const EMPTY_CTX: CalcContext = {
   requestedSubscriptionAmount: "", requestedUpfrontAmount: "",
   basisPoint: "", voyixPayTransactionFee: "",
   aeCurrentMonthlySpend: "", aeCurrentVoyixPaySpend: "",
+  productPciSum: 0, hwmCostMonthly: 0, ncrPay: false,
+  pitTotal: 0, productPitTotal: 0, heatmapTotal: 0,
+  recurringPit: false, costOfBuyOut: "",
 };
 
 function readCalcContext(): CalcContext {
@@ -521,6 +533,139 @@ function TotalRevenueBar({ calcCtx, annualTxnCount, blendedRate }: TotalRevenueB
   );
 }
 
+/* ── Total Cost section ──────────────────────────────────── */
+interface TotalCostBarProps {
+  calcCtx: CalcContext;
+  data: StatusPassData;
+  annualTxnCount: number;
+}
+
+function TotalCostBar({ calcCtx, data, annualTxnCount }: TotalCostBarProps) {
+  const costBuffer = (data.costBuffer ?? 12) / 100;
+  const gatewayCost = data.gatewayCost ?? 0.005;
+  const processingCost = data.processingCost ?? 0.0125;
+
+  // Row 1 – SW/HW Cost (monthly recurring)
+  const swHwM1 = (calcCtx.productPciSum ?? 0) * (1 + costBuffer);
+
+  // Row 2 – HWM Cost (monthly recurring)
+  const hwmM1 = calcCtx.hwmCostMonthly ?? 0;
+
+  // Row 3 – Payments Cost (monthly recurring)
+  // ncrPay YES: annualTxnCount × (gateway + processing) / 12
+  // ncrPay NO:  annualTxnCount × gateway / 12
+  const paymentsM1 = annualTxnCount > 0
+    ? (annualTxnCount * (gatewayCost + (calcCtx.ncrPay ? processingCost : 0))) / 12
+    : 0;
+
+  // Row 4 – Installation Cost
+  const pitTotal = calcCtx.pitTotal ?? 0;
+  const productPitTotal = calcCtx.productPitTotal ?? 0;
+  const heatmapTotal = calcCtx.heatmapTotal ?? 0;
+  let installM1: number, installY1: number, installY2: number, installY3: number;
+  if (calcCtx.recurringPit) {
+    // PIT recurring: (((pitTotal + productPitTotal) / 120) × 4) / 2
+    const pitMonthly = (((pitTotal + productPitTotal) / 120) * 4) / 2;
+    const heatmapOneTime = heatmapTotal / 2;
+    installM1 = pitMonthly + heatmapOneTime;
+    installY1 = pitMonthly * 12 + heatmapOneTime;
+    installY2 = pitMonthly * 12;
+    installY3 = pitMonthly * 12;
+  } else {
+    // One-time: (pitTotal + productPitTotal + heatmapTotal) / 2
+    const oneTime = (pitTotal + productPitTotal + heatmapTotal) / 2;
+    installM1 = oneTime;
+    installY1 = oneTime;
+    installY2 = 0;
+    installY3 = 0;
+  }
+
+  // Row 5 – Buyout Cost (one-time)
+  const buyoutM1 = parseDollar(calcCtx.costOfBuyOut ?? "");
+  const buyoutY1 = buyoutM1;
+  const buyoutY2 = 0;
+  const buyoutY3 = 0;
+
+  // Year columns for recurring rows (SW/HW, HWM, Payments)
+  const swHwY1 = swHwM1 * 12; const swHwY2 = swHwY1; const swHwY3 = swHwY1;
+  const hwmY1  = hwmM1  * 12; const hwmY2  = hwmY1;  const hwmY3  = hwmY1;
+  const payY1  = paymentsM1 * 12; const payY2 = payY1; const payY3 = payY1;
+
+  // Row totals (Y1 + Y2 + Y3)
+  const swHwTotal   = swHwY1 + swHwY2 + swHwY3;
+  const hwmTotal    = hwmY1  + hwmY2  + hwmY3;
+  const payTotal    = payY1  + payY2  + payY3;
+  const installTotal = installY1 + installY2 + installY3;
+  const buyoutTotal = buyoutY1 + buyoutY2 + buyoutY3;
+
+  // Column totals
+  const totalM1    = swHwM1 + hwmM1 + paymentsM1 + installM1 + buyoutM1;
+  const totalY1    = swHwY1 + hwmY1 + payY1 + installY1 + buyoutY1;
+  const totalY2    = swHwY2 + hwmY2 + payY2 + installY2 + buyoutY2;
+  const totalY3    = swHwY3 + hwmY3 + payY3 + installY3 + buyoutY3;
+  const grandTotal = totalY1 + totalY2 + totalY3;
+
+  const hasAny = totalM1 > 0;
+
+  const rows: [string, number, number, number, number, number][] = [
+    ["SW/HW Cost",        swHwM1,     swHwY1,     swHwY2,     swHwY3,     swHwTotal],
+    ["HWM Cost",          hwmM1,      hwmY1,      hwmY2,      hwmY3,      hwmTotal],
+    ["Payments Cost",     paymentsM1, payY1,      payY2,      payY3,      payTotal],
+    ["Installation Cost", installM1,  installY1,  installY2,  installY3,  installTotal],
+    ["Buyout Cost",       buyoutM1,   buyoutY1,   buyoutY2,   buyoutY3,   buyoutTotal],
+  ];
+
+  const val = (n: number) => (
+    <td className="sp-tr-td-val sp-tr-td-live">{fmtMoney(n)}</td>
+  );
+
+  return (
+    <div className="sp-tr-bar">
+      <div className="sp-calc-header">
+        <div className="sp-calc-title">Total Cost</div>
+        {!hasAny && (
+          <div className="sp-calc-source">Fill in quote fields to compute costs</div>
+        )}
+      </div>
+
+      <div className="sp-tr-table-wrap">
+        <table className="sp-tr-table">
+          <thead>
+            <tr>
+              <th className="sp-tr-th-label"></th>
+              {TR_COLS.map((col) => (
+                <th key={col} className="sp-tr-th-col">{col}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(([label, m1, y1, y2, y3, rowTotal]) => (
+              <tr key={label} className="sp-tr-row">
+                <td className="sp-tr-td-label">{label}</td>
+                {val(m1)}
+                {val(y1)}
+                {val(y2)}
+                {val(y3)}
+                {val(rowTotal)}
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="sp-tr-total-row">
+              <td className="sp-tr-td-label sp-tr-total-label">Total</td>
+              <td className="sp-tr-td-val sp-tr-total-val">{hasAny ? fmtMoney(totalM1) : "—"}</td>
+              <td className="sp-tr-td-val sp-tr-total-val">{hasAny ? fmtMoney(totalY1) : "—"}</td>
+              <td className="sp-tr-td-val sp-tr-total-val">{hasAny ? fmtMoney(totalY2) : "—"}</td>
+              <td className="sp-tr-td-val sp-tr-total-val">{hasAny ? fmtMoney(totalY3) : "—"}</td>
+              <td className="sp-tr-td-val sp-tr-total-val">{hasAny ? fmtMoney(grandTotal) : "—"}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 /* ── Prior Spend vs Requested Pricing ───────────────────── */
 interface PriorSpendBarProps {
   calcCtx: CalcContext;
@@ -890,6 +1035,13 @@ export default function StatusPassConfigPage() {
                   calcCtx={calcCtx}
                   annualTxnCount={annualTxnCount}
                   blendedRate={blendedRate}
+                />
+
+                {/* Total Cost */}
+                <TotalCostBar
+                  calcCtx={calcCtx}
+                  data={data}
+                  annualTxnCount={annualTxnCount}
                 />
 
                 {/* Prior Spend vs Requested Pricing */}

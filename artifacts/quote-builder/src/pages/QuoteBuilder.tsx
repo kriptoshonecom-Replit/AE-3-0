@@ -353,27 +353,74 @@ export default function QuoteBuilder() {
     [userId]
   );
 
-  const syncCalcContext = (meta: QuoteMeta) => {
-    sessionStorage.setItem(
-      "cpq_sp_context",
-      JSON.stringify({
-        quoteId: meta.id ?? "",
-        quoteName: meta.companyName || meta.customerName || meta.quoteNumber || "Untitled Quote",
-        annualRevenue: meta.annualStoreRevenue ?? "",
-        avgTicket: meta.averageTicketAmount ?? "",
-        numSites: meta.numberOfSites ?? "",
-        requestedSubscriptionAmount: meta.requestedSubscriptionAmount ?? "",
-        requestedUpfrontAmount: meta.requestedUpfrontAmount ?? "",
-        basisPoint: meta.basisPoint ?? "",
-        voyixPayTransactionFee: meta.voyixPayTransactionFee ?? "",
-        aeCurrentMonthlySpend: meta.aeCurrentMonthlySpend ?? "",
-        aeCurrentVoyixPaySpend: meta.aeCurrentVoyixPaySpend ?? "",
-      }),
+  // Sync all quote data to sessionStorage so StatusPassConfigPage can read it
+  useEffect(() => {
+    const meta = quote.meta;
+    const TIER_IDS = new Set(["co-001", "co-002"]);
+    const TIER_EXTRA_RATE = 6.30;
+    let productPciSum = 0;
+    let hwmCostMonthly = 0;
+
+    const itemAttrMap = new Map<string, { pci: number; hwmc: number }>();
+    for (const cat of productCategories) {
+      for (const item of cat.items) {
+        const a = item as unknown as { pci?: number; hwmc?: number };
+        itemAttrMap.set(item.id, { pci: a.pci ?? 0, hwmc: a.hwmc ?? 0 });
+      }
+    }
+    for (const group of quote.groups) {
+      for (const li of group.lineItems) {
+        const attrs = itemAttrMap.get(li.productId);
+        if (!attrs) continue;
+        const qty = li.quantity;
+        if (attrs.pci > 0 && qty > 0) {
+          if (TIER_IDS.has(li.productId) && qty > 1) {
+            productPciSum += attrs.pci + (qty - 1) * TIER_EXTRA_RATE;
+          } else {
+            productPciSum += attrs.pci * qty;
+          }
+        }
+        if (attrs.hwmc > 0 && qty > 0) hwmCostMonthly += attrs.hwmc * qty;
+      }
+    }
+
+    const pitCat = pitCategories.find((c) => c.id === (meta.pitType ?? ""));
+    const pitTotal = pitCat
+      ? pitCat.lineItems.reduce((s, i) => s + i.duration * pitHourlyRate, 0)
+      : 0;
+    const productPitTotal = computeProductRelatedPitTotal(
+      quote.groups, yesNoToggles, optionalProgramToggles,
+      meta.pitType ?? "", catalogMap, pitHourlyRate,
     );
-  };
+    const heatmapTotal = computeHeatmapTotal(
+      heatmapToggles,
+      heatmapItems.length > 0 ? heatmapItems : undefined,
+    );
+
+    sessionStorage.setItem("cpq_sp_context", JSON.stringify({
+      quoteId: meta.id ?? "",
+      quoteName: meta.companyName || meta.customerName || meta.quoteNumber || "Untitled Quote",
+      annualRevenue: meta.annualStoreRevenue ?? "",
+      avgTicket: meta.averageTicketAmount ?? "",
+      numSites: meta.numberOfSites ?? "",
+      requestedSubscriptionAmount: meta.requestedSubscriptionAmount ?? "",
+      requestedUpfrontAmount: meta.requestedUpfrontAmount ?? "",
+      basisPoint: meta.basisPoint ?? "",
+      voyixPayTransactionFee: meta.voyixPayTransactionFee ?? "",
+      aeCurrentMonthlySpend: meta.aeCurrentMonthlySpend ?? "",
+      aeCurrentVoyixPaySpend: meta.aeCurrentVoyixPaySpend ?? "",
+      productPciSum,
+      hwmCostMonthly,
+      ncrPay: meta.ncrPay ?? false,
+      pitTotal,
+      productPitTotal,
+      heatmapTotal,
+      recurringPit: meta.recurringPit ?? false,
+      costOfBuyOut: meta.costOfBuyOut ?? "",
+    }));
+  }, [quote, yesNoToggles, heatmapToggles, optionalProgramToggles, pitCategories, pitHourlyRate, catalogMap, heatmapItems, productCategories]);
 
   const handleMetaChange = (meta: QuoteMeta) => {
-    syncCalcContext(meta);
     const updated = { ...quote, meta };
     setQuote(updated);
     autosave(updated);
