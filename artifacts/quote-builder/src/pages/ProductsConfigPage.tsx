@@ -189,6 +189,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
   const [text, setText] = useState(item?.text ?? "");
   const [price, setPrice] = useState(numberOrEmpty(item?.price));
   const [pci, setPci] = useState(numberOrEmpty(item?.pci));
+  const [hwmc, setHwmc] = useState(numberOrEmpty(item?.hwmc));
   const [pro, setPro] = useState(numberOrEmpty(item?.produration));
   const [tra, setTra] = useState(numberOrEmpty(item?.traduration));
   const [ins, setIns] = useState(numberOrEmpty(item?.instaduration));
@@ -247,6 +248,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
       name: name.trim(), type, text,
       price: Number(price) || 0,
       pci: Number(pci) || 0,
+      hwmc: Number(hwmc) || 0,
       produration: Number(pro) || 0,
       traduration: Number(tra) || 0,
       instaduration: Number(ins) || 0,
@@ -403,6 +405,10 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
             <div className="edit-field-group">
               <label>PCI</label>
               <input type="number" min="0" step="0.01" value={pci} onChange={(e) => setPci(e.target.value)} placeholder="0" />
+            </div>
+            <div className="edit-field-group">
+              <label>HWMC</label>
+              <input type="number" min="0" step="0.01" value={hwmc} onChange={(e) => setHwmc(e.target.value)} placeholder="0" />
             </div>
             <div className="edit-field-group">
               <label>Pro Duration (h)</label>
