@@ -12,6 +12,7 @@ interface ProductItem {
   image?: string;
   price: number;
   pci?: number;
+  hwmc?: number;
   produration?: number;
   traduration?: number;
   instaduration?: number;
@@ -628,6 +629,7 @@ export default function ProductsConfigPage() {
                       <th>Type</th>
                       <th>Price/mo</th>
                       <th title="Product Cost Indicator">PCI</th>
+                      <th title="Hardware Maintenance Cost">HWMC</th>
                       <th>Pro</th>
                       <th>Train</th>
                       <th>Install</th>
@@ -662,6 +664,13 @@ export default function ProductsConfigPage() {
                             value={(item.pci ?? 0).toFixed(2)}
                             type="number" step={0.01} min={0}
                             onSave={(v) => patchItem(currentCat.id, item.id, "pci", v)}
+                          />
+                        </td>
+                        <td>
+                          <InlineCell
+                            value={(item.hwmc ?? 0).toFixed(2)}
+                            type="number" step={0.01} min={0}
+                            onSave={(v) => patchItem(currentCat.id, item.id, "hwmc", v)}
                           />
                         </td>
                         <td>

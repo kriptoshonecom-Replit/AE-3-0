@@ -52,6 +52,7 @@ interface ProductItem {
   image?: string;
   price: number;
   pci?: number;
+  hwmc?: number;
   produration?: number;
   traduration?: number;
   instaduration?: number;
