@@ -295,7 +295,6 @@ export default function QuoteBuilder() {
         if (q.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...q.meta.yesNoToggles });
         setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
         setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });
-        syncCalcContext(q.meta);
         setInitialized(true);
         return;
       }
@@ -307,7 +306,6 @@ export default function QuoteBuilder() {
       if (q.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...q.meta.yesNoToggles });
       setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
       setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });
-      syncCalcContext(q.meta);
     }
     setInitialized(true);
   }, [userId, initialized]);
@@ -335,7 +333,7 @@ export default function QuoteBuilder() {
         const activeId = getActiveQuoteId(userId);
         if (activeId && !isDirtyRef.current) {
           const updated = localMap.get(activeId);
-          if (updated) { setQuote(updated); syncCalcContext(updated.meta); }
+          if (updated) { setQuote(updated); }
         }
       }
     })();
@@ -690,7 +688,6 @@ export default function QuoteBuilder() {
     setYesNoToggles({ ...DEFAULT_YES_NO, ...(q.meta.yesNoToggles ?? {}) });
     setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
     setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });
-    syncCalcContext(q.meta);
     setSidebarOpen(false);
   };
 
