@@ -31,6 +31,7 @@ interface PayCategory {
 
 interface StatusPassData {
   categories: PayCategory[];
+  costBuffer: number;
   paymentCosts: number;
   gatewayCost: number;
   processingCost: number;
@@ -39,6 +40,7 @@ interface StatusPassData {
 const DATA_VERSION = "3.1";
 
 const DEFAULT_DATA: StatusPassData = {
+  costBuffer: 12,
   paymentCosts: 2.25,
   gatewayCost: 0.005,
   processingCost: 0.0125,
@@ -202,6 +204,7 @@ async function readConfig(): Promise<StatusPassData> {
   // Merge stored data with defaults for any new top-level fields added after initial seed
   const stored = row.data as Partial<StatusPassData>;
   return {
+    costBuffer: DEFAULT_DATA.costBuffer,
     paymentCosts: DEFAULT_DATA.paymentCosts,
     gatewayCost: DEFAULT_DATA.gatewayCost,
     processingCost: DEFAULT_DATA.processingCost,
@@ -232,8 +235,9 @@ router.get("/admin/status-pass", requireAdmin, async (_req, res) => {
 
 router.patch("/admin/status-pass/global", requireAdmin, async (req, res) => {
   try {
-    const { paymentCosts, gatewayCost, processingCost } = req.body as Partial<Pick<StatusPassData, "paymentCosts" | "gatewayCost" | "processingCost">>;
+    const { costBuffer, paymentCosts, gatewayCost, processingCost } = req.body as Partial<Pick<StatusPassData, "costBuffer" | "paymentCosts" | "gatewayCost" | "processingCost">>;
     const data = await readConfig();
+    if (costBuffer !== undefined) data.costBuffer = costBuffer;
     if (paymentCosts !== undefined) data.paymentCosts = paymentCosts;
     if (gatewayCost !== undefined) data.gatewayCost = gatewayCost;
     if (processingCost !== undefined) data.processingCost = processingCost;
