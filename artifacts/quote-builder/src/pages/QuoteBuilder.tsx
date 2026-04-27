@@ -760,16 +760,7 @@ export default function QuoteBuilder() {
 
           {stampStatus && (
             <div className={`sidebar-stamp-badge sidebar-stamp-badge-${stampStatus}`}>
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                {stampStatus === "pass" ? (
-                  <path d="M3 8l4 4 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                ) : (
-                  <>
-                    <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  </>
-                )}
-              </svg>
-              <span>Status Pass: {stampStatus === "pass" ? "PASS" : "FAIL"}</span>
+              Status Pass: <strong>{stampStatus === "pass" ? "PASS" : "FAIL"}</strong>
             </div>
           )}
 
