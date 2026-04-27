@@ -898,6 +898,115 @@ function PriorSpendBar({ calcCtx, annualTxnCount, blendedRate }: PriorSpendBarPr
   );
 }
 
+/* ── Year 1 Requested Pricing approval ───────────────────── */
+interface Year1PricingBarProps {
+  calcCtx: CalcContext;
+  data: StatusPassData;
+  annualTxnCount: number;
+  blendedRate: number;
+}
+
+function Year1PricingBar({ calcCtx, data, annualTxnCount, blendedRate }: Year1PricingBarProps) {
+  const [threshold, setThreshold] = useState<number>(5);
+
+  // ── Recompute Margin % Year 1 (mirrors MarginBar) ──
+  const subscriptionAmt = parseDollar(calcCtx.requestedSubscriptionAmount);
+  const upfrontAmt      = parseDollar(calcCtx.requestedUpfrontAmount);
+  const annualRevenue   = parseDollar(calcCtx.annualRevenue);
+  const bpDecimal       = (parseFloat(calcCtx.basisPoint) || 0) / 10000;
+  const voyixFee        = parseFloat(calcCtx.voyixPayTransactionFee) || 0;
+
+  const subM1          = subscriptionAmt;
+  const upfrontM1      = upfrontAmt;
+  const paymentsRevM1  = annualRevenue > 0 || annualTxnCount > 0
+    ? ((bpDecimal * annualRevenue) + (voyixFee * annualTxnCount)) / 12 : 0;
+  const gatewayRevM1   = annualTxnCount > 0 && blendedRate > 0
+    ? (annualTxnCount * blendedRate) / 12 : 0;
+
+  const revY1 = (subM1 * 12) + upfrontM1 + (paymentsRevM1 * 12) + (gatewayRevM1 * 12);
+
+  const costBuffer     = (data.costBuffer ?? 12) / 100;
+  const gatewayCost    = data.gatewayCost ?? 0.005;
+  const processingCost = data.processingCost ?? 0.0125;
+
+  const swHwM1     = (calcCtx.productPciSum ?? 0) * (1 + costBuffer);
+  const hwmM1      = calcCtx.hwmCostMonthly ?? 0;
+  const paysCostM1 = annualTxnCount > 0
+    ? (annualTxnCount * (gatewayCost + (calcCtx.ncrPay ? processingCost : 0))) / 12 : 0;
+
+  const pitTot     = calcCtx.pitTotal ?? 0;
+  const prodPitTot = calcCtx.productPitTotal ?? 0;
+  const hmTot      = calcCtx.heatmapTotal ?? 0;
+  let instY1: number;
+  if (calcCtx.recurringPit) {
+    const pitMo = (((pitTot + prodPitTot) / 120) * 4) / 2;
+    const hmOT  = hmTot / 2;
+    instY1 = pitMo * 12 + hmOT;
+  } else {
+    instY1 = (pitTot + prodPitTot + hmTot) / 2;
+  }
+  const buyoutM1 = parseDollar(calcCtx.costOfBuyOut ?? "");
+  const costY1   = (swHwM1 * 12) + (hwmM1 * 12) + (paysCostM1 * 12) + instY1 + buyoutM1;
+
+  const marY1  = revY1 - costY1;
+  const pctY1  = revY1 > 0 ? (marY1 / revY1) * 100 : null;
+
+  // PASS: variance < threshold; FAIL otherwise
+  const result: "PASS" | "FAIL" | null =
+    pctY1 !== null ? (pctY1 < threshold ? "PASS" : "FAIL") : null;
+
+  const fmtPct = (n: number) => `${n.toFixed(1)}%`;
+
+  return (
+    <div className="sp-ps-bar">
+      <div className="sp-calc-header">
+        <div className="sp-calc-title">Year 1 Requested Pricing</div>
+      </div>
+      <div className="sp-ps-grid">
+        <div className="sp-ps-field">
+          <span className="sp-ps-label">Year 1 %</span>
+          <span className="sp-ps-value">
+            {pctY1 !== null ? fmtPct(pctY1) : "—"}
+          </span>
+          <span className="sp-ps-hint">
+            Margin % for Year 1
+          </span>
+        </div>
+
+        <div className="sp-ps-field">
+          <span className="sp-ps-label">Variance (%)</span>
+          <span className={`sp-ps-value ${pctY1 !== null ? (pctY1 >= 0 ? "sp-ps-positive" : "sp-ps-negative") : ""}`}>
+            {pctY1 !== null ? fmtPct(pctY1) : "—"}
+          </span>
+          <span className="sp-ps-hint">
+            Margin $ ÷ Total Revenue (Year 1)
+          </span>
+        </div>
+
+        <div className="sp-ps-field">
+          <span className="sp-ps-label">Threshold (%)</span>
+          <div className="sp-ps-threshold-wrap">
+            <input
+              className="sp-ps-threshold-input"
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              value={threshold}
+              onChange={(e) => setThreshold(parseFloat(e.target.value) || 0)}
+            />
+            <span className="sp-ps-threshold-unit">%</span>
+          </div>
+        </div>
+
+        <div className={`sp-ps-badge sp-ps-badge-${result?.toLowerCase() ?? "pending"}`}>
+          {result ?? "—"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main Page ────────────────────────────────────────────── */
 export default function StatusPassConfigPage() {
   const [, setLocation] = useLocation();
@@ -1187,6 +1296,14 @@ export default function StatusPassConfigPage() {
                 {/* Prior Spend vs Requested Pricing */}
                 <PriorSpendBar
                   calcCtx={calcCtx}
+                  annualTxnCount={annualTxnCount}
+                  blendedRate={blendedRate}
+                />
+
+                {/* Year 1 Requested Pricing */}
+                <Year1PricingBar
+                  calcCtx={calcCtx}
+                  data={data}
                   annualTxnCount={annualTxnCount}
                   blendedRate={blendedRate}
                 />
