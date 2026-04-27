@@ -385,6 +385,12 @@ export default function QuoteBuilder() {
     autosave(updated);
   };
 
+  const handleRecurringPitChange = (val: boolean) => {
+    const updated = { ...quote, meta: { ...quote.meta, recurringPit: val } };
+    setQuote(updated);
+    autosave(updated);
+  };
+
   const handleGroupChange = (idx: number, group: QuoteGroup) => {
     const oldGroup = quote.groups[idx];
     const groups = quote.groups.map((g, i) => (i === idx ? group : g));
@@ -867,6 +873,8 @@ export default function QuoteBuilder() {
               <PitSection
                 pitType={quote.meta.pitType ?? ""}
                 onChange={handlePitTypeChange}
+                recurringPit={quote.meta.recurringPit ?? false}
+                onRecurringPitChange={handleRecurringPitChange}
                 yesNoToggles={yesNoToggles}
                 onYesNoChange={handleYesNoChange}
                 optionalProgramToggles={optionalProgramToggles}

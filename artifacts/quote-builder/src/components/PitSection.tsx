@@ -18,6 +18,8 @@ const OPTIONAL_PROGRAMS = [
 interface Props {
   pitType: string;
   onChange: (pitType: string) => void;
+  recurringPit: boolean;
+  onRecurringPitChange: (val: boolean) => void;
   yesNoToggles: Record<string, boolean>;
   onYesNoChange: (id: string, value: boolean) => void;
   optionalProgramToggles: Record<string, boolean>;
@@ -29,6 +31,8 @@ interface Props {
 export default function PitSection({
   pitType,
   onChange,
+  recurringPit,
+  onRecurringPitChange,
   yesNoToggles,
   onYesNoChange,
   optionalProgramToggles,
@@ -59,6 +63,22 @@ export default function PitSection({
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="pit-yn-row pit-recurring-row">
+          <span className="pit-yn-label">Recurring PIT</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={recurringPit}
+            className={`pit-toggle-switch ${recurringPit ? "pit-toggle-on" : "pit-toggle-off"}`}
+            onClick={() => onRecurringPitChange(!recurringPit)}
+          >
+            <span className="pit-toggle-thumb" />
+          </button>
+          <span className={`pit-yn-state ${recurringPit ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
+            {recurringPit ? "Yes" : "No"}
+          </span>
         </div>
 
         <div className="pit-rate-note">

@@ -55,6 +55,7 @@ export interface QuoteMeta {
   discount: number;
   tax: number;
   pitType?: string;
+  recurringPit?: boolean;
   yesNoToggles?: Record<string, boolean>;
   optionalProgramToggles?: Record<string, boolean>;
   aeCurrentMonthlySpend?: string;
