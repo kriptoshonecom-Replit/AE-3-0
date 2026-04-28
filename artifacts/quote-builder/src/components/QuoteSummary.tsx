@@ -143,13 +143,19 @@ export default function QuoteSummary({
           <div className="discount-analysis-row">
             <span>One-Time Initial Payment</span>
             <span className="discount-analysis-value">
-              {quote.meta.requestedUpfrontAmount || "—"}
+              {(() => {
+                const v = parseFloat((quote.meta.requestedUpfrontAmount ?? "").replace(/[^0-9.]/g, ""));
+                return v > 0 ? formatCurrency(v) : "—";
+              })()}
             </span>
           </div>
           <div className="discount-analysis-row">
             <span>Monthly Pricing Per Site</span>
             <span className="discount-analysis-value">
-              {quote.meta.requestedSubscriptionAmount || "—"}
+              {(() => {
+                const v = parseFloat((quote.meta.requestedSubscriptionAmount ?? "").replace(/[^0-9.]/g, ""));
+                return v > 0 ? formatCurrency(v) : "—";
+              })()}
             </span>
           </div>
         </div>

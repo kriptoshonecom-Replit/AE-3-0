@@ -472,9 +472,13 @@ export async function exportQuoteToPDF(
 
   // ── Customer Request ─────────────────────────────────
   {
+    const parseCr = (v?: string) => {
+      const n = parseFloat((v ?? "").replace(/[^0-9.]/g, ""));
+      return n > 0 ? formatCurrency(n) : "—";
+    };
     const crRows: Array<[string, string]> = [
-      ["One-Time Initial Payment", quote.meta.requestedUpfrontAmount || "—"],
-      ["Monthly Pricing Per Site", quote.meta.requestedSubscriptionAmount || "—"],
+      ["One-Time Initial Payment", parseCr(quote.meta.requestedUpfrontAmount)],
+      ["Monthly Pricing Per Site", parseCr(quote.meta.requestedSubscriptionAmount)],
     ];
 
     const blockH = 6 + crRows.length * 7 + 4;
