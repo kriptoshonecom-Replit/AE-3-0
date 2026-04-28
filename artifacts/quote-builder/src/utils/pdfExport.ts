@@ -299,7 +299,6 @@ export async function exportQuoteToPDF(
     0,
   );
   const mrrTotal = quoteTotal(quote);
-  const grandTotal = mrrTotal + pitTotal + productPitTotal;
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
@@ -360,7 +359,10 @@ export async function exportQuoteToPDF(
   y += 3;
 
   doc.setFontSize(11);
-  row("Total", formatCurrency(grandTotal), true);
+  row("Upfront Total", formatCurrency(pitTotal + productPitTotal), true);
+
+  // Capture end of main totals block here — before extra tables that may span pages
+  const totalsEndY = y;
 
   if (heatmapTotal > 0) {
     y += 2;
@@ -490,14 +492,12 @@ export async function exportQuoteToPDF(
 
   drawItemsTable("Heatmap & Cabling", activeHeatmapRows, false);
 
-  const totalsEndY = y;
-
   // ── Stamp overlay on totals page ─────────────────────
   if (stampStatus === "pass" || stampStatus === "fail") {
     const stampSrc = new URL(`/${stampStatus}.png`, import.meta.url).href;
     try {
       const stampData = await loadImageAsDataUrl(stampSrc);
-      const stampSize = 58;
+      const stampSize = 72;
       const stampCenterX = (totalsX + valueX) / 2;
       const stampCenterY = (totalsStartY + totalsEndY) / 2;
       doc.setPage(totalsPageNum);
