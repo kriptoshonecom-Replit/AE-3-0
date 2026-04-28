@@ -453,15 +453,23 @@ export default function QuoteBuilder() {
   }, [initialized, userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const autosave = useCallback(
-    (q: Quote, markDirty = true) => {
+    (q: Quote, markDirty = true, overrideStatus?: "pass" | "fail" | null) => {
       if (!userId) return;
-      const updated = { ...q, meta: { ...q.meta, updatedAt: todayString() } };
+      const ps = overrideStatus !== undefined ? overrideStatus : stampStatus;
+      const updated = {
+        ...q,
+        meta: {
+          ...q.meta,
+          updatedAt: todayString(),
+          ...(ps != null ? { passStatus: ps } : {}),
+        },
+      };
       saveQuote(updated, userId);
       syncQuoteToServer(updated);
       setRefreshTrigger((n) => n + 1);
       if (markDirty) isDirtyRef.current = true;
     },
-    [userId]
+    [userId, stampStatus]
   );
 
   // Sync all quote data to sessionStorage so StatusPassConfigPage can read it
@@ -856,12 +864,6 @@ export default function QuoteBuilder() {
             userFullName={user?.fullName}
           />
 
-          {stampStatus && (
-            <div className={`sidebar-stamp-badge sidebar-stamp-badge-${stampStatus}`}>
-              Status Pass: <strong>{stampStatus === "pass" ? "PASS" : "FAIL"}</strong>
-            </div>
-          )}
-
           {user?.role === "admin" && (
             <div className="sidebar-admin-links">
               <button
@@ -1135,11 +1137,11 @@ export default function QuoteBuilder() {
                 />
                 {stampStatus && (
                   <div className="summary-stamp-overlay">
-                    {stampStatus === "fail" ? (
-                      <img className="summary-stamp-img" src="/fail.png" alt="FAIL" />
-                    ) : (
-                      <div className="summary-stamp-css summary-stamp-css-pass">PASS</div>
-                    )}
+                    <img
+                      className="summary-stamp-img"
+                      src={stampStatus === "pass" ? "/pass.png" : "/fail.png"}
+                      alt={stampStatus === "pass" ? "PASS" : "FAIL"}
+                    />
                   </div>
                 )}
               </section>

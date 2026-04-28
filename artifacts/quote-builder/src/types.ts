@@ -78,6 +78,7 @@ export interface QuoteMeta {
   requestedUpfrontAmount?: string;
   creatorName?: string;
   updatedByName?: string;
+  passStatus?: "pass" | "fail";
 }
 
 export interface PitLineItem {

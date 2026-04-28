@@ -918,26 +918,6 @@ button {
   opacity: 0.88;
 }
 
-.summary-stamp-css {
-  width: 175px;
-  height: 175px;
-  border-radius: 50%;
-  border: 5px double;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform: rotate(-12deg);
-  font-size: 40px;
-  font-weight: 900;
-  font-family: 'Arial Black', Impact, sans-serif;
-  letter-spacing: 4px;
-  opacity: 0.82;
-}
-
-.summary-stamp-css-pass {
-  color: #15803d;
-  border-color: #15803d;
-}
 
 .summary-panel {
   background: var(--surface);
@@ -2477,27 +2457,6 @@ textarea:focus::placeholder {
   height: 100%;
 }
 
-.sidebar-stamp-badge {
-  margin: 8px 12px 4px;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-family: inherit;
-  letter-spacing: 0.01em;
-  text-align: center;
-}
-
-.sidebar-stamp-badge-pass {
-  background: #dcfce7;
-  color: #15803d;
-  border: 1px solid #bbf7d0;
-}
-
-.sidebar-stamp-badge-fail {
-  background: #fee2e2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
-}
 
 .sidebar-admin-links {
   margin-top: auto;
@@ -4353,15 +4312,20 @@ td:has(.inline-cell-input) {
 .ql-meta-val { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 110px; }
 .ql-meta-sep { opacity: 0.4; }
 .ql-meta-admin { color: #7c3aed; font-weight: 600; }
-.ql-item-status-row { margin-top: 2px; }
+.ql-item-status-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
 .ql-status-badge {
   display: inline-flex;
   align-items: center;
-  padding: 1px 7px;
+  padding: 1px 8px;
   border-radius: 20px;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
 .ql-status-pass { background: #d1fae5; color: #065f46; }
 .ql-status-fail { background: #fee2e2; color: #991b1b; }
