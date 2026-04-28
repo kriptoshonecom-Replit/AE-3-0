@@ -4,17 +4,17 @@ import type { QuoteMeta } from "../types";
 interface Props {
   meta: QuoteMeta;
   onChange: (meta: QuoteMeta) => void;
+  pspmDiscountPct?: number;
+  upfrontPriceDiscountPct?: number;
 }
 
-export default function QuoteMetaForm({ meta, onChange }: Props) {
+export default function QuoteMetaForm({ meta, onChange, pspmDiscountPct, upfrontPriceDiscountPct }: Props) {
   const set = (key: keyof QuoteMeta) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     onChange({ ...meta, [key]: e.target.value });
   };
 
-  const setNum = (key: keyof QuoteMeta) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    onChange({ ...meta, [key]: isNaN(val) ? 0 : Math.max(0, val) });
-  };
+  const fmtPct = (v?: number) =>
+    v === undefined || isNaN(v) ? "—" : `${v.toFixed(2)}%`;
 
   return (
     <div className="quote-meta-form">
@@ -86,27 +86,21 @@ export default function QuoteMetaForm({ meta, onChange }: Props) {
 
         <div className="field-row">
           <div className="field-group">
-            <label>Discount (%)</label>
+            <label>PSPM Discount %</label>
             <input
-              type="number"
-              min="0"
-              max="100"
-              step="0.5"
-              value={meta.discount}
-              onChange={setNum("discount")}
-              onFocus={(e) => e.target.select()}
+              type="text"
+              readOnly
+              value={fmtPct(pspmDiscountPct)}
+              className="input-readonly-computed"
             />
           </div>
           <div className="field-group">
-            <label>Tax (%)</label>
+            <label>Upfront Price Discount %</label>
             <input
-              type="number"
-              min="0"
-              max="100"
-              step="0.5"
-              value={meta.tax}
-              onChange={setNum("tax")}
-              onFocus={(e) => e.target.select()}
+              type="text"
+              readOnly
+              value={fmtPct(upfrontPriceDiscountPct)}
+              className="input-readonly-computed"
             />
           </div>
         </div>

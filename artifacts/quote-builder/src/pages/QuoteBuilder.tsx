@@ -30,7 +30,7 @@ import AddGroupModal from "../components/AddGroupModal";
 import { saveQuote, loadAllQuotes, getActiveQuoteId, loadQuote } from "../utils/storage";
 import { syncQuoteToServer, fetchServerQuotes } from "../utils/serverSync";
 import { exportQuoteToPDF } from "../utils/pdfExport";
-import { generateId, todayString, thirtyDaysOut } from "../utils/calculations";
+import { generateId, todayString, thirtyDaysOut, quoteTotal } from "../utils/calculations";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -737,7 +737,10 @@ export default function QuoteBuilder() {
   const executeExportPDF = async () => {
     setExporting(true);
     try {
-      await exportQuoteToPDF(quote, pitHourlyRate, stampStatus ?? undefined);
+      await exportQuoteToPDF(
+        quote, pitHourlyRate, stampStatus ?? undefined,
+        pspmDiscountPct, upfrontPriceDiscountPct,
+      );
     } finally {
       setExporting(false);
     }
@@ -846,6 +849,32 @@ export default function QuoteBuilder() {
 
   const existingGroupIds = quote.groups.map((g) => g.categoryId);
   const allGroupsAdded = existingGroupIds.length >= productCategories.length;
+
+  // ── Discount Analysis computations ──────────────────────────────────
+  const parseDollarStr = (v?: string) =>
+    parseFloat((v ?? "").replace(/[^0-9.]/g, "")) || 0;
+
+  const _mrrTotal = quoteTotal(quote);
+  const _pitCat = pitCategories.find((c) => c.id === (quote.meta.pitType ?? ""));
+  const _pitTotal = _pitCat
+    ? _pitCat.lineItems.reduce((s, i) => s + i.duration * pitHourlyRate, 0)
+    : 0;
+  const _productPitTotal = computeProductRelatedPitTotal(
+    quote.groups, yesNoToggles, optionalProgramToggles,
+    quote.meta.pitType ?? "", catalogMap, pitHourlyRate,
+  );
+  const _heatmapTotal = computeHeatmapTotal(
+    heatmapToggles, heatmapItems.length > 0 ? heatmapItems : undefined,
+  );
+  const _upfrontTotal = _pitTotal + _productPitTotal + _heatmapTotal;
+  const _reqSub = parseDollarStr(quote.meta.requestedSubscriptionAmount);
+  const _reqUpfront = parseDollarStr(quote.meta.requestedUpfrontAmount);
+  const pspmDiscountPct = _mrrTotal > 0
+    ? ((_mrrTotal - _reqSub) / _mrrTotal) * 100
+    : 0;
+  const upfrontPriceDiscountPct = _upfrontTotal > 0
+    ? ((_upfrontTotal - _reqUpfront) / _upfrontTotal) * 100
+    : 0;
 
   return (
     <div className="app-shell">
@@ -1056,7 +1085,12 @@ export default function QuoteBuilder() {
             {/* Meta section */}
             <section className="section">
               <h2 className="section-title">Quote Details</h2>
-              <QuoteMetaForm meta={quote.meta} onChange={handleMetaChange} />
+              <QuoteMetaForm
+                meta={quote.meta}
+                onChange={handleMetaChange}
+                pspmDiscountPct={pspmDiscountPct}
+                upfrontPriceDiscountPct={upfrontPriceDiscountPct}
+              />
             </section>
 
             {/* Current Aloha Essential Spend section */}
@@ -1161,13 +1195,12 @@ export default function QuoteBuilder() {
                 <div className="summary-stamp-wrap">
                   <QuoteSummary
                     quote={quote}
-                    pitTotal={(() => {
-                      const cat = pitCategories.find((c) => c.id === (quote.meta.pitType ?? ""));
-                      return cat ? cat.lineItems.reduce((s, i) => s + i.duration * pitHourlyRate, 0) : 0;
-                    })()}
-                    productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles, optionalProgramToggles, quote.meta.pitType ?? "", catalogMap, pitHourlyRate)}
-                    heatmapTotal={computeHeatmapTotal(heatmapToggles, heatmapItems.length > 0 ? heatmapItems : undefined)}
+                    pitTotal={_pitTotal}
+                    productPitTotal={_productPitTotal}
+                    heatmapTotal={_heatmapTotal}
                     legacyTotal={0}
+                    pspmDiscountPct={pspmDiscountPct}
+                    upfrontPriceDiscountPct={upfrontPriceDiscountPct}
                   />
                   {stampStatus && (
                     <div className="summary-stamp-overlay">

@@ -438,6 +438,14 @@ button {
   min-height: 72px;
 }
 
+.field-group input.input-readonly-computed {
+  background: var(--surface, #f8f8f7);
+  color: var(--primary, #7c3aed);
+  font-weight: 700;
+  cursor: default;
+  border-color: color-mix(in srgb, var(--primary, #7c3aed) 30%, transparent);
+}
+
 .field-group input:focus,
 .field-group textarea:focus {
   border-color: var(--accent);
@@ -968,6 +976,40 @@ button {
   font-weight: 700;
   color: var(--text);
   padding-top: 2px;
+}
+
+/* ── Discount Analysis (below Summary) ─────────────── */
+.discount-analysis-section {
+  margin-top: 16px;
+  border-top: 2px solid var(--primary, #7c3aed);
+  padding-top: 14px;
+}
+
+.discount-analysis-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--primary, #7c3aed);
+  margin-bottom: 10px;
+}
+
+.discount-analysis-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.discount-analysis-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.discount-analysis-value {
+  font-weight: 700;
+  color: var(--primary, #7c3aed);
 }
 
 /* ── Quote List (Sidebar) ───────────────────────────── */

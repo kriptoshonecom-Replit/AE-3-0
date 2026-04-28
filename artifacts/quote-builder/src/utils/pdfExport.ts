@@ -48,6 +48,8 @@ export async function exportQuoteToPDF(
   quote: Quote,
   pitHourlyRate?: number,
   stampStatus?: "pass" | "fail" | null,
+  pspmDiscountPct?: number,
+  upfrontPriceDiscountPct?: number,
 ): Promise<void> {
   const rate = pitHourlyRate ?? PIT_HOURLY_RATE;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -426,6 +428,46 @@ export async function exportQuoteToPDF(
     doc.setTextColor(30, 41, 59);
     doc.text(noteLines, margin + notePad, y + 1);
     y += noteLines.length * 5 + notePad;
+  }
+
+  // ── Discount Analysis ───────────────────────────────
+  if (pspmDiscountPct !== undefined || upfrontPriceDiscountPct !== undefined) {
+    const fmtPct = (v: number) => `${v.toFixed(2)}%`;
+    const rows: Array<[string, number]> = [];
+    if (pspmDiscountPct !== undefined) rows.push(["PSPM Discount %", pspmDiscountPct]);
+    if (upfrontPriceDiscountPct !== undefined) rows.push(["Upfront Price Discount %", upfrontPriceDiscountPct]);
+
+    const blockH = 7 + rows.length * 7 + 4;
+    addPageIfNeeded(blockH + 8);
+    y += 8;
+
+    // Section header bar
+    doc.setFillColor(124, 58, 237);
+    doc.rect(margin, y, contentWidth, 6, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(255, 255, 255);
+    doc.text("DISCOUNT ANALYSIS", margin + 3, y + 4.2);
+    y += 6;
+
+    // Light background
+    doc.setFillColor(250, 247, 255);
+    doc.rect(margin, y, contentWidth, rows.length * 7 + 4, "F");
+    doc.setDrawColor(220, 220, 218);
+    doc.setLineWidth(0.3);
+    doc.rect(margin, y, contentWidth, rows.length * 7 + 4, "S");
+    y += 5;
+
+    for (const [label, value] of rows) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text(label, margin + 4, y);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(124, 58, 237);
+      doc.text(fmtPct(value), margin + contentWidth - 4, y, { align: "right" });
+      y += 7;
+    }
   }
 
   // ── Helper: boxy item table (matches product group style) ──

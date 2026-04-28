@@ -13,14 +13,30 @@ interface Props {
   productPitTotal: number;
   heatmapTotal: number;
   legacyTotal: number;
+  pspmDiscountPct?: number;
+  upfrontPriceDiscountPct?: number;
 }
 
-export default function QuoteSummary({ quote, pitTotal, productPitTotal, heatmapTotal, legacyTotal }: Props) {
+export default function QuoteSummary({
+  quote,
+  pitTotal,
+  productPitTotal,
+  heatmapTotal,
+  legacyTotal,
+  pspmDiscountPct,
+  upfrontPriceDiscountPct,
+}: Props) {
   const subtotal = quoteSubtotal(quote);
   const discount = quoteDiscount(quote);
   const tax = quoteTax(quote);
   const productsTotal = quoteTotal(quote);
   const buyoutAmount = parseFloat((quote.meta.costOfBuyOut ?? "").replace(/[^0-9.]/g, "")) || 0;
+
+  const fmtPct = (v?: number) =>
+    v === undefined || isNaN(v) ? "—" : `${v.toFixed(2)}%`;
+
+  const showDiscountSection =
+    pspmDiscountPct !== undefined || upfrontPriceDiscountPct !== undefined;
 
   return (
     <div className="summary-panel">
@@ -100,6 +116,26 @@ export default function QuoteSummary({ quote, pitTotal, productPitTotal, heatmap
           </>
         )}
       </div>
+
+      {showDiscountSection && (
+        <div className="discount-analysis-section">
+          <div className="discount-analysis-title">Discount Analysis</div>
+          <div className="discount-analysis-rows">
+            {pspmDiscountPct !== undefined && (
+              <div className="discount-analysis-row">
+                <span>PSPM Discount %</span>
+                <span className="discount-analysis-value">{fmtPct(pspmDiscountPct)}</span>
+              </div>
+            )}
+            {upfrontPriceDiscountPct !== undefined && (
+              <div className="discount-analysis-row">
+                <span>Upfront Price Discount %</span>
+                <span className="discount-analysis-value">{fmtPct(upfrontPriceDiscountPct)}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
