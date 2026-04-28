@@ -196,7 +196,7 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
 
         {/* 5 — Requested Upfront Amount */}
         <div className="field-group">
-          <label>Requested Upfront Amount ( PIT Related )</label>
+          <label>Requested Upfront Amount</label>
           <input
             type="text"
             placeholder="Aloha Essentials"

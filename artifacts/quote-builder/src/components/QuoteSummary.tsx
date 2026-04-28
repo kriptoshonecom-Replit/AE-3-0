@@ -15,6 +15,8 @@ interface Props {
   legacyTotal: number;
   pspmDiscountPct?: number;
   upfrontPriceDiscountPct?: number;
+  voyixTxnFee?: number;
+  gatewayTxnRate?: number;
 }
 
 export default function QuoteSummary({
@@ -25,6 +27,8 @@ export default function QuoteSummary({
   legacyTotal,
   pspmDiscountPct,
   upfrontPriceDiscountPct,
+  voyixTxnFee,
+  gatewayTxnRate,
 }: Props) {
   const subtotal = quoteSubtotal(quote);
   const discount = quoteDiscount(quote);
@@ -131,6 +135,40 @@ export default function QuoteSummary({
               <div className="discount-analysis-row">
                 <span>Upfront Price Discount %</span>
                 <span className="discount-analysis-value">{fmtPct(upfrontPriceDiscountPct)}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {(voyixTxnFee !== undefined || gatewayTxnRate !== undefined) && (
+        <div className="discount-analysis-section">
+          <div className="discount-analysis-title">Payments Overview</div>
+          <div className="discount-analysis-rows">
+            {voyixTxnFee !== undefined && (
+              <div className="discount-analysis-row">
+                <span>Payments Processing Txn Rate</span>
+                <span className="discount-analysis-value">
+                  {voyixTxnFee > 0 ? `$${voyixTxnFee.toFixed(4)}` : "—"}
+                </span>
+              </div>
+            )}
+            {gatewayTxnRate !== undefined && (
+              <div className="discount-analysis-row">
+                <span>Gateway Payments Txn Rate</span>
+                <span className="discount-analysis-value">
+                  {gatewayTxnRate > 0 ? `$${gatewayTxnRate.toFixed(4)}` : "—"}
+                </span>
+              </div>
+            )}
+            {voyixTxnFee !== undefined && gatewayTxnRate !== undefined && (
+              <div className="discount-analysis-row" style={{ borderTop: "1px solid var(--border)", paddingTop: "6px", marginTop: "2px" }}>
+                <span style={{ fontWeight: 600 }}>Total Txn Rate</span>
+                <span className="discount-analysis-value">
+                  {(voyixTxnFee + gatewayTxnRate) > 0
+                    ? `$${(voyixTxnFee + gatewayTxnRate).toFixed(4)}`
+                    : "—"}
+                </span>
               </div>
             )}
           </div>

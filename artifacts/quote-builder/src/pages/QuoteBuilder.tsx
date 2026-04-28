@@ -740,6 +740,7 @@ export default function QuoteBuilder() {
       await exportQuoteToPDF(
         quote, pitHourlyRate, stampStatus ?? undefined,
         pspmDiscountPct, upfrontPriceDiscountPct,
+        voyixTxnFee, gatewayTxnRate,
       );
     } finally {
       setExporting(false);
@@ -875,6 +876,39 @@ export default function QuoteBuilder() {
   const upfrontPriceDiscountPct = _upfrontTotal > 0
     ? ((_upfrontTotal - _reqUpfront) / _upfrontTotal) * 100
     : 0;
+
+  // ── Payments Overview computations ──────────────────────────────────
+  const voyixTxnFee = parseFloat(quote.meta.voyixPayTransactionFee ?? "") || 0;
+  const _numSites   = parseFloat(quote.meta.numberOfSites ?? "") || 0;
+  const _annualRev  = parseDollarStr(quote.meta.annualStoreRevenue);
+  const _avgTicket  = parseDollarStr(quote.meta.averageTicketAmount);
+  const _txnCount   = _avgTicket > 0 ? _annualRev / _avgTicket : 0;
+  const _catId      = quote.meta.ncrPay ? "voyix-pay-yes" : "voyix-pay-no";
+  const _modelId    = _numSites > 0 && _numSites < 10 ? "smb"
+    : _numSites >= 10 && _numSites <= 50 ? "mid-market"
+    : _numSites > 50 ? "enterprise" : "";
+  const _rawTxnCount = _txnCount > 0 && _numSites > 0
+    ? Math.round((_txnCount / 12) * _numSites / 10) * 10 : 0;
+  type _SpTier  = { lowVolume: number; highVolume: number; txnRate: number };
+  type _SpModel = { id: string; tiers: _SpTier[] };
+  type _SpCat   = { id: string; models: _SpModel[] };
+  const _spCats  = (spData?.categories ?? []) as _SpCat[];
+  const _spModel = _spCats.find((c) => c.id === _catId)?.models.find((m) => m.id === _modelId);
+  const gatewayTxnRate = (() => {
+    if (!_spModel || _rawTxnCount === 0) return 0;
+    let rem = _rawTxnCount, fees = 0;
+    for (let i = 0; i < _spModel.tiers.length; i++) {
+      const t = _spModel.tiers[i];
+      const isLast = t.highVolume === t.lowVolume;
+      const prevHigh = i === 0 ? 0 : _spModel.tiers[i - 1].highVolume;
+      const cap = isLast ? Infinity : i === 0 ? t.highVolume : t.highVolume - prevHigh;
+      const used = Math.min(rem, cap);
+      fees += used * t.txnRate;
+      rem = Math.max(0, rem - used);
+      if (rem === 0) break;
+    }
+    return _rawTxnCount > 0 ? fees / _rawTxnCount : 0;
+  })();
 
   return (
     <div className="app-shell">
@@ -1201,6 +1235,8 @@ export default function QuoteBuilder() {
                     legacyTotal={0}
                     pspmDiscountPct={pspmDiscountPct}
                     upfrontPriceDiscountPct={upfrontPriceDiscountPct}
+                    voyixTxnFee={voyixTxnFee}
+                    gatewayTxnRate={gatewayTxnRate}
                   />
                   {stampStatus && (
                     <div className="summary-stamp-overlay">

@@ -50,6 +50,8 @@ export async function exportQuoteToPDF(
   stampStatus?: "pass" | "fail" | null,
   pspmDiscountPct?: number,
   upfrontPriceDiscountPct?: number,
+  voyixTxnFee?: number,
+  gatewayTxnRate?: number,
 ): Promise<void> {
   const rate = pitHourlyRate ?? PIT_HOURLY_RATE;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -509,6 +511,57 @@ export async function exportQuoteToPDF(
       doc.text(label, margin + 4, y);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(15, 23, 42);
+      doc.text(value, margin + contentWidth - 4, y, { align: "right" });
+      y += 7;
+    }
+  }
+
+  // ── Payments Overview ────────────────────────────────
+  if (voyixTxnFee !== undefined || gatewayTxnRate !== undefined) {
+    const fmtRate = (v: number) => v > 0 ? `$${v.toFixed(4)}` : "—";
+    const poRows: Array<[string, string, boolean]> = [];
+    if (voyixTxnFee !== undefined)
+      poRows.push(["Payments Processing Txn Rate", fmtRate(voyixTxnFee), false]);
+    if (gatewayTxnRate !== undefined)
+      poRows.push(["Gateway Payments Txn Rate", fmtRate(gatewayTxnRate), false]);
+    if (voyixTxnFee !== undefined && gatewayTxnRate !== undefined) {
+      const total = voyixTxnFee + gatewayTxnRate;
+      poRows.push(["Total Txn Rate", total > 0 ? `$${total.toFixed(4)}` : "—", true]);
+    }
+
+    const blockH = 6 + poRows.length * 7 + 4;
+    addPageIfNeeded(blockH + 8);
+    y += 8;
+
+    // Section header bar — teal/slate
+    doc.setFillColor(2, 132, 199);
+    doc.rect(margin, y, contentWidth, 6, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(255, 255, 255);
+    doc.text("PAYMENTS OVERVIEW", margin + 3, y + 4.2);
+    y += 6;
+
+    // Light background
+    doc.setFillColor(240, 249, 255);
+    doc.rect(margin, y, contentWidth, poRows.length * 7 + 4, "F");
+    doc.setDrawColor(220, 220, 218);
+    doc.setLineWidth(0.3);
+    doc.rect(margin, y, contentWidth, poRows.length * 7 + 4, "S");
+    y += 5;
+
+    for (const [label, value, isTotalRow] of poRows) {
+      if (isTotalRow) {
+        doc.setDrawColor(180, 180, 180);
+        doc.setLineWidth(0.2);
+        doc.line(margin + 3, y - 2, margin + contentWidth - 3, y - 2);
+      }
+      doc.setFont("helvetica", isTotalRow ? "bold" : "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text(label, margin + 4, y);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(2, 132, 199);
       doc.text(value, margin + contentWidth - 4, y, { align: "right" });
       y += 7;
     }
