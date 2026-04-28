@@ -323,11 +323,11 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
             <span className="price-prefix">$</span>
             <input
               type="number"
-              min="0"
-              step="0.01"
+              readOnly
               value={item.unitPrice}
-              onChange={(e) => onPriceChange(Math.max(0, parseFloat(e.target.value) || 0))}
-              className="price-input"
+              onChange={() => {}}
+              className="price-input price-input--readonly"
+              tabIndex={-1}
             />
           </div>
         </div>

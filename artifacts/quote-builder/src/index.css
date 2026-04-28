@@ -856,6 +856,19 @@ button {
   min-width: 60px;
 }
 
+.price-input--readonly,
+.price-input--readonly:focus {
+  cursor: default;
+  color: var(--text-2);
+  pointer-events: none;
+}
+
+.price-input-wrap:has(.price-input--readonly) {
+  background: var(--surface, #f8f8f7);
+  border-color: var(--border);
+  opacity: 0.85;
+}
+
 .col-actions {
   display: flex;
   align-items: center;
