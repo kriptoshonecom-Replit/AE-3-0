@@ -127,7 +127,7 @@ export default function QuoteList({
           const isActive = q.meta.id === currentId;
           const passStatus: string | undefined = isActive && currentStatus != null
             ? currentStatus
-            : (q.meta as Record<string, unknown>).passStatus as string | undefined;
+            : (q.meta as unknown as Record<string, unknown>).passStatus as string | undefined;
 
           return (
             <button

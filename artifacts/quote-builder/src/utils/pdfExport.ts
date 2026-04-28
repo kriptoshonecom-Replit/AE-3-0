@@ -50,7 +50,11 @@ async function loadImageAsDataUrl(src: string): Promise<string> {
   });
 }
 
-export async function exportQuoteToPDF(quote: Quote, pitHourlyRate?: number): Promise<void> {
+export async function exportQuoteToPDF(
+  quote: Quote,
+  pitHourlyRate?: number,
+  stampStatus?: "pass" | "fail" | null,
+): Promise<void> {
   const rate = pitHourlyRate ?? PIT_HOURLY_RATE;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pageWidth = 210;
@@ -249,6 +253,8 @@ export async function exportQuoteToPDF(quote: Quote, pitHourlyRate?: number): Pr
   // ── Totals ──────────────────────────────────────────
   addPageIfNeeded(56);
   y += 4;
+  const totalsStartY = y;
+  const totalsPageNum = (doc.internal as unknown as { getCurrentPageInfo: () => { pageNumber: number } }).getCurrentPageInfo().pageNumber;
 
   const totalsX = margin + contentWidth - 70;
   const labelX = totalsX;
@@ -483,6 +489,30 @@ export async function exportQuoteToPDF(quote: Quote, pitHourlyRate?: number): Pr
     .map((i) => ({ name: i.name, qty: 1, price: i.price ?? 0 }));
 
   drawItemsTable("Heatmap & Cabling", activeHeatmapRows, false);
+
+  const totalsEndY = y;
+
+  // ── Stamp overlay on totals page ─────────────────────
+  if (stampStatus === "pass" || stampStatus === "fail") {
+    const stampSrc = new URL(`/${stampStatus}.png`, import.meta.url).href;
+    try {
+      const stampData = await loadImageAsDataUrl(stampSrc);
+      const stampSize = 58;
+      const stampCenterX = (totalsX + valueX) / 2;
+      const stampCenterY = (totalsStartY + totalsEndY) / 2;
+      doc.setPage(totalsPageNum);
+      doc.addImage(
+        stampData,
+        "PNG",
+        stampCenterX - stampSize / 2,
+        stampCenterY - stampSize / 2,
+        stampSize,
+        stampSize,
+      );
+    } catch {
+      // stamp image failed to load — skip silently
+    }
+  }
 
   // ── Footer ──────────────────────────────────────────
   const totalPages = doc.getNumberOfPages();

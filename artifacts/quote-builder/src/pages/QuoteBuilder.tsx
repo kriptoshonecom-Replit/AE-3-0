@@ -705,7 +705,7 @@ export default function QuoteBuilder() {
   const executeExportPDF = async () => {
     setExporting(true);
     try {
-      await exportQuoteToPDF(quote, pitHourlyRate);
+      await exportQuoteToPDF(quote, pitHourlyRate, stampStatus ?? undefined);
     } finally {
       setExporting(false);
     }
