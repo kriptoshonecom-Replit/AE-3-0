@@ -899,6 +899,11 @@ button {
   position: relative;
 }
 
+.summary-stamp-wrap {
+  position: relative;
+  display: inline-block;
+}
+
 .summary-stamp-overlay {
   position: absolute;
   inset: 0;
@@ -906,16 +911,16 @@ button {
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  z-index: 10;
+  z-index: 99999;
   border-radius: 8px;
 }
 
 .summary-stamp-img {
-  width: 190px;
-  height: 190px;
+  width: 200px;
+  height: 200px;
   object-fit: contain;
   transform: rotate(-12deg);
-  opacity: 0.88;
+  opacity: 0.85;
 }
 
 
@@ -4315,20 +4320,22 @@ td:has(.inline-cell-input) {
 .ql-item-status-row {
   display: flex;
   justify-content: flex-end;
-  margin-top: 4px;
+  margin-top: 5px;
 }
 .ql-status-badge {
   display: inline-flex;
   align-items: center;
-  padding: 1px 8px;
+  padding: 2px 9px;
   border-radius: 20px;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  border: 1px solid currentColor;
+  opacity: 0.85;
 }
-.ql-status-pass { background: #d1fae5; color: #065f46; }
-.ql-status-fail { background: #fee2e2; color: #991b1b; }
+.ql-status-pass { background: #dcfce7; color: #15803d; }
+.ql-status-fail { background: #fee2e2; color: #b91c1c; }
 
 /* Highlight for Quote Library nav link */
 .sidebar-admin-link--highlight {

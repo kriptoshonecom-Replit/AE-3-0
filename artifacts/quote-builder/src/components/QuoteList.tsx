@@ -41,6 +41,7 @@ function fmtShortDate(s: string | undefined | null): string {
 
 interface Props {
   currentId: string;
+  currentStatus?: "pass" | "fail" | null;
   onSelect: (quote: Quote) => void;
   onNew: () => void;
   refreshTrigger: number;
@@ -50,6 +51,7 @@ interface Props {
 
 export default function QuoteList({
   currentId,
+  currentStatus,
   onSelect,
   onNew,
   refreshTrigger,
@@ -122,7 +124,10 @@ export default function QuoteList({
         {filtered.map((q) => {
           const creator = q.meta.creatorName || userFullName || "—";
           const updatedBy = q.meta.updatedByName;
-          const passStatus = (q.meta as Record<string, unknown>).passStatus as string | undefined;
+          const isActive = q.meta.id === currentId;
+          const passStatus: string | undefined = isActive && currentStatus != null
+            ? currentStatus
+            : (q.meta as Record<string, unknown>).passStatus as string | undefined;
 
           return (
             <button

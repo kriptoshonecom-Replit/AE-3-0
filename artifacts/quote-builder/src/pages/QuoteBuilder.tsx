@@ -857,6 +857,7 @@ export default function QuoteBuilder() {
           </div>
           <QuoteList
             currentId={quote.meta.id}
+            currentStatus={stampStatus}
             onSelect={handleSelectQuote}
             onNew={handleNewQuote}
             refreshTrigger={refreshTrigger}
@@ -1125,25 +1126,27 @@ export default function QuoteBuilder() {
             {quote.groups.some((g) => g.lineItems.length > 0) && (
               <section className="section summary-section">
                 <h2 className="section-title">Summary</h2>
-                <QuoteSummary
-                  quote={quote}
-                  pitTotal={(() => {
-                    const cat = pitCategories.find((c) => c.id === (quote.meta.pitType ?? ""));
-                    return cat ? cat.lineItems.reduce((s, i) => s + i.duration * pitHourlyRate, 0) : 0;
-                  })()}
-                  productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles, optionalProgramToggles, quote.meta.pitType ?? "", catalogMap, pitHourlyRate)}
-                  heatmapTotal={computeHeatmapTotal(heatmapToggles, heatmapItems.length > 0 ? heatmapItems : undefined)}
-                  legacyTotal={0}
-                />
-                {stampStatus && (
-                  <div className="summary-stamp-overlay">
-                    <img
-                      className="summary-stamp-img"
-                      src={stampStatus === "pass" ? "/pass.png" : "/fail.png"}
-                      alt={stampStatus === "pass" ? "PASS" : "FAIL"}
-                    />
-                  </div>
-                )}
+                <div className="summary-stamp-wrap">
+                  <QuoteSummary
+                    quote={quote}
+                    pitTotal={(() => {
+                      const cat = pitCategories.find((c) => c.id === (quote.meta.pitType ?? ""));
+                      return cat ? cat.lineItems.reduce((s, i) => s + i.duration * pitHourlyRate, 0) : 0;
+                    })()}
+                    productPitTotal={computeProductRelatedPitTotal(quote.groups, yesNoToggles, optionalProgramToggles, quote.meta.pitType ?? "", catalogMap, pitHourlyRate)}
+                    heatmapTotal={computeHeatmapTotal(heatmapToggles, heatmapItems.length > 0 ? heatmapItems : undefined)}
+                    legacyTotal={0}
+                  />
+                  {stampStatus && (
+                    <div className="summary-stamp-overlay">
+                      <img
+                        className="summary-stamp-img"
+                        src={stampStatus === "pass" ? "/pass.png" : "/fail.png"}
+                        alt={stampStatus === "pass" ? "PASS" : "FAIL"}
+                      />
+                    </div>
+                  )}
+                </div>
               </section>
             )}
           </div>
