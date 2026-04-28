@@ -241,9 +241,40 @@ export default function QuoteBuilder() {
     const paymentsRevM1  = annualRevenue > 0 || txnCount > 0
       ? ((bpDecimal * annualRevenue) + (voyixFee * txnCount)) / 12 : 0;
 
-    const revM1         = subM1 + upfrontM1 + paymentsRevM1;
-    const revY1         = (subM1 * 12) + upfrontM1 + (paymentsRevM1 * 12);
-    const revY2         = (subM1 * 12) + (paymentsRevM1 * 12);
+    // ── Gateway revenue: blended rate from StatusPass tier tables ──
+    const numSitesVal      = parseFloat(meta.numberOfSites ?? "") || 0;
+    const catId            = meta.ncrPay ? "voyix-pay-yes" : "voyix-pay-no";
+    const modelId          =
+      numSitesVal > 0 && numSitesVal < 10 ? "smb"
+      : numSitesVal >= 10 && numSitesVal <= 50 ? "mid-market"
+      : numSitesVal > 50 ? "enterprise" : "";
+    const rawTxnCount      = txnCount > 0 && numSitesVal > 0 ? (txnCount / 12) * numSitesVal : 0;
+    const computedTxnCount = rawTxnCount > 0 ? Math.round(rawTxnCount / 10) * 10 : 0;
+    type SpTier   = { lowVolume: number; highVolume: number; txnRate: number };
+    type SpModel  = { id: string; tiers: SpTier[] };
+    type SpCat    = { id: string; models: SpModel[] };
+    const spCats  = (spData?.categories ?? []) as SpCat[];
+    const spModel = spCats.find((c) => c.id === catId)?.models.find((m) => m.id === modelId);
+    const blendedRate = (() => {
+      if (!spModel || computedTxnCount === 0 || rawTxnCount === 0) return 0;
+      let remaining = computedTxnCount, fees = 0;
+      for (let idx = 0; idx < spModel.tiers.length; idx++) {
+        const t = spModel.tiers[idx];
+        const isLast = t.highVolume === t.lowVolume;
+        const prevHigh = idx === 0 ? 0 : spModel.tiers[idx - 1].highVolume;
+        const cap = isLast ? Infinity : idx === 0 ? t.highVolume : t.highVolume - prevHigh;
+        const used = Math.min(remaining, cap);
+        fees += used * t.txnRate;
+        remaining = Math.max(0, remaining - used);
+        if (remaining === 0) break;
+      }
+      return rawTxnCount > 0 ? fees / rawTxnCount : 0;
+    })();
+    const gatewayRevM1 = txnCount > 0 && blendedRate > 0 ? (txnCount * blendedRate) / 12 : 0;
+
+    const revM1         = subM1 + upfrontM1 + paymentsRevM1 + gatewayRevM1;
+    const revY1         = (subM1 * 12) + upfrontM1 + (paymentsRevM1 * 12) + (gatewayRevM1 * 12);
+    const revY2         = (subM1 * 12) + (paymentsRevM1 * 12) + (gatewayRevM1 * 12);
     const revGrandTotal = revY1 + revY2 + revY2;
 
     const priorMonthly = pDollar(meta.aeCurrentMonthlySpend) + pDollar(meta.aeCurrentVoyixPaySpend);
@@ -274,7 +305,7 @@ export default function QuoteBuilder() {
     const costGrandTotal = costY1 + costY2 + costY2;
 
     // ── Check 1: Prior Spend variance >= 15% ──
-    const proposedMonthly = subM1 + paymentsRevM1;
+    const proposedMonthly = subM1 + paymentsRevM1 + gatewayRevM1;
     const priorVariance   = priorMonthly > 0
       ? ((proposedMonthly - priorMonthly) / priorMonthly) * 100 : null;
     const priorPass = priorVariance !== null ? priorVariance >= 15 : null;
@@ -288,7 +319,8 @@ export default function QuoteBuilder() {
       ? ((revGrandTotal - costGrandTotal) / revGrandTotal) * 100 : null;
     const y3Pass = pctTotal !== null ? pctTotal > 40 : null;
 
-    return (priorPass === true && y1Pass === true && y3Pass === true) ? "pass" : "fail";
+    // null = no data for that check → skip it (treat as not failing)
+    return (priorPass !== false && y1Pass !== false && y3Pass !== false) ? "pass" : "fail";
   }, [spData, quote.meta, quote.groups, yesNoToggles, optionalProgramToggles,
       heatmapToggles, pitCategories, pitHourlyRate, catalogMap, heatmapItems, productCategories]);
 
