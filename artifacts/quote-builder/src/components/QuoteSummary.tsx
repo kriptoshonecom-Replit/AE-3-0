@@ -20,7 +20,6 @@ export default function QuoteSummary({ quote, pitTotal, productPitTotal, heatmap
   const discount = quoteDiscount(quote);
   const tax = quoteTax(quote);
   const productsTotal = quoteTotal(quote);
-  const grandTotal = productsTotal + pitTotal + productPitTotal;
   const buyoutAmount = parseFloat((quote.meta.costOfBuyOut ?? "").replace(/[^0-9.]/g, "")) || 0;
 
   return (
@@ -68,7 +67,7 @@ export default function QuoteSummary({ quote, pitTotal, productPitTotal, heatmap
 
         <div className="summary-row total">
           <span>Total</span>
-          <span>{formatCurrency(grandTotal)}</span>
+          <span>{formatCurrency(pitTotal + productPitTotal)}</span>
         </div>
 
         {heatmapTotal > 0 && (
