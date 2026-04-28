@@ -33,20 +33,14 @@ const pitCategories = pitData.categories as PitCategory[];
 const logoUrl = new URL("/logo.png", import.meta.url).href;
 
 async function loadImageAsDataUrl(src: string): Promise<string> {
+  const res = await fetch(src);
+  if (!res.ok) throw new Error(`Image fetch failed: ${res.status} ${src}`);
+  const blob = await res.blob();
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return reject(new Error("Canvas not available"));
-      ctx.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL("image/png"));
-    };
-    img.onerror = () => reject(new Error("Failed to load logo"));
-    img.src = src;
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("FileReader error"));
+    reader.readAsDataURL(blob);
   });
 }
 
@@ -509,8 +503,8 @@ export async function exportQuoteToPDF(
         stampSize,
         stampSize,
       );
-    } catch {
-      // stamp image failed to load — skip silently
+    } catch (err) {
+      console.warn("[PDF stamp] failed to load stamp image:", err);
     }
   }
 
