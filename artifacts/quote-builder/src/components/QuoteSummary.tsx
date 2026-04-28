@@ -66,7 +66,7 @@ export default function QuoteSummary({ quote, pitTotal, productPitTotal, heatmap
         <div className="summary-divider" />
 
         <div className="summary-row total">
-          <span>Total</span>
+          <span>Upfront Total</span>
           <span>{formatCurrency(pitTotal + productPitTotal)}</span>
         </div>
 
