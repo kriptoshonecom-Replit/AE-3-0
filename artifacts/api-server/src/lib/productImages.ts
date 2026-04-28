@@ -41,6 +41,15 @@ export async function deleteProductImage(slug: string): Promise<void> {
   if (exists) await file.delete();
 }
 
+export async function moveProductImage(oldSlug: string, newSlug: string): Promise<void> {
+  const bucket = gcs.bucket(getBucketId());
+  const src = bucket.file(GCS_PREFIX + oldSlug);
+  const [exists] = await src.exists();
+  if (!exists) return;
+  await src.copy(bucket.file(GCS_PREFIX + newSlug));
+  await src.delete();
+}
+
 export async function serveProductImage(slug: string, res: Response): Promise<void> {
   const file = gcs.bucket(getBucketId()).file(GCS_PREFIX + slug);
   const [exists] = await file.exists();

@@ -8,7 +8,7 @@ import { mediaFilesTable } from "@workspace/db/schema";
 import { eq, desc, inArray } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/requireAdmin";
 import { logger } from "../lib/logger";
-import { uploadProductImage, deleteProductImage, listProductImageSlugs } from "../lib/productImages";
+import { uploadProductImage, deleteProductImage, moveProductImage, listProductImageSlugs } from "../lib/productImages";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -122,16 +122,40 @@ router.post("/media/upload", upload.single("file"), async (req, res) => {
       return;
     }
 
-    const baseName = file.originalname.replace(/\.png$/i, "").replace(/[^a-z0-9]/gi, "-").replace(/-+/g, "-").toLowerCase() || "image";
-    const slug = baseName + "-" + Date.now() + ".png";
+    // Use clean slug derived from the original filename (no timestamp suffix)
+    // This way re-uploading a file with the same name overwrites instead of duplicating
+    const baseName = file.originalname
+      .replace(/\.png$/i, "")
+      .replace(/[^a-z0-9]/gi, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .toLowerCase() || "image";
+    const slug = baseName + ".png";
     const path = `/api/images/products/${slug}`;
 
+    // Upload to GCS (overwrites if already exists)
     await uploadProductImage(slug, file.buffer);
 
-    const [row] = await db
-      .insert(mediaFilesTable)
-      .values({ originalName: file.originalname, slug, path })
-      .returning();
+    // Upsert in DB — update if slug exists, insert if new
+    const existing = await db
+      .select()
+      .from(mediaFilesTable)
+      .where(eq(mediaFilesTable.slug, slug))
+      .limit(1);
+
+    let row;
+    if (existing.length > 0) {
+      [row] = await db
+        .update(mediaFilesTable)
+        .set({ originalName: file.originalname, uploadedAt: new Date() })
+        .where(eq(mediaFilesTable.slug, slug))
+        .returning();
+    } else {
+      [row] = await db
+        .insert(mediaFilesTable)
+        .values({ originalName: file.originalname, slug, path })
+        .returning();
+    }
 
     res.status(201).json(row);
   } catch (err) {
@@ -153,9 +177,32 @@ router.patch("/media/:id", async (req, res) => {
       .limit(1);
     if (!row) { res.status(404).json({ error: "Media file not found" }); return; }
 
+    // Derive new slug from the new display name
+    const newBase = originalName.trim()
+      .replace(/\.png$/i, "")
+      .replace(/[^a-z0-9]/gi, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .toLowerCase() || "image";
+    const newSlug = newBase + ".png";
+    const newPath = `/api/images/products/${newSlug}`;
+
+    // Move the GCS file only if the slug actually changes
+    if (newSlug !== row.slug) {
+      try {
+        await moveProductImage(row.slug, newSlug);
+      } catch (moveErr) {
+        logger.warn(moveErr, `GCS move skipped for ${row.slug} → ${newSlug}`);
+      }
+    }
+
     const [updated] = await db
       .update(mediaFilesTable)
-      .set({ originalName: originalName.trim() })
+      .set({
+        originalName: originalName.trim(),
+        slug: newSlug,
+        path: newPath,
+      })
       .where(eq(mediaFilesTable.id, id))
       .returning();
 
