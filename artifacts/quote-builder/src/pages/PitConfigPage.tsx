@@ -8,6 +8,8 @@ interface PitLineItem {
   name: string;
   duration?: number;
   price?: number;
+  pci?: number;
+  hwmc?: number;
 }
 
 interface PitCategory {
@@ -58,6 +60,8 @@ function EditItemModal({
   const [name, setName] = useState(item?.name ?? "");
   const [duration, setDuration] = useState(numberOrEmpty(item?.duration));
   const [price, setPrice] = useState(numberOrEmpty(item?.price));
+  const [pci, setPci] = useState(numberOrEmpty(item?.pci));
+  const [hwmc, setHwmc] = useState(numberOrEmpty(item?.hwmc));
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -67,6 +71,7 @@ function EditItemModal({
 
   const showDuration = catType === "duration" || catType === "both";
   const showPrice = catType === "price" || catType === "both";
+  const showPciHwmc = catId === "heatmap";
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -89,6 +94,7 @@ function EditItemModal({
       name: name.trim(),
       ...(showDuration ? { duration: Number(duration) || 0 } : {}),
       ...(showPrice ? { price: Number(price) || 0 } : {}),
+      ...(showPciHwmc ? { pci: Number(pci) || 0, hwmc: Number(hwmc) || 0 } : {}),
     };
 
     const url =
@@ -232,6 +238,33 @@ function EditItemModal({
               </div>
             )}
           </div>
+
+          {showPciHwmc && (
+            <div className="admin-form-row">
+              <div className="edit-field-group">
+                <label>PCI ($)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={pci}
+                  onChange={(e) => setPci(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="edit-field-group">
+                <label>HWMC ($)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={hwmc}
+                  onChange={(e) => setHwmc(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="edit-modal-footer">
             <button
@@ -618,6 +651,8 @@ export default function PitConfigPage() {
                       {(catType === "price" || catType === "both") && (
                         <th>Price ($)</th>
                       )}
+                      {currentCat.id === "heatmap" && <th>PCI ($)</th>}
+                      {currentCat.id === "heatmap" && <th>HWMC ($)</th>}
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -646,6 +681,20 @@ export default function PitConfigPage() {
                           <td>
                             {(item.price ?? 0) > 0
                               ? `$${(item.price ?? 0).toFixed(2)}`
+                              : "—"}
+                          </td>
+                        )}
+                        {currentCat.id === "heatmap" && (
+                          <td>
+                            {(item.pci ?? 0) > 0
+                              ? `$${(item.pci ?? 0).toFixed(2)}`
+                              : "—"}
+                          </td>
+                        )}
+                        {currentCat.id === "heatmap" && (
+                          <td>
+                            {(item.hwmc ?? 0) > 0
+                              ? `$${(item.hwmc ?? 0).toFixed(2)}`
                               : "—"}
                           </td>
                         )}

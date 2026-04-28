@@ -38,18 +38,23 @@
         {
           "id": "heat-001",
           "name": "Predictive Survey + Post Heatmap",
-          "price": 2400.0
+          "price": 2400.0,
+          "pci": 0,
+          "hwmc": 0
         },
-
-        { "id": "heat-002",
+        {
+          "id": "heat-002",
           "name": "Pre + Post Heatmap",
-          "price": 4500.0
+          "price": 4500.0,
+          "pci": 0,
+          "hwmc": 0
         },
-
         {
           "id": "heat-003",
           "name": "Post Heatmap",
-          "price": 1750.0
+          "price": 1750.0,
+          "pci": 0,
+          "hwmc": 0
         }
       ]
     }

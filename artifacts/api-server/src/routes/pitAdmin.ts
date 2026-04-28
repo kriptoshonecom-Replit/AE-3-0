@@ -16,6 +16,8 @@ interface PitLineItem {
   name: string;
   duration?: number;
   price?: number;
+  pci?: number;
+  hwmc?: number;
 }
 
 interface PitCategory {
@@ -100,8 +102,8 @@ router.post("/pit/categories", async (req, res) => {
 /* ── POST /api/admin/pit/categories/:catId/items ─────────── */
 router.post("/pit/categories/:catId/items", async (req, res) => {
   const { catId } = req.params as { catId: string };
-  const { id, name, duration, price } = req.body as {
-    id?: string; name?: string; duration?: number; price?: number;
+  const { id, name, duration, price, pci, hwmc } = req.body as {
+    id?: string; name?: string; duration?: number; price?: number; pci?: number; hwmc?: number;
   };
   if (!id?.trim() || !name?.trim()) {
     res.status(400).json({ error: "ID and name are required" });
@@ -121,6 +123,8 @@ router.post("/pit/categories/:catId/items", async (req, res) => {
     const newItem: PitLineItem = { id: id.trim(), name: name.trim() };
     if (duration !== undefined && Number(duration) > 0) newItem.duration = Number(duration);
     if (price !== undefined && Number(price) > 0) newItem.price = Number(price);
+    if (pci !== undefined) newItem.pci = Number(pci) || 0;
+    if (hwmc !== undefined) newItem.hwmc = Number(hwmc) || 0;
     cat.lineItems.push(newItem);
     res.json(await writeCatalog(catalog));
   } catch {
@@ -131,8 +135,8 @@ router.post("/pit/categories/:catId/items", async (req, res) => {
 /* ── PATCH /api/admin/pit/categories/:catId/items/:itemId ── */
 router.patch("/pit/categories/:catId/items/:itemId", async (req, res) => {
   const { catId, itemId } = req.params as { catId: string; itemId: string };
-  const { name, duration, price } = req.body as {
-    name?: string; duration?: number; price?: number;
+  const { name, duration, price, pci, hwmc } = req.body as {
+    name?: string; duration?: number; price?: number; pci?: number; hwmc?: number;
   };
   try {
     const catalog = await readCatalog();
@@ -144,6 +148,8 @@ router.patch("/pit/categories/:catId/items/:itemId", async (req, res) => {
     if (name !== undefined) item.name = name.trim() || item.name;
     if (duration !== undefined) item.duration = Number(duration) || 0;
     if (price !== undefined) item.price = Number(price) || 0;
+    if (pci !== undefined) item.pci = Number(pci) || 0;
+    if (hwmc !== undefined) item.hwmc = Number(hwmc) || 0;
     res.json(await writeCatalog(catalog));
   } catch {
     res.status(500).json({ error: "Server error" });

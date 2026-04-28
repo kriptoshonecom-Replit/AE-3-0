@@ -85,17 +85,23 @@ export const DEFAULT_PIT_CATALOG = {
         {
           "id": "heat-001",
           "name": "Predictive Survey + Post Heatmap",
-          "price": 2400
+          "price": 2400,
+          "pci": 0,
+          "hwmc": 0
         },
         {
           "id": "heat-002",
           "name": "Pre + Post Heatmap",
-          "price": 4500
+          "price": 4500,
+          "pci": 0,
+          "hwmc": 0
         },
         {
           "id": "heat-003",
           "name": "Post Heatmap",
-          "price": 1750
+          "price": 1750,
+          "pci": 0,
+          "hwmc": 0
         }
       ]
     }
