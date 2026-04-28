@@ -470,6 +470,46 @@ export async function exportQuoteToPDF(
     }
   }
 
+  // ── Customer Request ─────────────────────────────────
+  {
+    const crRows: Array<[string, string]> = [
+      ["One-Time Initial Payment", quote.meta.requestedUpfrontAmount || "—"],
+      ["Monthly Pricing Per Site", quote.meta.requestedSubscriptionAmount || "—"],
+    ];
+
+    const blockH = 6 + crRows.length * 7 + 4;
+    addPageIfNeeded(blockH + 8);
+    y += 8;
+
+    // Section header bar
+    doc.setFillColor(15, 23, 42);
+    doc.rect(margin, y, contentWidth, 6, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(255, 255, 255);
+    doc.text("CUSTOMER REQUEST", margin + 3, y + 4.2);
+    y += 6;
+
+    // Light background
+    doc.setFillColor(248, 250, 252);
+    doc.rect(margin, y, contentWidth, crRows.length * 7 + 4, "F");
+    doc.setDrawColor(220, 220, 218);
+    doc.setLineWidth(0.3);
+    doc.rect(margin, y, contentWidth, crRows.length * 7 + 4, "S");
+    y += 5;
+
+    for (const [label, value] of crRows) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text(label, margin + 4, y);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(15, 23, 42);
+      doc.text(value, margin + contentWidth - 4, y, { align: "right" });
+      y += 7;
+    }
+  }
+
   // ── Helper: boxy item table (matches product group style) ──
   type TableRow = { name: string; qty: number; price: number };
 

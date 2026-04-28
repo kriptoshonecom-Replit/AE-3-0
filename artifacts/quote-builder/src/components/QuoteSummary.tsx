@@ -136,6 +136,24 @@ export default function QuoteSummary({
           </div>
         </div>
       )}
+
+      <div className="discount-analysis-section">
+        <div className="discount-analysis-title">Customer Request</div>
+        <div className="discount-analysis-rows">
+          <div className="discount-analysis-row">
+            <span>One-Time Initial Payment</span>
+            <span className="discount-analysis-value">
+              {quote.meta.requestedUpfrontAmount || "—"}
+            </span>
+          </div>
+          <div className="discount-analysis-row">
+            <span>Monthly Pricing Per Site</span>
+            <span className="discount-analysis-value">
+              {quote.meta.requestedSubscriptionAmount || "—"}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
