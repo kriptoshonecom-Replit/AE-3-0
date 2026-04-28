@@ -100,6 +100,25 @@ export async function exportQuoteToPDF(
     doc.text(dateLine, pageWidth - margin, logoTopY + logoHeightMm + 4.5, {
       align: "right",
     });
+
+    // Pass / Fail badge — below app name in banner
+    if (stampStatus === "pass" || stampStatus === "fail") {
+      const isPass = stampStatus === "pass";
+      const badgeLabel = isPass ? "PASS" : "FAIL";
+      const badgeX = margin;
+      const badgeW = 16;
+      const badgeH = 5.5;
+      const badgeY = logoTopY + logoHeightMm + 8.5;
+      if (isPass) doc.setFillColor(34, 197, 94);
+      else doc.setFillColor(239, 68, 68);
+      doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 1, 1, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.setTextColor(255, 255, 255);
+      doc.text(badgeLabel, badgeX + badgeW / 2, badgeY + badgeH / 2 + 1.3, {
+        align: "center",
+      });
+    }
   } catch {
     // Fallback: just write app name if logo fails
     doc.setFontSize(11);
@@ -247,8 +266,6 @@ export async function exportQuoteToPDF(
   // ── Totals ──────────────────────────────────────────
   addPageIfNeeded(56);
   y += 4;
-  const totalsStartY = y;
-  const totalsPageNum = (doc.internal as unknown as { getCurrentPageInfo: () => { pageNumber: number } }).getCurrentPageInfo().pageNumber;
 
   const totalsX = margin + contentWidth - 70;
   const labelX = totalsX;
@@ -354,9 +371,6 @@ export async function exportQuoteToPDF(
 
   doc.setFontSize(11);
   row("Upfront Total", formatCurrency(pitTotal + productPitTotal), true);
-
-  // Capture end of main totals block here — before extra tables that may span pages
-  const totalsEndY = y;
 
   if (heatmapTotal > 0) {
     y += 2;
@@ -485,28 +499,6 @@ export async function exportQuoteToPDF(
     .map((i) => ({ name: i.name, qty: 1, price: i.price ?? 0 }));
 
   drawItemsTable("Heatmap & Cabling", activeHeatmapRows, false);
-
-  // ── Stamp overlay on totals page ─────────────────────
-  if (stampStatus === "pass" || stampStatus === "fail") {
-    const stampSrc = new URL(`/${stampStatus}.png`, import.meta.url).href;
-    try {
-      const stampData = await loadImageAsDataUrl(stampSrc);
-      const stampSize = 72;
-      const stampCenterX = (totalsX + valueX) / 2;
-      const stampCenterY = (totalsStartY + totalsEndY) / 2;
-      doc.setPage(totalsPageNum);
-      doc.addImage(
-        stampData,
-        "PNG",
-        stampCenterX - stampSize / 2,
-        stampCenterY - stampSize / 2,
-        stampSize,
-        stampSize,
-      );
-    } catch (err) {
-      console.warn("[PDF stamp] failed to load stamp image:", err);
-    }
-  }
 
   // ── Footer ──────────────────────────────────────────
   const totalPages = doc.getNumberOfPages();
