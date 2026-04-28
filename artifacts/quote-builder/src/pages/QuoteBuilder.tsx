@@ -172,27 +172,125 @@ export default function QuoteBuilder() {
 
   const [pitHourlyRate, setPitHourlyRate] = useState<number>(PIT_HOURLY_RATE);
 
-  // ── Status Pass stamp ──────────────────────────────────────
-  const [stampStatus, setStampStatus] = useState<"pass" | "fail" | null>(null);
-  useEffect(() => {
-    const prior = sessionStorage.getItem("aloha-sp-result-prior");
-    const y1    = sessionStorage.getItem("aloha-sp-result-year1");
-    const y3    = sessionStorage.getItem("aloha-sp-result-year3");
-    if (prior === "PASS" && y1 === "PASS" && y3 === "PASS") {
-      setStampStatus("pass");
-    } else if (prior || y1 || y3) {
-      setStampStatus("fail");
-    } else {
-      setStampStatus(null);
-    }
-  }, []);
-
   const [heatmapItems, setHeatmapItems] = useState<HeatmapItem[]>(() => {
     const cat = (pitDataStatic.categories as Array<{ id: string; lineItems: Array<{ id: string; name: string; price?: number }> }>).find(
       (c) => c.id === "heatmap",
     );
     return cat ? (cat.lineItems.filter((i) => i.price !== undefined) as HeatmapItem[]) : [];
   });
+
+  // ── Status Pass stamp ──────────────────────────────────────
+  const [spData, setSpData] = useState<Record<string, unknown> | null>(null);
+  useEffect(() => {
+    fetch(`${API_BASE}/api/admin/status-pass`, { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setSpData(d))
+      .catch(() => {});
+  }, []);
+
+  const stampStatus = useMemo((): "pass" | "fail" | null => {
+    const pDollar = (s: string | undefined) =>
+      parseFloat((s ?? "").replace(/[^0-9.-]/g, "")) || 0;
+    const meta = quote.meta;
+
+    // ── Compute productPciSum & hwmCostMonthly from live groups ──
+    const TIER_IDS = new Set(["co-001", "co-002"]);
+    const TIER_EXTRA = 6.30;
+    let productPciSum = 0;
+    let hwmCostMonthly = 0;
+    const attrMap = new Map<string, { pci: number; hwmc: number }>();
+    for (const cat of productCategories) {
+      for (const item of cat.items) {
+        const a = item as unknown as { pci?: number; hwmc?: number };
+        attrMap.set(item.id, { pci: a.pci ?? 0, hwmc: a.hwmc ?? 0 });
+      }
+    }
+    for (const group of quote.groups) {
+      for (const li of group.lineItems) {
+        const attrs = attrMap.get(li.productId);
+        if (!attrs) continue;
+        const qty = li.quantity;
+        if (attrs.pci > 0 && qty > 0) {
+          productPciSum += TIER_IDS.has(li.productId) && qty > 1
+            ? attrs.pci + (qty - 1) * TIER_EXTRA
+            : attrs.pci * qty;
+        }
+        if (attrs.hwmc > 0 && qty > 0) hwmCostMonthly += attrs.hwmc * qty;
+      }
+    }
+
+    const pitCat = pitCategories.find((c) => c.id === (meta.pitType ?? ""));
+    const pitTotal = pitCat
+      ? pitCat.lineItems.reduce((s, i) => s + i.duration * pitHourlyRate, 0) : 0;
+    const productPitTotal = computeProductRelatedPitTotal(
+      quote.groups, yesNoToggles, optionalProgramToggles,
+      meta.pitType ?? "", catalogMap, pitHourlyRate,
+    );
+    const heatmapTotal = computeHeatmapTotal(
+      heatmapToggles, heatmapItems.length > 0 ? heatmapItems : undefined,
+    );
+
+    // ── Revenue ──
+    const annualRevenue  = pDollar(meta.annualStoreRevenue);
+    const avgTicket      = pDollar(meta.averageTicketAmount);
+    const txnCount       = avgTicket > 0 ? annualRevenue / avgTicket : 0;
+    const bpDecimal      = (parseFloat(meta.basisPoint ?? "") || 0) / 10000;
+    const voyixFee       = parseFloat(meta.voyixPayTransactionFee ?? "") || 0;
+    const subM1          = pDollar(meta.requestedSubscriptionAmount);
+    const upfrontM1      = pDollar(meta.requestedUpfrontAmount);
+    const paymentsRevM1  = annualRevenue > 0 || txnCount > 0
+      ? ((bpDecimal * annualRevenue) + (voyixFee * txnCount)) / 12 : 0;
+
+    const revM1         = subM1 + upfrontM1 + paymentsRevM1;
+    const revY1         = (subM1 * 12) + upfrontM1 + (paymentsRevM1 * 12);
+    const revY2         = (subM1 * 12) + (paymentsRevM1 * 12);
+    const revGrandTotal = revY1 + revY2 + revY2;
+
+    const priorMonthly = pDollar(meta.aeCurrentMonthlySpend) + pDollar(meta.aeCurrentVoyixPaySpend);
+    const hasData = revM1 > 0 || priorMonthly > 0;
+    if (!hasData) return null;
+
+    // ── Cost ──
+    const costBuffer     = ((spData?.costBuffer as number) ?? 12) / 100;
+    const gatewayCost    = (spData?.gatewayCost    as number) ?? 0.005;
+    const processingCost = (spData?.processingCost as number) ?? 0.0125;
+
+    const swHwM1     = productPciSum * (1 + costBuffer);
+    const paysCostM1 = txnCount > 0
+      ? (txnCount * (gatewayCost + ((meta.ncrPay ?? false) ? processingCost : 0))) / 12 : 0;
+
+    let instY1: number, instY2: number;
+    if (meta.recurringPit) {
+      const pitMo = (((pitTotal + productPitTotal) / 120) * 4) / 2;
+      instY1 = pitMo * 12 + heatmapTotal / 2; instY2 = pitMo * 12;
+    } else {
+      instY1 = (pitTotal + productPitTotal + heatmapTotal) / 2; instY2 = 0;
+    }
+    const buyoutM1 = pDollar(meta.costOfBuyOut);
+    const swHwY = swHwM1 * 12, hwmY = hwmCostMonthly * 12, paysY = paysCostM1 * 12;
+
+    const costY1         = swHwY + hwmY + paysY + instY1 + buyoutM1;
+    const costY2         = swHwY + hwmY + paysY + instY2;
+    const costGrandTotal = costY1 + costY2 + costY2;
+
+    // ── Check 1: Prior Spend variance >= 15% ──
+    const proposedMonthly = subM1 + paymentsRevM1;
+    const priorVariance   = priorMonthly > 0
+      ? ((proposedMonthly - priorMonthly) / priorMonthly) * 100 : null;
+    const priorPass = priorVariance !== null ? priorVariance >= 15 : null;
+
+    // ── Check 2: Year 1 margin % > 5% ──
+    const pctY1  = revY1 > 0 ? ((revY1 - costY1) / revY1) * 100 : null;
+    const y1Pass = pctY1 !== null ? pctY1 > 5 : null;
+
+    // ── Check 3: 3-year total margin % > 40% ──
+    const pctTotal = revGrandTotal > 0
+      ? ((revGrandTotal - costGrandTotal) / revGrandTotal) * 100 : null;
+    const y3Pass = pctTotal !== null ? pctTotal > 40 : null;
+
+    return (priorPass === true && y1Pass === true && y3Pass === true) ? "pass" : "fail";
+  }, [spData, quote.meta, quote.groups, yesNoToggles, optionalProgramToggles,
+      heatmapToggles, pitCategories, pitHourlyRate, catalogMap, heatmapItems, productCategories]);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/products`)
