@@ -40,6 +40,26 @@ export function adminSaveQuoteToServer(quoteId: string, quote: Quote): void {
 }
 
 /**
+ * Uploads an array of quotes to the server sequentially.
+ * Used at startup to migrate local-only quotes so they become visible to
+ * admin users. Fire-and-forget per quote; errors are silently ignored.
+ */
+export async function bulkUploadQuotesToServer(quotes: Quote[]): Promise<void> {
+  for (const quote of quotes) {
+    try {
+      await fetch(`${API_BASE}/api/quotes/sync`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ quote }),
+      });
+    } catch {
+      /* ignore individual failures */
+    }
+  }
+}
+
+/**
  * Returns the user's server-side quotes.
  * Returns `null` when the fetch fails or returns a non-OK status — callers
  * must treat `null` as "unknown, do not delete local data".

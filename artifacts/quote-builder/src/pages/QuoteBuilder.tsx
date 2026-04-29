@@ -28,7 +28,7 @@ import QuoteSummary from "../components/QuoteSummary";
 import QuoteList from "../components/QuoteList";
 import AddGroupModal from "../components/AddGroupModal";
 import { saveQuote, loadAllQuotes, getActiveQuoteId, loadQuote } from "../utils/storage";
-import { syncQuoteToServer, adminSaveQuoteToServer, fetchServerQuotes } from "../utils/serverSync";
+import { syncQuoteToServer, adminSaveQuoteToServer, fetchServerQuotes, bulkUploadQuotesToServer } from "../utils/serverSync";
 import { exportQuoteToPDF } from "../utils/pdfExport";
 import { generateId, todayString, thirtyDaysOut, quoteTotal } from "../utils/calculations";
 
@@ -471,6 +471,14 @@ export default function QuoteBuilder() {
 
       const localMap = new Map(localAll.map((q) => [q.meta.id, q]));
       const serverIds = new Set(serverQuotes.map((q) => q.meta.id));
+
+      // Upload any local quotes that aren't on the server yet.
+      // This migrates localStorage-only quotes (e.g. created before server sync
+      // was in place, or on first production visit) so admins can see them.
+      const localOnly = localAll.filter((q) => !serverIds.has(q.meta.id));
+      if (localOnly.length > 0) {
+        await bulkUploadQuotesToServer(localOnly);
+      }
       const activeId = getActiveQuoteId(userId);
       let changed = false;
 
