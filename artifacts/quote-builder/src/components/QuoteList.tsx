@@ -88,15 +88,22 @@ export default function QuoteList({
 
   async function handleDelete(q: Quote) {
     if (!window.confirm("Delete this quote?")) return;
-    // Remove from localStorage immediately
-    deleteQuote(q.meta.id, userId);
-    // Also remove from server (fire-and-forget — don't block the UI)
+    // Delete from server first — must complete before we touch localStorage,
+    // otherwise a page refresh before the request finishes will cause the startup
+    // sync to pull the quote back from the server and restore it.
     if (apiBase) {
-      fetch(`${apiBase}/api/quotes/${q.meta.id}`, {
-        method: "DELETE",
-        credentials: "include",
-      }).catch(() => {});
+      try {
+        await fetch(`${apiBase}/api/quotes/${q.meta.id}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+      } catch {
+        // Network error — still remove locally so the UI feels responsive.
+        // The startup sync will clean up if server delete later succeeds.
+      }
     }
+    // Remove from localStorage after server confirms (or on network failure).
+    deleteQuote(q.meta.id, userId);
     if (q.meta.id === currentId) {
       onNew();
     } else {

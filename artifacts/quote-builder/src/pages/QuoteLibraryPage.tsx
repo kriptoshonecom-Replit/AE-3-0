@@ -4,6 +4,7 @@ import { formatCurrency, quoteTotal } from "../utils/calculations";
 import { computeProductRelatedPitTotal } from "../components/ProductRelatedPitSection";
 import pitData from "../data/pit-services.json";
 import { PIT_HOURLY_RATE } from "../data/pit-config";
+import { deleteQuote } from "../utils/storage";
 import type { Quote, QuoteMeta } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
@@ -254,7 +255,7 @@ export default function QuoteLibraryPage() {
 
   useEffect(() => { void load(); }, [load]);
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: string, ownerId: string) {
     if (!window.confirm("Permanently delete this quote?")) return;
     try {
       const res = await fetch(`${API_BASE}/api/admin/quotes/${id}`, {
@@ -265,6 +266,9 @@ export default function QuoteLibraryPage() {
         const d = (await res.json()) as { error?: string };
         throw new Error(d.error ?? "Delete failed");
       }
+      // Clean up localStorage for this quote's owner (no-op if not in this browser).
+      // Ensures the startup sync doesn't re-upload a locally-cached copy.
+      deleteQuote(id, ownerId);
       setQuotes((prev) => prev.filter((r) => r.id !== id));
     } catch (err) {
       alert(err instanceof Error ? err.message : "Delete failed");
@@ -412,7 +416,7 @@ export default function QuoteLibraryPage() {
                         <button
                           type="button"
                           className="admin-btn-delete"
-                          onClick={() => handleDelete(row.id)}
+                          onClick={() => handleDelete(row.id, row.userId)}
                           title="Delete quote"
                         >
                           <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
