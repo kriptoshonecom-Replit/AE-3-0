@@ -71,7 +71,7 @@ export default function QuoteList({
   // Fetch quotes from server whenever refreshTrigger changes.
   // Falls back to localStorage if the server is unreachable.
   useEffect(() => {
-    if (!apiBase || !userId) return;
+    if (!userId) return; // apiBase can be "" (relative URLs) — that is valid
     let cancelled = false;
     // Show spinner only on first load — subsequent refreshes update silently.
     if (!hasFetchedOnce.current) setLoading(true);
@@ -120,15 +120,14 @@ export default function QuoteList({
     if (!window.confirm("Delete this quote?")) return;
     // Delete from server first — ensures server processes it before any
     // possible page refresh (prevents the quote from being restored on reload).
-    if (apiBase) {
-      try {
-        await fetch(`${apiBase}/api/quotes/${q.meta.id}`, {
-          method: "DELETE",
-          credentials: "include",
-        });
-      } catch {
-        /* network error — remove locally anyway and retry on next sync */
-      }
+    try {
+      // apiBase can be "" in production (relative URL) — fetch still works
+      await fetch(`${apiBase ?? ""}/api/quotes/${q.meta.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+    } catch {
+      /* network error — remove locally anyway */
     }
     // Remove from localStorage cache
     deleteQuote(q.meta.id, userId);
