@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { quotesTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 
 const router = Router();
@@ -72,6 +72,20 @@ router.post("/quotes/sync", requireAuth, async (req, res) => {
   } catch (err) {
     console.error("POST /quotes/sync error:", err);
     res.status(500).json({ error: "Failed to sync quote" });
+  }
+});
+
+router.delete("/quotes/:id", requireAuth, async (req, res) => {
+  const userId = req.auth!.userId;
+  const { id } = req.params;
+  try {
+    await db
+      .delete(quotesTable)
+      .where(and(eq(quotesTable.id, id), eq(quotesTable.userId, userId)));
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("DELETE /quotes/:id error:", err);
+    res.status(500).json({ error: "Failed to delete quote" });
   }
 });
 

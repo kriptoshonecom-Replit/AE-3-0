@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Quote } from "../types";
 import { formatCurrency, quoteTotal } from "../utils/calculations";
 import { loadAllQuotes, deleteQuote } from "../utils/storage";
@@ -42,14 +42,6 @@ function fmtShortDate(s: string | undefined | null): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-interface AdminRow {
-  id: string;
-  data: unknown;
-  passStatus?: string | null;
-  creatorName?: string | null;
-  userId?: string;
-}
-
 interface Props {
   currentId: string;
   currentStatus?: "pass" | "fail" | null;
@@ -70,59 +62,15 @@ export default function QuoteList({
   refreshTrigger,
   userId,
   userFullName,
-  isAdmin,
   apiBase,
 }: Props) {
-  const localQuotes = useMemo(
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const quotes = useMemo(
     () => loadAllQuotes(userId),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [refreshTrigger, userId],
+    [refreshTrigger, refreshKey, userId],
   );
-
-  const [adminQuotes, setAdminQuotes] = useState<Quote[]>([]);
-  const [adminLoading, setAdminLoading] = useState(false);
-
-  useEffect(() => {
-    if (!isAdmin || !apiBase) return;
-    setAdminLoading(true);
-    fetch(`${apiBase}/api/admin/quotes`, { credentials: "include" })
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then(({ quotes }: { quotes: AdminRow[] }) => {
-        const mapped: Quote[] = quotes
-          .filter((row) => row.data != null)
-          .map((row) => {
-            const q = row.data as Quote;
-            return {
-              ...q,
-              meta: {
-                ...q.meta,
-                creatorName: row.creatorName || q.meta?.creatorName,
-                passStatus: (row.passStatus ?? q.meta?.passStatus) as "pass" | "fail" | undefined,
-                _adminOwnerId: row.userId ?? undefined,
-              },
-            };
-          });
-        mapped.sort((a, b) =>
-          (b.meta.updatedAt ?? "").localeCompare(a.meta.updatedAt ?? ""),
-        );
-        setAdminQuotes(mapped);
-      })
-      .catch(() => {})
-      .finally(() => setAdminLoading(false));
-  }, [isAdmin, apiBase, refreshTrigger]);
-
-  // Admins see ALL server quotes (every user) plus any of their own local quotes
-  // that haven't been synced to the server yet (e.g. first production visit).
-  const adminServerIds = new Set(adminQuotes.map((q) => q.meta.id));
-  const quotes = isAdmin
-    ? [
-        ...adminQuotes,
-        ...localQuotes.filter((lq) => !adminServerIds.has(lq.meta.id)),
-      ]
-    : localQuotes;
 
   const [search, setSearch] = useState("");
 
@@ -140,30 +88,26 @@ export default function QuoteList({
 
   async function handleDelete(q: Quote) {
     if (!window.confirm("Delete this quote?")) return;
-    if (isAdmin && apiBase) {
-      try {
-        const res = await fetch(`${apiBase}/api/admin/quotes/${q.meta.id}`, {
-          method: "DELETE",
-          credentials: "include",
-        });
-        if (res.ok) {
-          setAdminQuotes((prev) => prev.filter((aq) => aq.meta.id !== q.meta.id));
-          if (q.meta.id === currentId) onNew();
-        }
-      } catch {
-        /* silent */
-      }
+    // Remove from localStorage immediately
+    deleteQuote(q.meta.id, userId);
+    // Also remove from server (fire-and-forget — don't block the UI)
+    if (apiBase) {
+      fetch(`${apiBase}/api/quotes/${q.meta.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      }).catch(() => {});
+    }
+    if (q.meta.id === currentId) {
+      onNew();
     } else {
-      deleteQuote(q.meta.id, userId);
-      if (q.meta.id === currentId) onNew();
-      else window.location.reload();
+      setRefreshKey((k) => k + 1);
     }
   }
 
   return (
     <div className="quote-list">
       <div className="quote-list-header">
-        <span className="ql-title">{isAdmin ? "All Quotes" : "Saved Quotes"}</span>
+        <span className="ql-title">Saved Quotes</span>
         <button className="btn-new-quote" type="button" onClick={onNew}>
           <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
             <path
@@ -185,7 +129,7 @@ export default function QuoteList({
         <input
           type="text"
           className="ql-search"
-          placeholder={isAdmin ? "Search all quotes…" : "Search quotes…"}
+          placeholder="Search quotes…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -203,16 +147,10 @@ export default function QuoteList({
         )}
       </div>
 
-      {adminLoading && (
-        <p className="ql-empty" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span className="spinner" style={{ width: "12px", height: "12px" }} />
-          Loading…
-        </p>
-      )}
-      {!adminLoading && quotes.length === 0 && (
+      {quotes.length === 0 && (
         <p className="ql-empty">No saved quotes yet.</p>
       )}
-      {!adminLoading && quotes.length > 0 && filtered.length === 0 && (
+      {quotes.length > 0 && filtered.length === 0 && (
         <p className="ql-empty">No quotes match &ldquo;{search}&rdquo;.</p>
       )}
 
