@@ -182,6 +182,15 @@ export async function exportQuoteToPDF(
   if (quote.meta.customerEmail)
     rightRow("Customer Email:", quote.meta.customerEmail);
 
+  const parseCrAmt = (v?: string) => {
+    const n = parseFloat((v ?? "").replace(/[^0-9.]/g, ""));
+    return n > 0 ? formatCurrency(n) : null;
+  };
+  const crUpfront = parseCrAmt(quote.meta.requestedUpfrontAmount);
+  const crMonthly = parseCrAmt(quote.meta.requestedSubscriptionAmount);
+  if (crUpfront) rightRow("Requested One-Time Payment:", crUpfront);
+  if (crMonthly) rightRow("Requested Monthly/Site:", crMonthly);
+
   y = Math.max(leftY, rightY) + 4;
 
   // ── Groups ──────────────────────────────────────────
@@ -529,7 +538,9 @@ export async function exportQuoteToPDF(
       poRows.push(["Total Txn Rate", total > 0 ? `$${total.toFixed(4)}` : "—", true]);
     }
 
-    const blockH = 6 + poRows.length * 7 + 4;
+    const hasTotalRow = poRows.some(([,, t]) => t);
+    const bodyH = poRows.length * 7 + 4 + (hasTotalRow ? 3 : 0);
+    const blockH = 6 + bodyH;
     addPageIfNeeded(blockH + 8);
     y += 8;
 
@@ -544,14 +555,15 @@ export async function exportQuoteToPDF(
 
     // Light background
     doc.setFillColor(240, 249, 255);
-    doc.rect(margin, y, contentWidth, poRows.length * 7 + 4, "F");
+    doc.rect(margin, y, contentWidth, bodyH, "F");
     doc.setDrawColor(220, 220, 218);
     doc.setLineWidth(0.3);
-    doc.rect(margin, y, contentWidth, poRows.length * 7 + 4, "S");
+    doc.rect(margin, y, contentWidth, bodyH, "S");
     y += 5;
 
     for (const [label, value, isTotalRow] of poRows) {
       if (isTotalRow) {
+        y += 3;
         doc.setDrawColor(180, 180, 180);
         doc.setLineWidth(0.2);
         doc.line(margin + 3, y - 2, margin + contentWidth - 3, y - 2);
