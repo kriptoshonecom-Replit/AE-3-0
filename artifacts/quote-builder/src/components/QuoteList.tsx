@@ -86,20 +86,25 @@ export default function QuoteList({
     if (!isAdmin || !apiBase) return;
     setAdminLoading(true);
     fetch(`${apiBase}/api/admin/quotes`, { credentials: "include" })
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then(({ quotes }: { quotes: AdminRow[] }) => {
-        const mapped: Quote[] = quotes.map((row) => {
-          const q = row.data as Quote;
-          return {
-            ...q,
-            meta: {
-              ...q.meta,
-              creatorName: row.creatorName || q.meta.creatorName,
-              passStatus: (row.passStatus ?? q.meta.passStatus) as string | undefined,
-              _adminOwnerId: row.userId ?? undefined,
-            },
-          };
-        });
+        const mapped: Quote[] = quotes
+          .filter((row) => row.data != null)
+          .map((row) => {
+            const q = row.data as Quote;
+            return {
+              ...q,
+              meta: {
+                ...q.meta,
+                creatorName: row.creatorName || q.meta?.creatorName,
+                passStatus: (row.passStatus ?? q.meta?.passStatus) as "pass" | "fail" | undefined,
+                _adminOwnerId: row.userId ?? undefined,
+              },
+            };
+          });
         mapped.sort((a, b) =>
           (b.meta.updatedAt ?? "").localeCompare(a.meta.updatedAt ?? ""),
         );
@@ -109,7 +114,15 @@ export default function QuoteList({
       .finally(() => setAdminLoading(false));
   }, [isAdmin, apiBase, refreshTrigger]);
 
-  const quotes = isAdmin ? adminQuotes : localQuotes;
+  // Admins see ALL server quotes (every user) plus any of their own local quotes
+  // that haven't been synced to the server yet (e.g. first production visit).
+  const adminServerIds = new Set(adminQuotes.map((q) => q.meta.id));
+  const quotes = isAdmin
+    ? [
+        ...adminQuotes,
+        ...localQuotes.filter((lq) => !adminServerIds.has(lq.meta.id)),
+      ]
+    : localQuotes;
 
   const [search, setSearch] = useState("");
 

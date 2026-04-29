@@ -463,6 +463,10 @@ export default function QuoteBuilder() {
     (async () => {
       const serverQuotes = await fetchServerQuotes();
       const localAll = loadAllQuotes(userId);
+
+      // null means the fetch failed (network error / auth issue) — bail out entirely
+      // so we never accidentally delete local quotes when the server is unreachable.
+      if (serverQuotes === null) return;
       if (!localAll.length && !serverQuotes.length) return;
 
       const localMap = new Map(localAll.map((q) => [q.meta.id, q]));
@@ -479,12 +483,19 @@ export default function QuoteBuilder() {
         }
       }
 
-      // Remove quotes that were deleted server-side (e.g. by an admin)
-      // Never drop the current quote if the user has unsaved edits
-      for (const [id] of localMap) {
-        if (!serverIds.has(id) && !(id === activeId && isDirtyRef.current)) {
-          localMap.delete(id);
-          changed = true;
+      // Remove quotes that were deleted server-side (e.g. by an admin).
+      // Only runs when the server returned actual data (serverQuotes !== null, checked above)
+      // AND the server has prior knowledge of at least one of this user's local quotes —
+      // which proves we're talking to the authoritative server for this account, not a
+      // freshly deployed environment whose DB is still empty.
+      // Never drop the current quote if the user has unsaved edits.
+      const serverKnowsThisUser = serverQuotes.some((sq) => localMap.has(sq.meta.id));
+      if (serverKnowsThisUser) {
+        for (const [id] of localMap) {
+          if (!serverIds.has(id) && !(id === activeId && isDirtyRef.current)) {
+            localMap.delete(id);
+            changed = true;
+          }
         }
       }
 

@@ -39,13 +39,19 @@ export function adminSaveQuoteToServer(quoteId: string, quote: Quote): void {
   }, 1500);
 }
 
-export async function fetchServerQuotes(): Promise<Quote[]> {
+/**
+ * Returns the user's server-side quotes.
+ * Returns `null` when the fetch fails or returns a non-OK status — callers
+ * must treat `null` as "unknown, do not delete local data".
+ * Returns an empty array only when the server confirms there are no quotes.
+ */
+export async function fetchServerQuotes(): Promise<Quote[] | null> {
   try {
     const res = await fetch(`${API_BASE}/api/quotes`, { credentials: "include" });
-    if (!res.ok) return [];
+    if (!res.ok) return null;
     const data = (await res.json()) as { quotes: Quote[] };
     return Array.isArray(data.quotes) ? data.quotes : [];
   } catch {
-    return [];
+    return null;
   }
 }

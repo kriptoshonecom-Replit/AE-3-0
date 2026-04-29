@@ -24,7 +24,7 @@ const DEFAULT_OPT_PROGRAMS: Record<string, boolean> = {
 function computeTotal(data: Quote): number {
   const pitCat = pitData.categories.find((c) => c.id === (data.meta.pitType ?? ""));
   const pitTotal = pitCat
-    ? pitCat.lineItems.reduce((s, i) => s + i.duration * PIT_HOURLY_RATE, 0)
+    ? pitCat.lineItems.reduce((s, i) => s + ("duration" in i ? (i.duration as number) : 0) * PIT_HOURLY_RATE, 0)
     : 0;
   const yesNoToggles = { ...DEFAULT_YES_NO, ...(data.meta.yesNoToggles ?? {}) };
   const optToggles = { ...DEFAULT_OPT_PROGRAMS, ...(data.meta.optionalProgramToggles ?? {}) };
