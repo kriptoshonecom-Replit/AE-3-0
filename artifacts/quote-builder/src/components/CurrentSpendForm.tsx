@@ -20,26 +20,6 @@ function stripFormat(value: string): string {
   return value.replace(/[^0-9.]/g, "");
 }
 
-function useBpsField(value: string, onChange: (val: string) => void) {
-  const [focused, setFocused] = useState(false);
-  const raw = value.replace(/[^0-9.]/g, "");
-  const display =
-    !focused && raw !== "" ? `${(parseFloat(raw) / 100).toFixed(2)}%` : raw;
-
-  return {
-    value: display,
-    onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
-      setFocused(true);
-      onChange(e.target.value.replace(/[^0-9.]/g, ""));
-    },
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-      onChange(e.target.value),
-    onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
-      setFocused(false);
-      onChange(e.target.value.replace(/[^0-9.]/g, ""));
-    },
-  };
-}
 
 function usePercentField(value: string, onChange: (val: string) => void) {
   const [focused, setFocused] = useState(false);
@@ -96,10 +76,12 @@ export default function CurrentSpendForm({ meta, onChange }: Props) {
     meta.existingHeadlineRate ?? "",
     set("existingHeadlineRate"),
   );
-  const interchangeRate = useBpsField(
-    meta.existingInterchangeRate ?? "",
-    set("existingInterchangeRate"),
-  );
+  const interchangeRateValue = meta.existingInterchangeRate ?? "";
+  const interchangeRateProps = {
+    value: interchangeRateValue,
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+      onChange({ ...meta, existingInterchangeRate: e.target.value.replace(/[^0-9.]/g, "") }),
+  };
 
   const setRaw =
     (key: keyof QuoteMeta) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -132,7 +114,7 @@ export default function CurrentSpendForm({ meta, onChange }: Props) {
           <input
             type="text"
             placeholder="Enter Whole Number"
-            {...interchangeRate}
+            {...interchangeRateProps}
           />
         </div>
       </div>
