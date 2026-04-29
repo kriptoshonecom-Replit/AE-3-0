@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Quote } from "../types";
 import { formatCurrency, quoteTotal } from "../utils/calculations";
 import { loadAllQuotes, deleteQuote } from "../utils/storage";
@@ -66,13 +66,15 @@ export default function QuoteList({
 }: Props) {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
+  const hasFetchedOnce = useRef(false);
 
   // Fetch quotes from server whenever refreshTrigger changes.
   // Falls back to localStorage if the server is unreachable.
   useEffect(() => {
     if (!apiBase || !userId) return;
     let cancelled = false;
-    setLoading(true);
+    // Show spinner only on first load — subsequent refreshes update silently.
+    if (!hasFetchedOnce.current) setLoading(true);
 
     fetch(`${apiBase}/api/quotes`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
@@ -82,6 +84,8 @@ export default function QuoteList({
           (b.meta.updatedAt ?? "").localeCompare(a.meta.updatedAt ?? ""),
         );
         setQuotes(sorted);
+        hasFetchedOnce.current = true;
+        setLoading(false);
       })
       .catch(() => {
         if (cancelled) return;
@@ -90,9 +94,8 @@ export default function QuoteList({
           (b.meta.updatedAt ?? "").localeCompare(a.meta.updatedAt ?? ""),
         );
         setQuotes(local);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        hasFetchedOnce.current = true;
+        setLoading(false);
       });
 
     return () => { cancelled = true; };
