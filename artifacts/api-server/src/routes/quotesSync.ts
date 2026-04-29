@@ -54,6 +54,7 @@ router.post("/quotes/sync", requireAuth, async (req, res) => {
         quoteNumber: (meta.quoteNumber as string) || null,
         companyName: (meta.companyName as string) || null,
         customerName: (meta.customerName as string) || null,
+        passStatus: (meta.passStatus as string) || null,
         createdAt: parseDate(meta.createdAt as string),
         updatedAt: parseDate(meta.updatedAt as string),
       })
@@ -65,6 +66,7 @@ router.post("/quotes/sync", requireAuth, async (req, res) => {
           companyName: (meta.companyName as string) || null,
           customerName: (meta.customerName as string) || null,
           updatedAt: parseDate(meta.updatedAt as string),
+          passStatus: (meta.passStatus as string) || null,
         },
       });
 

@@ -27,7 +27,16 @@ router.get("/admin/quotes", requireAdmin, async (_req, res) => {
       .leftJoin(usersTable, eq(quotesTable.userId, usersTable.id))
       .orderBy(quotesTable.updatedAt);
 
-    res.json({ quotes: rows });
+    // For quotes saved by regular users before this fix, passStatus may only
+    // exist inside the JSON blob — fall back to it when the column is null.
+    const normalised = rows.map((r) => ({
+      ...r,
+      passStatus:
+        r.passStatus ??
+        ((r.data as Record<string, unknown>)?.meta as Record<string, unknown> | undefined)
+          ?.passStatus as string | null ?? null,
+    }));
+    res.json({ quotes: normalised });
   } catch (err) {
     console.error("GET /admin/quotes error:", err);
     res.status(500).json({ error: "Failed to load quotes" });
