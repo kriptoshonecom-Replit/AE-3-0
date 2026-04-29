@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import type { QuoteMeta } from "../types";
 
 interface Props {
@@ -8,10 +8,21 @@ interface Props {
   upfrontPriceDiscountPct?: number;
 }
 
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
 export default function QuoteMetaForm({ meta, onChange, pspmDiscountPct, upfrontPriceDiscountPct }: Props) {
+  const [emailTouched, setEmailTouched] = useState(false);
+
   const set = (key: keyof QuoteMeta) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     onChange({ ...meta, [key]: e.target.value });
   };
+
+  const emailError =
+    emailTouched && meta.customerEmail && !isValidEmail(meta.customerEmail)
+      ? "Please enter a valid email address"
+      : null;
 
   const fmtPct = (v?: number) =>
     v === undefined || isNaN(v) ? "—" : `${v.toFixed(2)}%`;
@@ -75,8 +86,11 @@ export default function QuoteMetaForm({ meta, onChange, pspmDiscountPct, upfront
             type="email"
             value={meta.customerEmail}
             onChange={set("customerEmail")}
+            onBlur={() => setEmailTouched(true)}
             placeholder="contact@acme.com"
+            className={emailError ? "input-error" : undefined}
           />
+          {emailError && <span className="field-error">{emailError}</span>}
         </div>
 
         <div className="field-group">

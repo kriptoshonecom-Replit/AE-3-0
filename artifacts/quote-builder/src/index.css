@@ -446,6 +446,24 @@ button {
   border-color: color-mix(in srgb, var(--primary, #7c3aed) 30%, transparent);
 }
 
+.field-group input.input-error {
+  border-color: #dc2626;
+  background: #fff5f5;
+}
+
+.field-group input.input-error:focus {
+  border-color: #dc2626;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+}
+
+.field-error {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #dc2626;
+}
+
 .field-group input:focus,
 .field-group textarea:focus {
   border-color: var(--accent);
