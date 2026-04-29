@@ -28,7 +28,7 @@ import QuoteSummary from "../components/QuoteSummary";
 import QuoteList from "../components/QuoteList";
 import AddGroupModal from "../components/AddGroupModal";
 import { saveQuote, loadAllQuotes, getActiveQuoteId, loadQuote } from "../utils/storage";
-import { syncQuoteToServer, adminSaveQuoteToServer, fetchServerQuotes, bulkUploadQuotesToServer } from "../utils/serverSync";
+import { syncQuoteToServer, saveQuoteToServerNow, adminSaveQuoteToServer, fetchServerQuotes, bulkUploadQuotesToServer } from "../utils/serverSync";
 import { exportQuoteToPDF } from "../utils/pdfExport";
 import { generateId, todayString, thirtyDaysOut, quoteTotal } from "../utils/calculations";
 
@@ -457,74 +457,50 @@ export default function QuoteBuilder() {
     setInitialized(true);
   }, [userId, initialized]);
 
-  /* Pull server quotes after init — merge admin-edited versions and purge server-deleted ones */
+  /* On startup: pull server quotes, migrate any localStorage-only quotes,
+     then refresh the sidebar and update the open form if the server has a
+     newer version of the active quote. */
   useEffect(() => {
     if (!initialized || !userId) return;
     (async () => {
       const serverQuotes = await fetchServerQuotes();
-      const localAll = loadAllQuotes(userId);
-
-      // null means the fetch failed (network error / auth issue) — bail out entirely
-      // so we never accidentally delete local quotes when the server is unreachable.
+      // null = network / auth error — leave everything as-is
       if (serverQuotes === null) return;
-      if (!localAll.length && !serverQuotes.length) return;
 
-      const localMap = new Map(localAll.map((q) => [q.meta.id, q]));
+      const localAll = loadAllQuotes(userId);
       const serverIds = new Set(serverQuotes.map((q) => q.meta.id));
 
-      // Upload any local quotes that aren't on the server yet.
-      // This migrates localStorage-only quotes (e.g. created before server sync
-      // was in place, or on first production visit) so admins can see them.
+      // Upload any quotes that exist only in localStorage (migration for quotes
+      // created before server sync was in place, or on first production visit).
       const localOnly = localAll.filter((q) => !serverIds.has(q.meta.id));
       if (localOnly.length > 0) {
         await bulkUploadQuotesToServer(localOnly);
       }
+
+      // Signal the sidebar to re-fetch its list from the server.
+      setRefreshTrigger((n) => n + 1);
+
+      // If the user has unsaved edits to the current quote, leave the form alone.
+      if (isDirtyRef.current) return;
+
       const activeId = getActiveQuoteId(userId);
-      let changed = false;
+      if (!activeId) return;
 
-      // Update / add quotes that are newer on the server
-      for (const sq of serverQuotes) {
-        const lq = localMap.get(sq.meta.id);
-        if (!lq || (!isDirtyRef.current && sq.meta.updatedAt >= lq.meta.updatedAt)) {
-          localMap.set(sq.meta.id, sq);
-          changed = true;
-        }
-      }
+      const serverVersion = serverQuotes.find((q) => q.meta.id === activeId);
+      const localVersion = localAll.find((q) => q.meta.id === activeId);
 
-      // Remove quotes that were deleted server-side (e.g. by an admin).
-      // Only runs when the server returned actual data (serverQuotes !== null, checked above)
-      // AND the server has prior knowledge of at least one of this user's local quotes —
-      // which proves we're talking to the authoritative server for this account, not a
-      // freshly deployed environment whose DB is still empty.
-      // Never drop the current quote if the user has unsaved edits.
-      const serverKnowsThisUser = serverQuotes.some((sq) => localMap.has(sq.meta.id));
-      if (serverKnowsThisUser) {
-        for (const [id] of localMap) {
-          if (!serverIds.has(id) && !(id === activeId && isDirtyRef.current)) {
-            localMap.delete(id);
-            changed = true;
-          }
+      if (serverVersion) {
+        // Use server version if it's newer (e.g. edited by admin on another device)
+        if (!localVersion || serverVersion.meta.updatedAt >= localVersion.meta.updatedAt) {
+          setQuote(serverVersion);
+          saveQuote(serverVersion, userId); // keep localStorage cache in sync
         }
-      }
-
-      if (changed) {
-        const merged = Array.from(localMap.values());
-        localStorage.setItem(`quote_builder_quotes__${userId}`, JSON.stringify(merged));
-        setRefreshTrigger((n) => n + 1);
-        if (activeId && !isDirtyRef.current) {
-          const updated = localMap.get(activeId);
-          if (updated) {
-            setQuote(updated);
-          } else if (!serverIds.has(activeId)) {
-            // Active quote was deleted by admin — load the most recent remaining one
-            const remaining = merged.sort((a, b) =>
-              (b.meta.updatedAt ?? "").localeCompare(a.meta.updatedAt ?? ""),
-            );
-            if (remaining.length > 0) {
-              setQuote(remaining[0]);
-            }
-          }
-        }
+      } else if (serverQuotes.length > 0) {
+        // Active quote was deleted server-side — load the most recent remaining one
+        const latest = [...serverQuotes].sort((a, b) =>
+          (b.meta.updatedAt ?? "").localeCompare(a.meta.updatedAt ?? ""),
+        )[0];
+        setQuote(latest);
       }
     })();
   }, [initialized, userId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -547,10 +523,11 @@ export default function QuoteBuilder() {
         // Do NOT save to localStorage (it belongs to the original owner, not admin).
         adminSaveQuoteToServer(updated.meta.id, updated);
       } else {
+        // Write to localStorage immediately (fast cache for form restore on reload).
         saveQuote(updated, userId);
-        syncQuoteToServer(updated);
+        // Push to server; once confirmed, refresh the sidebar from server.
+        syncQuoteToServer(updated, () => setRefreshTrigger((n) => n + 1));
       }
-      setRefreshTrigger((n) => n + 1);
       if (markDirty) isDirtyRef.current = true;
     },
     [userId, stampStatus, editingOtherUserId]
@@ -805,9 +782,13 @@ export default function QuoteBuilder() {
     setYesNoToggles(DEFAULT_YES_NO);
     setOptionalProgramToggles(DEFAULT_OPT_PROGRAMS);
     setHeatmapToggles(DEFAULT_HEATMAP_TOGGLES);
-    autosave(newQ, false);
+    // Save to localStorage immediately (form cache).
+    saveQuote(newQ, userId!);
     isDirtyRef.current = false;
     setSidebarOpen(false);
+    // Save to server immediately (no debounce) so the new quote appears
+    // in the sidebar as soon as the server confirms — no 1.5 s wait.
+    void saveQuoteToServerNow(newQ).then(() => setRefreshTrigger((n) => n + 1));
   };
 
   // Collect all alert-config mismatches for the given groups

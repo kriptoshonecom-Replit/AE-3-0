@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Quote } from "../types";
 import { formatCurrency, quoteTotal } from "../utils/calculations";
 import { loadAllQuotes, deleteQuote } from "../utils/storage";
@@ -64,13 +64,40 @@ export default function QuoteList({
   userFullName,
   apiBase,
 }: Props) {
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const quotes = useMemo(
-    () => loadAllQuotes(userId),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [refreshTrigger, refreshKey, userId],
-  );
+  // Fetch quotes from server whenever refreshTrigger changes.
+  // Falls back to localStorage if the server is unreachable.
+  useEffect(() => {
+    if (!apiBase || !userId) return;
+    let cancelled = false;
+    setLoading(true);
+
+    fetch(`${apiBase}/api/quotes`, { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((data: { quotes: Quote[] }) => {
+        if (cancelled) return;
+        const sorted = [...(data.quotes ?? [])].sort((a, b) =>
+          (b.meta.updatedAt ?? "").localeCompare(a.meta.updatedAt ?? ""),
+        );
+        setQuotes(sorted);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // Server unreachable — show cached localStorage quotes
+        const local = loadAllQuotes(userId).sort((a, b) =>
+          (b.meta.updatedAt ?? "").localeCompare(a.meta.updatedAt ?? ""),
+        );
+        setQuotes(local);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshTrigger, apiBase, userId]);
 
   const [search, setSearch] = useState("");
 
@@ -88,9 +115,8 @@ export default function QuoteList({
 
   async function handleDelete(q: Quote) {
     if (!window.confirm("Delete this quote?")) return;
-    // Delete from server first — must complete before we touch localStorage,
-    // otherwise a page refresh before the request finishes will cause the startup
-    // sync to pull the quote back from the server and restore it.
+    // Delete from server first — ensures server processes it before any
+    // possible page refresh (prevents the quote from being restored on reload).
     if (apiBase) {
       try {
         await fetch(`${apiBase}/api/quotes/${q.meta.id}`, {
@@ -98,16 +124,17 @@ export default function QuoteList({
           credentials: "include",
         });
       } catch {
-        // Network error — still remove locally so the UI feels responsive.
-        // The startup sync will clean up if server delete later succeeds.
+        /* network error — remove locally anyway and retry on next sync */
       }
     }
-    // Remove from localStorage after server confirms (or on network failure).
+    // Remove from localStorage cache
     deleteQuote(q.meta.id, userId);
+    // Refresh the sidebar list
     if (q.meta.id === currentId) {
       onNew();
     } else {
-      setRefreshKey((k) => k + 1);
+      // Remove from local state immediately for instant UI feedback
+      setQuotes((prev) => prev.filter((sq) => sq.meta.id !== q.meta.id));
     }
   }
 
@@ -154,121 +181,129 @@ export default function QuoteList({
         )}
       </div>
 
-      {quotes.length === 0 && (
+      {loading && (
+        <p className="ql-empty" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span className="spinner" style={{ width: "12px", height: "12px" }} />
+          Loading…
+        </p>
+      )}
+      {!loading && quotes.length === 0 && (
         <p className="ql-empty">No saved quotes yet.</p>
       )}
-      {quotes.length > 0 && filtered.length === 0 && (
+      {!loading && quotes.length > 0 && filtered.length === 0 && (
         <p className="ql-empty">No quotes match &ldquo;{search}&rdquo;.</p>
       )}
 
-      <div className="ql-items">
-        {filtered.map((q) => {
-          const creator = q.meta.creatorName || userFullName || "—";
-          const updatedBy = q.meta.updatedByName;
-          const isActive = q.meta.id === currentId;
-          const passStatus: string | undefined =
-            isActive && currentStatus != null
-              ? currentStatus
-              : (q.meta as unknown as Record<string, unknown>).passStatus as
-                  | string
-                  | undefined;
+      {!loading && (
+        <div className="ql-items">
+          {filtered.map((q) => {
+            const creator = q.meta.creatorName || userFullName || "—";
+            const updatedBy = q.meta.updatedByName;
+            const isActive = q.meta.id === currentId;
+            const passStatus: string | undefined =
+              isActive && currentStatus != null
+                ? currentStatus
+                : (q.meta as unknown as Record<string, unknown>).passStatus as
+                    | string
+                    | undefined;
 
-          return (
-            <button
-              key={q.meta.id}
-              type="button"
-              className={`ql-item ${q.meta.id === currentId ? "active" : ""}`}
-              onClick={() => onSelect(q)}
-            >
-              {/* ── Row 1: title + total + delete ── */}
-              <div className="ql-item-top">
-                <span className="ql-item-title">
-                  {q.meta.quoteNumber || "Untitled Quote"}
-                </span>
-                <div className="ql-item-top-right">
-                  <span className="ql-item-total">{formatCurrency(quoteGrandTotal(q))}</span>
-                  <button
-                    type="button"
-                    className="ql-delete"
-                    title="Delete quote"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void handleDelete(q);
-                    }}
-                  >
-                    <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-                      <path
-                        d="M2 2l10 10M12 2L2 12"
-                        stroke="currentColor"
-                        strokeWidth="1.4"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              {/* ── Row 2: company / customer ── */}
-              {(q.meta.companyName || q.meta.customerName) && (
-                <span className="ql-item-company">
-                  {q.meta.companyName || q.meta.customerName}
-                </span>
-              )}
-
-              {/* ── Row 3: creator + created date ── */}
-              <div className="ql-item-meta-row">
-                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                  <circle cx="6" cy="4" r="2.5" stroke="currentColor" strokeWidth="1.1" />
-                  <path
-                    d="M1.5 11c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4"
-                    stroke="currentColor"
-                    strokeWidth="1.1"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <span className="ql-meta-val">{creator}</span>
-                <span className="ql-meta-sep">·</span>
-                <span className="ql-meta-val">{fmtShortDate(q.meta.createdAt)}</span>
-              </div>
-
-              {/* ── Row 4: updated info ── */}
-              <div className="ql-item-meta-row">
-                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                  <path
-                    d="M10 6A4 4 0 1 1 6 2"
-                    stroke="currentColor"
-                    strokeWidth="1.1"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M10 2v3H7"
-                    stroke="currentColor"
-                    strokeWidth="1.1"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <span className="ql-meta-val">{fmtShortDate(q.meta.updatedAt)}</span>
-                {updatedBy && (
-                  <>
-                    <span className="ql-meta-sep">·</span>
-                    <span className="ql-meta-val ql-meta-admin">by {updatedBy}</span>
-                  </>
-                )}
-              </div>
-
-              {/* ── Row 5: pass/fail badge ── */}
-              {passStatus ? (
-                <div className="ql-item-status-row">
-                  <span className={`ql-status-badge ql-status-${passStatus}`}>
-                    {passStatus === "pass" ? "PASS" : "FAIL"}
+            return (
+              <button
+                key={q.meta.id}
+                type="button"
+                className={`ql-item ${q.meta.id === currentId ? "active" : ""}`}
+                onClick={() => onSelect(q)}
+              >
+                {/* ── Row 1: title + total + delete ── */}
+                <div className="ql-item-top">
+                  <span className="ql-item-title">
+                    {q.meta.quoteNumber || "Untitled Quote"}
                   </span>
+                  <div className="ql-item-top-right">
+                    <span className="ql-item-total">{formatCurrency(quoteGrandTotal(q))}</span>
+                    <button
+                      type="button"
+                      className="ql-delete"
+                      title="Delete quote"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void handleDelete(q);
+                      }}
+                    >
+                      <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+                        <path
+                          d="M2 2l10 10M12 2L2 12"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-              ) : null}
-            </button>
-          );
-        })}
-      </div>
+
+                {/* ── Row 2: company / customer ── */}
+                {(q.meta.companyName || q.meta.customerName) && (
+                  <span className="ql-item-company">
+                    {q.meta.companyName || q.meta.customerName}
+                  </span>
+                )}
+
+                {/* ── Row 3: creator + created date ── */}
+                <div className="ql-item-meta-row">
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                    <circle cx="6" cy="4" r="2.5" stroke="currentColor" strokeWidth="1.1" />
+                    <path
+                      d="M1.5 11c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4"
+                      stroke="currentColor"
+                      strokeWidth="1.1"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <span className="ql-meta-val">{creator}</span>
+                  <span className="ql-meta-sep">·</span>
+                  <span className="ql-meta-val">{fmtShortDate(q.meta.createdAt)}</span>
+                </div>
+
+                {/* ── Row 4: updated info ── */}
+                <div className="ql-item-meta-row">
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                    <path
+                      d="M10 6A4 4 0 1 1 6 2"
+                      stroke="currentColor"
+                      strokeWidth="1.1"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M10 2v3H7"
+                      stroke="currentColor"
+                      strokeWidth="1.1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span className="ql-meta-val">{fmtShortDate(q.meta.updatedAt)}</span>
+                  {updatedBy && (
+                    <>
+                      <span className="ql-meta-sep">·</span>
+                      <span className="ql-meta-val ql-meta-admin">by {updatedBy}</span>
+                    </>
+                  )}
+                </div>
+
+                {/* ── Row 5: pass/fail badge ── */}
+                {passStatus ? (
+                  <div className="ql-item-status-row">
+                    <span className={`ql-status-badge ql-status-${passStatus}`}>
+                      {passStatus === "pass" ? "PASS" : "FAIL"}
+                    </span>
+                  </div>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
