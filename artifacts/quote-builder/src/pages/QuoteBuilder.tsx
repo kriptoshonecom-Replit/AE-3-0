@@ -184,7 +184,7 @@ export default function QuoteBuilder() {
   // ── Status Pass stamp ──────────────────────────────────────
   const [spData, setSpData] = useState<Record<string, unknown> | null>(null);
   useEffect(() => {
-    fetch(`${API_BASE}/api/admin/status-pass`, { credentials: "include" })
+    fetch(`${API_BASE}/api/status-pass/rates`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setSpData(d))
       .catch(() => {});

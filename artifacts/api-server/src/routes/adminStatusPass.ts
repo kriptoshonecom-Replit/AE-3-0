@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { statusPassConfigTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/requireAdmin";
+import { requireAuth } from "../middlewares/requireAuth";
 import pino from "pino";
 
 const logger = pino();
@@ -222,6 +223,18 @@ async function writeConfig(data: StatusPassData) {
       set: { data: data as unknown as Record<string, unknown>, updatedAt: new Date() },
     });
 }
+
+// Auth-only (any logged-in user) — returns the full config so the blended
+// gateway rate can be computed in the quote builder for all users.
+router.get("/status-pass/rates", requireAuth, async (_req, res) => {
+  try {
+    const data = await readConfig();
+    res.json(data);
+  } catch (err) {
+    logger.error(err, "status-pass rates get error");
+    res.status(500).json({ error: "Failed to load rates" });
+  }
+});
 
 router.get("/admin/status-pass", requireAdmin, async (_req, res) => {
   try {
