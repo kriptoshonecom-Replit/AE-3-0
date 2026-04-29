@@ -958,6 +958,8 @@ export default function QuoteBuilder() {
             refreshTrigger={refreshTrigger}
             userId={userId}
             userFullName={user?.fullName}
+            isAdmin={user?.role === "admin"}
+            apiBase={API_BASE}
           />
 
           {user?.role === "admin" && (

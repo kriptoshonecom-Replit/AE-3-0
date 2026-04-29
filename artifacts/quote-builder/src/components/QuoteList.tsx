@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Quote } from "../types";
 import { formatCurrency, quoteTotal } from "../utils/calculations";
 import { loadAllQuotes, deleteQuote } from "../utils/storage";
@@ -24,7 +24,10 @@ function quoteGrandTotal(q: Quote): number {
   const productsTotal = quoteTotal(q);
   const pitCat = pitData.categories.find((c) => c.id === (q.meta.pitType ?? ""));
   const pitTotal = pitCat
-    ? pitCat.lineItems.reduce((s, i) => s + i.duration * PIT_HOURLY_RATE, 0)
+    ? pitCat.lineItems.reduce(
+        (s, i) => s + ("duration" in i ? (i.duration as number) : 0) * PIT_HOURLY_RATE,
+        0,
+      )
     : 0;
   const yesNoToggles = { ...DEFAULT_YES_NO, ...(q.meta.yesNoToggles ?? {}) };
   const optToggles = { ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) };
@@ -39,6 +42,13 @@ function fmtShortDate(s: string | undefined | null): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+interface AdminRow {
+  id: string;
+  data: unknown;
+  passStatus?: string | null;
+  creatorName?: string | null;
+}
+
 interface Props {
   currentId: string;
   currentStatus?: "pass" | "fail" | null;
@@ -47,6 +57,8 @@ interface Props {
   refreshTrigger: number;
   userId: string;
   userFullName?: string;
+  isAdmin?: boolean;
+  apiBase?: string;
 }
 
 export default function QuoteList({
@@ -57,8 +69,46 @@ export default function QuoteList({
   refreshTrigger,
   userId,
   userFullName,
+  isAdmin,
+  apiBase,
 }: Props) {
-  const quotes = useMemo(() => loadAllQuotes(userId), [refreshTrigger, userId]);
+  const localQuotes = useMemo(
+    () => loadAllQuotes(userId),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [refreshTrigger, userId],
+  );
+
+  const [adminQuotes, setAdminQuotes] = useState<Quote[]>([]);
+  const [adminLoading, setAdminLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isAdmin || !apiBase) return;
+    setAdminLoading(true);
+    fetch(`${apiBase}/api/admin/quotes`, { credentials: "include" })
+      .then((r) => r.json())
+      .then(({ quotes }: { quotes: AdminRow[] }) => {
+        const mapped: Quote[] = quotes.map((row) => {
+          const q = row.data as Quote;
+          return {
+            ...q,
+            meta: {
+              ...q.meta,
+              creatorName: row.creatorName || q.meta.creatorName,
+              passStatus: (row.passStatus ?? q.meta.passStatus) as string | undefined,
+            },
+          };
+        });
+        mapped.sort((a, b) =>
+          (b.meta.updatedAt ?? "").localeCompare(a.meta.updatedAt ?? ""),
+        );
+        setAdminQuotes(mapped);
+      })
+      .catch(() => {})
+      .finally(() => setAdminLoading(false));
+  }, [isAdmin, apiBase, refreshTrigger]);
+
+  const quotes = isAdmin ? adminQuotes : localQuotes;
+
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
@@ -68,14 +118,37 @@ export default function QuoteList({
       (quote) =>
         (quote.meta.quoteNumber || "").toLowerCase().includes(q) ||
         (quote.meta.customerName || "").toLowerCase().includes(q) ||
-        (quote.meta.companyName || "").toLowerCase().includes(q)
+        (quote.meta.companyName || "").toLowerCase().includes(q) ||
+        (quote.meta.creatorName || "").toLowerCase().includes(q),
     );
   }, [quotes, search]);
+
+  async function handleDelete(q: Quote) {
+    if (!window.confirm("Delete this quote?")) return;
+    if (isAdmin && apiBase) {
+      try {
+        const res = await fetch(`${apiBase}/api/admin/quotes/${q.meta.id}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        if (res.ok) {
+          setAdminQuotes((prev) => prev.filter((aq) => aq.meta.id !== q.meta.id));
+          if (q.meta.id === currentId) onNew();
+        }
+      } catch {
+        /* silent */
+      }
+    } else {
+      deleteQuote(q.meta.id, userId);
+      if (q.meta.id === currentId) onNew();
+      else window.location.reload();
+    }
+  }
 
   return (
     <div className="quote-list">
       <div className="quote-list-header">
-        <span className="ql-title">Saved Quotes</span>
+        <span className="ql-title">{isAdmin ? "All Quotes" : "Saved Quotes"}</span>
         <button className="btn-new-quote" type="button" onClick={onNew}>
           <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
             <path
@@ -97,7 +170,7 @@ export default function QuoteList({
         <input
           type="text"
           className="ql-search"
-          placeholder="Search quotes…"
+          placeholder={isAdmin ? "Search all quotes…" : "Search quotes…"}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -115,8 +188,16 @@ export default function QuoteList({
         )}
       </div>
 
-      {quotes.length === 0 && <p className="ql-empty">No saved quotes yet.</p>}
-      {quotes.length > 0 && filtered.length === 0 && (
+      {adminLoading && (
+        <p className="ql-empty" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span className="spinner" style={{ width: "12px", height: "12px" }} />
+          Loading…
+        </p>
+      )}
+      {!adminLoading && quotes.length === 0 && (
+        <p className="ql-empty">No saved quotes yet.</p>
+      )}
+      {!adminLoading && quotes.length > 0 && filtered.length === 0 && (
         <p className="ql-empty">No quotes match &ldquo;{search}&rdquo;.</p>
       )}
 
@@ -125,9 +206,12 @@ export default function QuoteList({
           const creator = q.meta.creatorName || userFullName || "—";
           const updatedBy = q.meta.updatedByName;
           const isActive = q.meta.id === currentId;
-          const passStatus: string | undefined = isActive && currentStatus != null
-            ? currentStatus
-            : (q.meta as unknown as Record<string, unknown>).passStatus as string | undefined;
+          const passStatus: string | undefined =
+            isActive && currentStatus != null
+              ? currentStatus
+              : (q.meta as unknown as Record<string, unknown>).passStatus as
+                  | string
+                  | undefined;
 
           return (
             <button
@@ -149,11 +233,7 @@ export default function QuoteList({
                     title="Delete quote"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (window.confirm("Delete this quote?")) {
-                        deleteQuote(q.meta.id, userId);
-                        if (q.meta.id === currentId) onNew();
-                        else window.location.reload();
-                      }
+                      void handleDelete(q);
                     }}
                   >
                     <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
@@ -217,12 +297,10 @@ export default function QuoteList({
                 )}
               </div>
 
-              {/* ── Row 5: pass/fail badge (placeholder) ── */}
+              {/* ── Row 5: pass/fail badge ── */}
               {passStatus ? (
                 <div className="ql-item-status-row">
-                  <span
-                    className={`ql-status-badge ql-status-${passStatus}`}
-                  >
+                  <span className={`ql-status-badge ql-status-${passStatus}`}>
                     {passStatus === "pass" ? "PASS" : "FAIL"}
                   </span>
                 </div>
