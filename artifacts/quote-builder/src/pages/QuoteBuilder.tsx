@@ -28,7 +28,7 @@ import QuoteSummary from "../components/QuoteSummary";
 import QuoteList from "../components/QuoteList";
 import AddGroupModal from "../components/AddGroupModal";
 import { saveQuote, loadAllQuotes, getActiveQuoteId, loadQuote } from "../utils/storage";
-import { syncQuoteToServer, fetchServerQuotes } from "../utils/serverSync";
+import { syncQuoteToServer, adminSaveQuoteToServer, fetchServerQuotes } from "../utils/serverSync";
 import { exportQuoteToPDF } from "../utils/pdfExport";
 import { generateId, todayString, thirtyDaysOut, quoteTotal } from "../utils/calculations";
 
@@ -156,6 +156,8 @@ export default function QuoteBuilder() {
   const [heatmapToggles, setHeatmapToggles] = useState<Record<string, boolean>>(DEFAULT_HEATMAP_TOGGLES);
   const isDirtyRef = useRef(false);
   const [pendingAction, setPendingAction] = useState<null | "export" | "new">(null);
+  // Tracks the original owner's userId when admin is editing another user's quote
+  const [editingOtherUserId, setEditingOtherUserId] = useState<string | null>(null);
 
   const [productCategories, setProductCategories] = useState<ProductCategory[]>(
     catalog.categories as unknown as ProductCategory[],
@@ -455,15 +457,20 @@ export default function QuoteBuilder() {
     setInitialized(true);
   }, [userId, initialized]);
 
-  /* Pull server quotes after init — merge any admin-edited or newer versions */
+  /* Pull server quotes after init — merge admin-edited versions and purge server-deleted ones */
   useEffect(() => {
     if (!initialized || !userId) return;
     (async () => {
       const serverQuotes = await fetchServerQuotes();
-      if (!serverQuotes.length) return;
       const localAll = loadAllQuotes(userId);
+      if (!localAll.length && !serverQuotes.length) return;
+
       const localMap = new Map(localAll.map((q) => [q.meta.id, q]));
+      const serverIds = new Set(serverQuotes.map((q) => q.meta.id));
+      const activeId = getActiveQuoteId(userId);
       let changed = false;
+
+      // Update / add quotes that are newer on the server
       for (const sq of serverQuotes) {
         const lq = localMap.get(sq.meta.id);
         if (!lq || (!isDirtyRef.current && sq.meta.updatedAt >= lq.meta.updatedAt)) {
@@ -471,14 +478,33 @@ export default function QuoteBuilder() {
           changed = true;
         }
       }
+
+      // Remove quotes that were deleted server-side (e.g. by an admin)
+      // Never drop the current quote if the user has unsaved edits
+      for (const [id] of localMap) {
+        if (!serverIds.has(id) && !(id === activeId && isDirtyRef.current)) {
+          localMap.delete(id);
+          changed = true;
+        }
+      }
+
       if (changed) {
         const merged = Array.from(localMap.values());
         localStorage.setItem(`quote_builder_quotes__${userId}`, JSON.stringify(merged));
         setRefreshTrigger((n) => n + 1);
-        const activeId = getActiveQuoteId(userId);
         if (activeId && !isDirtyRef.current) {
           const updated = localMap.get(activeId);
-          if (updated) { setQuote(updated); }
+          if (updated) {
+            setQuote(updated);
+          } else if (!serverIds.has(activeId)) {
+            // Active quote was deleted by admin — load the most recent remaining one
+            const remaining = merged.sort((a, b) =>
+              (b.meta.updatedAt ?? "").localeCompare(a.meta.updatedAt ?? ""),
+            );
+            if (remaining.length > 0) {
+              setQuote(remaining[0]);
+            }
+          }
         }
       }
     })();
@@ -496,12 +522,19 @@ export default function QuoteBuilder() {
           ...(ps != null ? { passStatus: ps } : {}),
         },
       };
-      saveQuote(updated, userId);
-      syncQuoteToServer(updated);
+      if (editingOtherUserId) {
+        // Admin editing another user's quote — write through the admin endpoint
+        // so the original owner's record is updated with proper attribution.
+        // Do NOT save to localStorage (it belongs to the original owner, not admin).
+        adminSaveQuoteToServer(updated.meta.id, updated);
+      } else {
+        saveQuote(updated, userId);
+        syncQuoteToServer(updated);
+      }
       setRefreshTrigger((n) => n + 1);
       if (markDirty) isDirtyRef.current = true;
     },
-    [userId, stampStatus]
+    [userId, stampStatus, editingOtherUserId]
   );
 
   // Sync all quote data to sessionStorage so StatusPassConfigPage can read it
@@ -841,7 +874,19 @@ export default function QuoteBuilder() {
   }, []);
 
   const handleSelectQuote = (q: Quote) => {
-    setQuote(q);
+    // Detect admin editing another user's quote
+    const rawMeta = q.meta as unknown as Record<string, unknown>;
+    const ownerId = rawMeta._adminOwnerId as string | undefined;
+    if (ownerId && ownerId !== userId) {
+      setEditingOtherUserId(ownerId);
+    } else {
+      setEditingOtherUserId(null);
+    }
+    // Strip the injected _adminOwnerId before loading into state
+    const { _adminOwnerId: _drop, ...cleanMeta } = rawMeta;
+    void _drop;
+    const cleanQuote = { ...q, meta: cleanMeta as unknown as typeof q.meta };
+    setQuote(cleanQuote);
     setYesNoToggles({ ...DEFAULT_YES_NO, ...(q.meta.yesNoToggles ?? {}) });
     setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
     setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });

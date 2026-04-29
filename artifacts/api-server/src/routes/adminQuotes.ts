@@ -88,6 +88,61 @@ router.patch("/admin/quotes/:id", requireAdmin, async (req, res) => {
   }
 });
 
+/* ── PUT /api/admin/quotes/:id/full — replace full quote data ── */
+router.put("/admin/quotes/:id/full", requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { fullName, userId: adminId } = req.auth!;
+  const { quote } = req.body as { quote: Record<string, unknown> };
+
+  if (!quote) {
+    res.status(400).json({ error: "quote body required" });
+    return;
+  }
+
+  try {
+    const existing = await db
+      .select()
+      .from(quotesTable)
+      .where(eq(quotesTable.id, id))
+      .limit(1);
+
+    if (!existing.length) {
+      res.status(404).json({ error: "Quote not found" });
+      return;
+    }
+
+    const meta = (quote.meta ?? {}) as Record<string, unknown>;
+    const now = new Date();
+
+    const updatedQuote = {
+      ...quote,
+      meta: {
+        ...meta,
+        updatedAt: now.toISOString().split("T")[0],
+        updatedByName: fullName,
+      },
+    };
+
+    await db
+      .update(quotesTable)
+      .set({
+        data: updatedQuote,
+        quoteNumber: (meta.quoteNumber as string) ?? existing[0].quoteNumber,
+        companyName: (meta.companyName as string) ?? existing[0].companyName,
+        customerName: (meta.customerName as string) ?? existing[0].customerName,
+        updatedAt: now,
+        updatedByUserId: adminId,
+        updatedByName: fullName,
+      })
+      .where(eq(quotesTable.id, id));
+
+    res.json({ ok: true, updatedByName: fullName });
+  } catch (err) {
+    console.error("PUT /admin/quotes/:id/full error:", err);
+    res.status(500).json({ error: "Failed to save quote" });
+  }
+});
+
 router.delete("/admin/quotes/:id", requireAdmin, async (req, res) => {
   const { id } = req.params;
   try {

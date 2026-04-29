@@ -47,6 +47,7 @@ interface AdminRow {
   data: unknown;
   passStatus?: string | null;
   creatorName?: string | null;
+  userId?: string;
 }
 
 interface Props {
@@ -95,6 +96,7 @@ export default function QuoteList({
               ...q.meta,
               creatorName: row.creatorName || q.meta.creatorName,
               passStatus: (row.passStatus ?? q.meta.passStatus) as string | undefined,
+              _adminOwnerId: row.userId ?? undefined,
             },
           };
         });
