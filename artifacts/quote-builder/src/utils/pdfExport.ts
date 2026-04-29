@@ -539,7 +539,7 @@ export async function exportQuoteToPDF(
     }
 
     const hasTotalRow = poRows.some(([,, t]) => t);
-    const bodyH = poRows.length * 7 + 4 + (hasTotalRow ? 3 : 0);
+    const bodyH = poRows.length * 7 + 4 + (hasTotalRow ? 6 : 0);
     const blockH = 6 + bodyH;
     addPageIfNeeded(blockH + 8);
     y += 8;
@@ -563,10 +563,10 @@ export async function exportQuoteToPDF(
 
     for (const [label, value, isTotalRow] of poRows) {
       if (isTotalRow) {
-        y += 3;
+        y += 6;
         doc.setDrawColor(180, 180, 180);
-        doc.setLineWidth(0.2);
-        doc.line(margin + 3, y - 2, margin + contentWidth - 3, y - 2);
+        doc.setLineWidth(0.3);
+        doc.line(margin + 3, y - 4, margin + contentWidth - 3, y - 4);
       }
       doc.setFont("helvetica", isTotalRow ? "bold" : "normal");
       doc.setFontSize(9);
