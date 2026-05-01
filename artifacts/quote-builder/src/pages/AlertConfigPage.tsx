@@ -76,10 +76,11 @@ interface ModalProps {
   products: FlatProduct[];
   onClose: () => void;
   onSaved: (cfg: AlertConfig) => void;
+  isDuplicate?: boolean;
 }
 
-function AlertModal({ config, products, onClose, onSaved }: ModalProps) {
-  const isEdit = config !== null;
+function AlertModal({ config, products, onClose, onSaved, isDuplicate = false }: ModalProps) {
+  const isEdit = config !== null && !isDuplicate;
   const [subjectId, setSubjectId] = useState(config?.subjectProductId ?? "");
   const [lookupIds, setLookupIds] = useState<string[]>(config?.lookupProductIds ?? []);
   const [lookupLogic, setLookupLogic] = useState<string>(config?.lookupLogic ?? "and");
@@ -154,7 +155,7 @@ function AlertModal({ config, products, onClose, onSaved }: ModalProps) {
     >
       <div className="admin-modal" style={{ maxWidth: 520 }}>
         <div className="admin-modal-header">
-          <h3>{isEdit ? "Edit Alert" : "Add Alert"}</h3>
+          <h3>{isEdit ? "Edit Alert" : isDuplicate ? "Duplicate Alert" : "Add Alert"}</h3>
           <button className="edit-modal-close" onClick={onClose} aria-label="Close">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -298,7 +299,7 @@ function AlertModal({ config, products, onClose, onSaved }: ModalProps) {
           <div className="edit-modal-footer">
             <button type="button" className="edit-modal-cancel" onClick={onClose}>Cancel</button>
             <button type="submit" className="edit-modal-save" disabled={loading}>
-              {loading ? "Saving…" : isEdit ? "Save Changes" : "Create Alert"}
+              {loading ? "Saving…" : isEdit ? "Save Changes" : isDuplicate ? "Create Copy" : "Create Alert"}
             </button>
           </div>
         </form>
@@ -369,6 +370,7 @@ export default function AlertConfigPage() {
   const [loading, setLoading] = useState(true);
   const [editTarget, setEditTarget] = useState<AlertConfig | null | "new">(null);
   const [deleteTarget, setDeleteTarget] = useState<AlertConfig | null>(null);
+  const [duplicateTarget, setDuplicateTarget] = useState<AlertConfig | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -425,6 +427,18 @@ export default function AlertConfigPage() {
           config={deleteTarget}
           onClose={() => setDeleteTarget(null)}
           onDeleted={(id) => setConfigs((prev) => prev.filter((c) => c.id !== id))}
+        />
+      )}
+      {duplicateTarget && (
+        <AlertModal
+          config={duplicateTarget}
+          products={products}
+          isDuplicate
+          onClose={() => setDuplicateTarget(null)}
+          onSaved={(cfg) => {
+            setConfigs((prev) => [...prev, cfg]);
+            setDuplicateTarget(null);
+          }}
         />
       )}
 
@@ -509,6 +523,13 @@ export default function AlertConfigPage() {
                           <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                         Edit
+                      </button>
+                      <button className="admin-btn-edit" onClick={() => setDuplicateTarget(cfg)} title="Duplicate this alert">
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                          <rect x="5" y="5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                          <path d="M3 11V3.5A1.5 1.5 0 0 1 4.5 2H11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                        </svg>
+                        Duplicate
                       </button>
                       <button className="admin-btn-delete" onClick={() => setDeleteTarget(cfg)}>
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
