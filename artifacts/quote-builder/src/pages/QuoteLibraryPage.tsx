@@ -84,8 +84,6 @@ function EditDrawer({ row, onClose, onSaved }: EditDrawerProps) {
   const [customerName, setCustomerName] = useState(meta.customerName ?? "");
   const [salesRep, setSalesRep] = useState(meta.salesRep ?? "");
   const [validUntil, setValidUntil] = useState(meta.validUntil ?? "");
-  const [discount, setDiscount] = useState(String(meta.discount ?? 0));
-  const [tax, setTax] = useState(String(meta.tax ?? 0));
   const [notes, setNotes] = useState(meta.notes ?? "");
   const [passStatus, setPassStatus] = useState(row.passStatus ?? "");
   const [saving, setSaving] = useState(false);
@@ -108,8 +106,6 @@ function EditDrawer({ row, onClose, onSaved }: EditDrawerProps) {
             customerName,
             salesRep,
             validUntil,
-            discount: parseFloat(discount) || 0,
-            tax: parseFloat(tax) || 0,
             notes,
           },
           passStatus: passStatus || null,
@@ -187,16 +183,6 @@ function EditDrawer({ row, onClose, onSaved }: EditDrawerProps) {
             <label className="lib-label">
               Valid Until
               <input className="lib-input" type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} />
-            </label>
-          </div>
-          <div className="lib-form-row2">
-            <label className="lib-label">
-              Discount (%)
-              <input className="lib-input" type="number" min="0" max="100" step="0.01" value={discount} onChange={(e) => setDiscount(e.target.value)} />
-            </label>
-            <label className="lib-label">
-              Tax (%)
-              <input className="lib-input" type="number" min="0" max="100" step="0.01" value={tax} onChange={(e) => setTax(e.target.value)} />
             </label>
           </div>
           <label className="lib-label">
