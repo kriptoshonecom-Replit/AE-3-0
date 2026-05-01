@@ -1,15 +1,15 @@
 import type { Quote, QuoteGroup } from "../types";
 import { computeLineItemTotal } from "./quoteLogic";
 
-export function groupSubtotal(group: QuoteGroup): number {
+export function groupSubtotal(group: QuoteGroup, tieredAdditionalPrice?: number): number {
   return group.lineItems.reduce(
-    (sum, item) => sum + computeLineItemTotal(item.productId, item.unitPrice, item.quantity),
+    (sum, item) => sum + computeLineItemTotal(item.productId, item.unitPrice, item.quantity, tieredAdditionalPrice),
     0
   );
 }
 
-export function quoteSubtotal(quote: Quote): number {
-  return quote.groups.reduce((sum, g) => sum + groupSubtotal(g), 0);
+export function quoteSubtotal(quote: Quote, tieredAdditionalPrice?: number): number {
+  return quote.groups.reduce((sum, g) => sum + groupSubtotal(g, tieredAdditionalPrice), 0);
 }
 
 export function quoteDiscount(quote: Quote): number {

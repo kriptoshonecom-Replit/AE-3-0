@@ -8,9 +8,10 @@ interface Props {
   catalog: ProductCategory[];
   onChange: (group: QuoteGroupType) => void;
   onRemove: () => void;
+  tieredAdditionalPrice?: number;
 }
 
-export default function QuoteGroup({ group, catalog, onChange, onRemove }: Props) {
+export default function QuoteGroup({ group, catalog, onChange, onRemove, tieredAdditionalPrice }: Props) {
   const [isOpen, setIsOpen] = useState(group.isOpen);
 
   const toggle = () => {
@@ -59,7 +60,7 @@ export default function QuoteGroup({ group, catalog, onChange, onRemove }: Props
     }
   };
 
-  const subtotal = groupSubtotal(group);
+  const subtotal = groupSubtotal(group, tieredAdditionalPrice);
 
   return (
     <div className={`quote-group ${isOpen ? "open" : ""}`}>
@@ -120,6 +121,7 @@ export default function QuoteGroup({ group, catalog, onChange, onRemove }: Props
                     onQtyChange={(qty) => updateLine(idx, { ...item, quantity: qty })}
                     onPriceChange={(price) => updateLine(idx, { ...item, unitPrice: price })}
                     onRemove={() => removeLine(idx)}
+                    tieredAdditionalPrice={tieredAdditionalPrice}
                   />
                 );
               })}
@@ -160,9 +162,10 @@ interface LineItemRowProps {
   onQtyChange: (qty: number) => void;
   onPriceChange: (price: number) => void;
   onRemove: () => void;
+  tieredAdditionalPrice?: number;
 }
 
-function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, onQtyChange, onPriceChange, onRemove }: LineItemRowProps) {
+function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, onQtyChange, onPriceChange, onRemove, tieredAdditionalPrice }: LineItemRowProps) {
   const allCategoryItems = catalog.find((c) => c.id === groupId)?.items ?? [];
   const categoryItems = allCategoryItems.filter((p) => !usedProductIds.includes(p.id));
 
@@ -334,10 +337,10 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
 
         <div className="col-total">
           <span className="total-value">
-            {formatCurrency(computeLineItemTotal(item.productId, item.unitPrice, item.quantity))}
+            {formatCurrency(computeLineItemTotal(item.productId, item.unitPrice, item.quantity, tieredAdditionalPrice))}
           </span>
           {isTieredItem(item.productId) && item.quantity > 1 && (
-            <span className="tiered-hint">$30 / add'l unit</span>
+            <span className="tiered-hint">${tieredAdditionalPrice ?? 30} / add'l unit</span>
           )}
         </div>
 

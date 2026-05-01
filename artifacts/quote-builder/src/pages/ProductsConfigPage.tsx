@@ -27,6 +27,7 @@ interface Category {
 
 interface ProductsData {
   categories: Category[];
+  tieredAdditionalPrice?: number;
 }
 
 function numberOrEmpty(v: unknown): string {
@@ -515,6 +516,9 @@ export default function ProductsConfigPage() {
   const [movingItem, setMovingItem] = useState<ProductItem | null>(null);
   const [addingItem, setAddingItem] = useState(false);
   const [addingCat, setAddingCat] = useState(false);
+  const [tieredInput, setTieredInput] = useState("30");
+  const [tieredSaving, setTieredSaving] = useState(false);
+  const [tieredSaved, setTieredSaved] = useState(false);
 
   const allIds = (data?.categories ?? []).flatMap((c) => c.items.map((i) => i.id.toLowerCase()));
 
@@ -526,6 +530,7 @@ export default function ProductsConfigPage() {
       if (!res.ok) { setError("Failed to load products"); return; }
       const d = await res.json() as ProductsData;
       setData(d);
+      setTieredInput(String(d.tieredAdditionalPrice ?? 30));
       if (d.categories.length > 0 && !activeCat) setActiveCat(d.categories[0].id);
     } catch { setError("Network error"); }
     finally { setLoading(false); }
@@ -583,6 +588,24 @@ export default function ProductsConfigPage() {
 
   const currentCat = data?.categories.find((c) => c.id === activeCat);
 
+  async function handleSaveTiered() {
+    const val = parseFloat(tieredInput);
+    if (isNaN(val) || val < 0) return;
+    setTieredSaving(true);
+    try {
+      await fetch(`${API_BASE}/api/admin/products/settings`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ tieredAdditionalPrice: val }),
+      });
+      setTieredSaved(true);
+      setTimeout(() => setTieredSaved(false), 2000);
+    } finally {
+      setTieredSaving(false);
+    }
+  }
+
   return (
     <div className="admin-page">
       <div className="admin-topbar">
@@ -594,6 +617,23 @@ export default function ProductsConfigPage() {
         </button>
         <h1 className="admin-page-title">Products Configuration</h1>
         <div className="admin-topbar-right">
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginRight: "8px" }}>
+            <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--muted)", whiteSpace: "nowrap" }}>
+              Tiered Add'l Unit Price ($/unit)
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={tieredInput}
+              onChange={(e) => { setTieredInput(e.target.value); setTieredSaved(false); }}
+              onBlur={handleSaveTiered}
+              onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+              disabled={tieredSaving}
+              style={{ width: "80px", padding: "7px 10px", fontSize: "13px", border: "1.5px solid var(--border)", borderRadius: "8px", background: "var(--surface)" }}
+            />
+            {tieredSaved && <span style={{ fontSize: "12px", color: "var(--success, #16a34a)", fontWeight: 600 }}>Saved ✓</span>}
+          </div>
           <button className="admin-btn-add-secondary" onClick={() => setAddingCat(true)}>
             Add Category
           </button>

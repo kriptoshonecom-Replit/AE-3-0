@@ -173,6 +173,7 @@ export default function QuoteBuilder() {
   );
 
   const [pitHourlyRate, setPitHourlyRate] = useState<number>(PIT_HOURLY_RATE);
+  const [tieredAdditionalPrice, setTieredAdditionalPrice] = useState<number>(30);
 
   const [heatmapItems, setHeatmapItems] = useState<HeatmapItem[]>(() => {
     const cat = (pitDataStatic.categories as Array<{ id: string; lineItems: Array<{ id: string; name: string; price?: number }> }>).find(
@@ -329,8 +330,9 @@ export default function QuoteBuilder() {
   useEffect(() => {
     fetch(`${API_BASE}/api/products`)
       .then((r) => r.ok ? r.json() : null)
-      .then((data: { categories?: ProductCategory[] } | null) => {
+      .then((data: { categories?: ProductCategory[]; tieredAdditionalPrice?: number } | null) => {
         if (data?.categories) setProductCategories(data.categories);
+        if (typeof data?.tieredAdditionalPrice === "number") setTieredAdditionalPrice(data.tieredAdditionalPrice);
       })
       .catch(() => {});
   }, []);
@@ -769,7 +771,7 @@ export default function QuoteBuilder() {
       await exportQuoteToPDF(
         quote, pitHourlyRate, stampStatus ?? undefined,
         pspmDiscountPct, upfrontPriceDiscountPct,
-        voyixTxnFee, gatewayTxnRate,
+        voyixTxnFee, gatewayTxnRate, tieredAdditionalPrice,
       );
     } finally {
       setExporting(false);
@@ -1240,6 +1242,7 @@ export default function QuoteBuilder() {
                     catalog={productCategories}
                     onChange={(g) => handleGroupChange(idx, g)}
                     onRemove={() => handleGroupRemove(idx)}
+                    tieredAdditionalPrice={tieredAdditionalPrice}
                   />
                 ))}
               </div>

@@ -66,7 +66,9 @@ interface Category {
   items: ProductItem[];
 }
 
-async function readProducts(): Promise<{ categories: Category[] }> {
+type ProductsData = { categories: Category[]; tieredAdditionalPrice?: number };
+
+async function readProducts(): Promise<ProductsData> {
   const [row] = await db
     .select()
     .from(productCatalogTable)
@@ -74,7 +76,7 @@ async function readProducts(): Promise<{ categories: Category[] }> {
     .limit(1);
 
   if (!row) {
-    const seed = DEFAULT_CATALOG as unknown as { categories: Category[] };
+    const seed = DEFAULT_CATALOG as unknown as ProductsData;
     await db
       .insert(productCatalogTable)
       .values({ id: CATALOG_ID, data: seed as unknown as Record<string, unknown> });
@@ -82,10 +84,10 @@ async function readProducts(): Promise<{ categories: Category[] }> {
     return seed;
   }
 
-  return row.data as { categories: Category[] };
+  return row.data as ProductsData;
 }
 
-async function writeProducts(data: { categories: Category[] }) {
+async function writeProducts(data: ProductsData) {
   await db
     .insert(productCatalogTable)
     .values({ id: CATALOG_ID, data: data as unknown as Record<string, unknown> })
@@ -255,6 +257,23 @@ router.get("/products", async (_req, res) => {
   } catch (err) {
     logger.error(err, "admin get products error");
     res.status(500).json({ error: "Failed to read products" });
+  }
+});
+
+router.patch("/products/settings", async (req, res) => {
+  try {
+    const { tieredAdditionalPrice } = req.body as { tieredAdditionalPrice?: number };
+    if (tieredAdditionalPrice !== undefined && (isNaN(tieredAdditionalPrice) || tieredAdditionalPrice < 0)) {
+      res.status(400).json({ error: "tieredAdditionalPrice must be a non-negative number" });
+      return;
+    }
+    const data = await readProducts();
+    if (tieredAdditionalPrice !== undefined) data.tieredAdditionalPrice = tieredAdditionalPrice;
+    await writeProducts(data);
+    res.json({ tieredAdditionalPrice: data.tieredAdditionalPrice ?? 30 });
+  } catch (err) {
+    logger.error(err, "admin patch products settings error");
+    res.status(500).json({ error: "Failed to update product settings" });
   }
 });
 

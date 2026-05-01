@@ -18,11 +18,13 @@ router.get("/products", async (_req, res) => {
       .limit(1);
 
     if (!row) {
-      res.json(DEFAULT_CATALOG);
+      res.json({ ...DEFAULT_CATALOG, tieredAdditionalPrice: 30 });
       return;
     }
 
-    res.json(row.data);
+    const data = row.data as Record<string, unknown>;
+    if (data.tieredAdditionalPrice === undefined) data.tieredAdditionalPrice = 30;
+    res.json(data);
   } catch (err) {
     logger.error(err, "get products error");
     res.status(500).json({ error: "Failed to load products" });

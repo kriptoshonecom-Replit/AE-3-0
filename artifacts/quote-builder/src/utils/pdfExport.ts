@@ -52,6 +52,7 @@ export async function exportQuoteToPDF(
   upfrontPriceDiscountPct?: number,
   voyixTxnFee?: number,
   gatewayTxnRate?: number,
+  tieredAdditionalPrice?: number,
 ): Promise<void> {
   const rate = pitHourlyRate ?? PIT_HOURLY_RATE;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -251,7 +252,7 @@ export async function exportQuoteToPDF(
       doc.setFont("helvetica", "bold");
       doc.text(
         formatCurrency(
-          computeLineItemTotal(item.productId, item.unitPrice, item.quantity),
+          computeLineItemTotal(item.productId, item.unitPrice, item.quantity, tieredAdditionalPrice),
         ),
         margin + contentWidth - 3,
         y + 3.5,

@@ -38,10 +38,11 @@ const TIERED_ADDITIONAL_UNIT_PRICE = 30;
 export function computeLineItemTotal(
   productId: string,
   unitPrice: number,
-  quantity: number
+  quantity: number,
+  additionalUnitPrice: number = TIERED_ADDITIONAL_UNIT_PRICE
 ): number {
   if (TIERED_ITEM_IDS.includes(productId) && quantity > 0) {
-    return unitPrice + Math.max(0, quantity - 1) * TIERED_ADDITIONAL_UNIT_PRICE;
+    return unitPrice + Math.max(0, quantity - 1) * additionalUnitPrice;
   }
   return unitPrice * quantity;
 }
