@@ -1094,7 +1094,7 @@ export default function QuoteBuilder() {
               </button>
               <button
                 type="button"
-                className="sidebar-admin-link sidebar-admin-link--highlight"
+                className="sidebar-admin-link"
                 onClick={() => { setLocation("/admin/quote-library"); setSidebarOpen(false); }}
               >
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none">

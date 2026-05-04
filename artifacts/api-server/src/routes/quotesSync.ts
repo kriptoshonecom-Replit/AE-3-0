@@ -101,6 +101,7 @@ router.post("/quotes/sync", requireAuth, async (req, res) => {
           companyName: (meta.companyName as string) || null,
           customerName: (meta.customerName as string) || null,
           updatedAt: parseDate(meta.updatedAt as string),
+          updatedByName: fullName,
           passStatus: (meta.passStatus as string) || null,
         },
       });

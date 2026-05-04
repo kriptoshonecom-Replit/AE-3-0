@@ -4606,13 +4606,6 @@ td:has(.inline-cell-input) {
 .ql-status-pass { background: #dcfce7; color: #15803d; }
 .ql-status-fail { background: #fee2e2; color: #b91c1c; }
 
-/* Highlight for Quote Library nav link */
-.sidebar-admin-link--highlight {
-  background: rgba(59,130,246,0.07);
-  color: #2563eb !important;
-}
-.sidebar-admin-link--highlight svg { color: #2563eb; }
-.sidebar-admin-link--highlight:hover { background: rgba(59,130,246,0.14); }
 
 /* ── Prior Spend vs Requested Pricing ───────────────────── */
 .sp-ps-bar {
