@@ -13,6 +13,7 @@ import MediaFilesPage from "@/pages/MediaFilesPage";
 import AlertConfigPage from "@/pages/AlertConfigPage";
 import StatusPassConfigPage from "@/pages/StatusPassConfigPage";
 import QuoteLibraryPage from "@/pages/QuoteLibraryPage";
+import MyQuoteLibraryPage from "@/pages/MyQuoteLibraryPage";
 import LogJournalPage from "@/pages/LogJournalPage";
 import AppReleasePage from "@/pages/AppReleasePage";
 
@@ -50,6 +51,13 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoaded } = useAuth();
+  if (!isLoaded) return <LoadingScreen />;
+  if (!user) return <Redirect to="/sign-in" />;
+  return <>{children}</>;
+}
+
 function AppRoutes() {
   return (
     <AuthProvider>
@@ -76,6 +84,9 @@ function AppRoutes() {
           </Route>
           <Route path="/admin/status-pass">
             <AdminRoute><StatusPassConfigPage /></AdminRoute>
+          </Route>
+          <Route path="/my-quotes">
+            <ProtectedRoute><MyQuoteLibraryPage /></ProtectedRoute>
           </Route>
           <Route path="/admin/quote-library">
             <AdminRoute><QuoteLibraryPage /></AdminRoute>

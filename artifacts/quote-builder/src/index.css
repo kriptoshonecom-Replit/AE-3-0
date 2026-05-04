@@ -2562,9 +2562,17 @@ textarea:focus::placeholder {
 }
 
 
-.sidebar-admin-links {
+.sidebar-user-links {
   margin-top: auto;
-  padding: 10px 12px 8px;
+  padding: 10px 12px 0;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-admin-links {
+  padding: 6px 12px 8px;
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;

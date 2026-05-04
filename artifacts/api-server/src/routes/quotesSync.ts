@@ -26,6 +26,41 @@ router.get("/quotes", requireAuth, async (req, res) => {
   }
 });
 
+/* ── GET /api/quotes/library — enriched list for the current user ── */
+router.get("/quotes/library", requireAuth, async (req, res) => {
+  const userId = req.auth!.userId;
+  try {
+    const rows = await db
+      .select({
+        id: quotesTable.id,
+        data: quotesTable.data,
+        quoteNumber: quotesTable.quoteNumber,
+        companyName: quotesTable.companyName,
+        customerName: quotesTable.customerName,
+        createdAt: quotesTable.createdAt,
+        updatedAt: quotesTable.updatedAt,
+        updatedByName: quotesTable.updatedByName,
+        passStatus: quotesTable.passStatus,
+        userId: quotesTable.userId,
+      })
+      .from(quotesTable)
+      .where(eq(quotesTable.userId, userId))
+      .orderBy(quotesTable.updatedAt);
+
+    const normalised = rows.map((r) => ({
+      ...r,
+      passStatus:
+        r.passStatus ??
+        ((r.data as Record<string, unknown>)?.meta as Record<string, unknown> | undefined)
+          ?.passStatus as string | null ?? null,
+    }));
+    res.json({ quotes: normalised });
+  } catch (err) {
+    console.error("GET /quotes/library error:", err);
+    res.status(500).json({ error: "Failed to load quotes" });
+  }
+});
+
 router.post("/quotes/sync", requireAuth, async (req, res) => {
   const { userId, fullName } = req.auth!;
   const { quote } = req.body as { quote: { meta: Record<string, string | number | boolean | undefined | null> } };
@@ -74,6 +109,61 @@ router.post("/quotes/sync", requireAuth, async (req, res) => {
   } catch (err) {
     console.error("POST /quotes/sync error:", err);
     res.status(500).json({ error: "Failed to sync quote" });
+  }
+});
+
+/* ── PATCH /api/quotes/:id — user edits their own quote metadata ── */
+router.patch("/quotes/:id", requireAuth, async (req, res) => {
+  const userId = req.auth!.userId;
+  const { fullName } = req.auth!;
+  const { id } = req.params;
+  const { meta, passStatus } = req.body as {
+    meta: Record<string, unknown>;
+    passStatus?: string | null;
+  };
+
+  try {
+    const existing = await db
+      .select()
+      .from(quotesTable)
+      .where(and(eq(quotesTable.id, id), eq(quotesTable.userId, userId)))
+      .limit(1);
+
+    if (!existing.length) {
+      res.status(404).json({ error: "Quote not found" });
+      return;
+    }
+
+    const existingData = existing[0].data as Record<string, unknown>;
+    const existingMeta = (existingData.meta ?? {}) as Record<string, unknown>;
+    const now = new Date();
+
+    const newMeta = {
+      ...existingMeta,
+      ...meta,
+      updatedAt: now.toISOString().split("T")[0],
+      updatedByName: fullName,
+    };
+
+    const newData = { ...existingData, meta: newMeta };
+
+    await db
+      .update(quotesTable)
+      .set({
+        data: newData,
+        quoteNumber: (newMeta.quoteNumber as string) || null,
+        companyName: (newMeta.companyName as string) || null,
+        customerName: (newMeta.customerName as string) || null,
+        updatedAt: now,
+        updatedByName: fullName,
+        ...(passStatus !== undefined ? { passStatus: passStatus ?? null } : {}),
+      })
+      .where(and(eq(quotesTable.id, id), eq(quotesTable.userId, userId)));
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("PATCH /quotes/:id error:", err);
+    res.status(500).json({ error: "Failed to update quote" });
   }
 });
 
