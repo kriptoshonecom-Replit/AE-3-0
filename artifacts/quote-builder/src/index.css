@@ -2511,7 +2511,6 @@ textarea:focus::placeholder {
   gap: 8px;
   justify-content: flex-end;
   margin-top: 4px;
-  padding: 18px 20px 20px;
 }
 
 .edit-modal-cancel {

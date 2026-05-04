@@ -161,7 +161,7 @@ function MoveProductModal({ item, sourceCatId, categories, onClose, onMoved }: M
             </div>
             {error && <p className="edit-modal-error">{error}</p>}
           </div>
-          <div className="edit-modal-footer">
+          <div className="edit-modal-footer" style={{ padding: "18px 20px 20px" }}>
             <button type="button" className="edit-modal-cancel" onClick={onClose}>Cancel</button>
             <button type="submit" className="edit-modal-save" disabled={loading || otherCats.length === 0}>
               {loading ? "Moving…" : "Move Product"}
