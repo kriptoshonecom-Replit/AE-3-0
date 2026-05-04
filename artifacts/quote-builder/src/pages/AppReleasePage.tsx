@@ -34,29 +34,25 @@ function validateVersion(v: string) {
 export default function AppReleasePage() {
   const [, setLocation] = useLocation();
 
-  /* ── App Version ── */
   const [currentVersion, setCurrentVersion] = useState("6.0");
   const [versionInput, setVersionInput] = useState("6.0");
-  const [versionSaving, setVersionSaving] = useState(false);
-  const [versionError, setVersionError] = useState("");
-  const [versionSuccess, setVersionSuccess] = useState("");
 
-  /* ── Compose ── */
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [selectAll, setSelectAll] = useState(true);
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
-  const [composeSending, setComposeSending] = useState(false);
-  const [composeError, setComposeError] = useState("");
-  const [composeSuccess, setComposeSuccess] = useState("");
 
-  /* ── Data ── */
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [notifications, setNotifications] = useState<ReleaseNotification[]>([]);
   const [loading, setLoading] = useState(true);
-
-  /* ── Delete confirm ── */
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const versionTrimmed = versionInput.trim();
+  const versionWillChange = versionTrimmed !== currentVersion && versionTrimmed !== "";
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -86,32 +82,6 @@ export default function AppReleasePage() {
 
   useEffect(() => { void load(); }, [load]);
 
-  /* ── Version release ── */
-  async function handleRelease() {
-    setVersionError("");
-    setVersionSuccess("");
-    if (!validateVersion(versionInput)) {
-      setVersionError("Use format X.Y or X.Y.Z  (e.g. 6.0, 6.1, 7.0)");
-      return;
-    }
-    setVersionSaving(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/admin/app-version`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ version: versionInput.trim() }),
-      });
-      const data = await res.json() as { version?: string; error?: string };
-      if (!res.ok) { setVersionError(data.error ?? "Failed to release"); return; }
-      setCurrentVersion(data.version!);
-      setVersionSuccess(`Version ${data.version} released successfully.`);
-      setTimeout(() => setVersionSuccess(""), 4000);
-    } catch { setVersionError("Network error"); }
-    finally { setVersionSaving(false); }
-  }
-
-  /* ── User selection ── */
   function toggleSelectAll() {
     if (selectAll) {
       setSelectAll(false);
@@ -126,22 +96,37 @@ export default function AppReleasePage() {
     setSelectedEmails((prev) => {
       const next = new Set(prev);
       if (next.has(email)) { next.delete(email); } else { next.add(email); }
-      const allSelected = users.every((u) => next.has(u.email));
-      setSelectAll(allSelected);
+      setSelectAll(users.every((u) => next.has(u.email)));
       return next;
     });
   }
 
-  /* ── Send notification ── */
   async function handleSend() {
-    setComposeError("");
-    setComposeSuccess("");
-    if (!message.trim()) { setComposeError("Message is required"); return; }
-    const emails = Array.from(selectedEmails);
-    if (!emails.length) { setComposeError("Select at least one recipient"); return; }
+    setError("");
+    setSuccess("");
 
-    setComposeSending(true);
+    if (!message.trim()) { setError("Message is required"); return; }
+    const emails = Array.from(selectedEmails);
+    if (!emails.length) { setError("Select at least one recipient"); return; }
+    if (versionWillChange && !validateVersion(versionTrimmed)) {
+      setError("Version must be in format X.Y or X.Y.Z (e.g. 6.1, 7.0)");
+      return;
+    }
+
+    setSending(true);
     try {
+      if (versionWillChange) {
+        const vRes = await fetch(`${API_BASE}/api/admin/app-version`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ version: versionTrimmed }),
+        });
+        const vData = await vRes.json() as { version?: string; error?: string };
+        if (!vRes.ok) { setError(vData.error ?? "Failed to release version"); return; }
+        setCurrentVersion(vData.version!);
+      }
+
       const createRes = await fetch(`${API_BASE}/api/admin/release-notifications`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -149,7 +134,7 @@ export default function AppReleasePage() {
         body: JSON.stringify({ subject: subject.trim(), message: message.trim(), recipientEmails: emails }),
       });
       const created = await createRes.json() as ReleaseNotification & { error?: string };
-      if (!createRes.ok) { setComposeError(created.error ?? "Failed to create notification"); return; }
+      if (!createRes.ok) { setError(created.error ?? "Failed to create notification"); return; }
 
       const sendRes = await fetch(`${API_BASE}/api/admin/release-notifications/${created.id}/send`, {
         method: "POST",
@@ -158,297 +143,269 @@ export default function AppReleasePage() {
         body: JSON.stringify({ recipientEmails: emails }),
       });
       const sendData = await sendRes.json() as { notification?: ReleaseNotification; errors?: string[]; error?: string };
-      if (!sendRes.ok) { setComposeError(sendData.error ?? "Failed to send"); return; }
+      if (!sendRes.ok) { setError(sendData.error ?? "Failed to send"); return; }
 
-      const failedCount = sendData.errors?.length ?? 0;
-      if (failedCount) {
-        setComposeSuccess(`Sent to ${emails.length - failedCount} of ${emails.length} recipients. ${failedCount} failed.`);
-      } else {
-        setComposeSuccess(`Notification sent to ${emails.length} recipient${emails.length !== 1 ? "s" : ""}.`);
-      }
+      const failCount = sendData.errors?.length ?? 0;
+      const parts: string[] = [];
+      if (versionWillChange) parts.push(`Version ${versionTrimmed} released.`);
+      parts.push(failCount
+        ? `Sent to ${emails.length - failCount} of ${emails.length} recipients (${failCount} failed).`
+        : `Notification sent to ${emails.length} recipient${emails.length !== 1 ? "s" : ""}.`
+      );
+      setSuccess(parts.join(" "));
       setSubject("");
       setMessage("");
-      setTimeout(() => setComposeSuccess(""), 6000);
+      setTimeout(() => setSuccess(""), 6000);
       void load();
-    } catch { setComposeError("Network error"); }
-    finally { setComposeSending(false); }
+    } catch { setError("Network error — please try again"); }
+    finally { setSending(false); }
   }
 
-  /* ── Clone ── */
-  async function handleClone(id: string) {
-    try {
-      const res = await fetch(`${API_BASE}/api/admin/release-notifications/${id}/clone`, {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!res.ok) return;
-      const cloned = await res.json() as ReleaseNotification;
-      setSubject(cloned.subject);
-      setMessage(cloned.message);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch { /* ignore */ }
+  async function handleClone(n: ReleaseNotification) {
+    setSubject(n.subject);
+    setMessage(n.message);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  /* ── Delete ── */
   async function handleDelete(id: string) {
     try {
       const res = await fetch(`${API_BASE}/api/admin/release-notifications/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
-      if (res.ok) {
-        setNotifications((prev) => prev.filter((n) => n.id !== id));
-      }
+      if (res.ok) setNotifications((prev) => prev.filter((n) => n.id !== id));
     } catch { /* ignore */ }
     finally { setDeletingId(null); }
   }
 
-  function suggestNextMinor() {
+  function suggestMinor() {
     const parts = currentVersion.split(".");
-    if (parts.length >= 2) {
-      const minor = parseInt(parts[1], 10);
-      return `${parts[0]}.${minor + 1}`;
-    }
-    return currentVersion;
+    return parts.length >= 2 ? `${parts[0]}.${parseInt(parts[1], 10) + 1}` : currentVersion;
+  }
+  function suggestMajor() {
+    return `${parseInt(currentVersion.split(".")[0], 10) + 1}.0`;
   }
 
-  function suggestNextMajor() {
-    const major = parseInt(currentVersion.split(".")[0], 10);
-    return `${major + 1}.0`;
-  }
-
-  if (loading) {
-    return (
-      <div className="admin-page">
-        <div className="admin-header">
-          <button className="admin-back-btn" onClick={() => setLocation("/")}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Back
-          </button>
-          <h1 className="admin-title">App Release Communication</h1>
-        </div>
-        <div className="admin-loading">Loading…</div>
-      </div>
-    );
-  }
+  const btnLabel = sending
+    ? "Sending…"
+    : versionWillChange
+      ? `Send & Release v${versionTrimmed}`
+      : "Send Notification";
 
   return (
     <div className="admin-page">
-      <div className="admin-header">
-        <button className="admin-back-btn" onClick={() => setLocation("/")}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <div className="admin-topbar">
+        <button className="btn-ghost admin-back-btn" onClick={() => setLocation("/")}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Back
+          Back to Quotes
         </button>
-        <h1 className="admin-title">App Release Communication</h1>
+        <h1 className="admin-page-title">App Release Communication</h1>
       </div>
 
-      <div className="arc-grid">
-        {/* ── Left: App Version ── */}
-        <div className="arc-card">
-          <div className="arc-card-header">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4" />
-              <path d="M8 5v3.5l2 1.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            App Version
-          </div>
-
-          <div className="arc-version-current">
-            <span className="arc-version-label">Currently released</span>
-            <span className="arc-version-badge">v{currentVersion}</span>
-          </div>
-
-          <div className="edit-field-group" style={{ marginTop: 16 }}>
-            <label>New Version Number</label>
-            <input
-              type="text"
-              value={versionInput}
-              onChange={(e) => { setVersionInput(e.target.value); setVersionError(""); }}
-              placeholder="e.g. 6.1"
-              style={{ fontFamily: "monospace", fontSize: 15 }}
-            />
-          </div>
-
-          <div className="arc-version-suggestions">
-            <span className="arc-suggest-label">Quick pick:</span>
-            <button type="button" className="arc-suggest-btn" onClick={() => setVersionInput(suggestNextMinor())}>
-              {suggestNextMinor()} minor
-            </button>
-            <button type="button" className="arc-suggest-btn" onClick={() => setVersionInput(suggestNextMajor())}>
-              {suggestNextMajor()} major
-            </button>
-          </div>
-
-          {versionError && <p className="edit-modal-error" style={{ marginTop: 8 }}>{versionError}</p>}
-          {versionSuccess && <p className="arc-success">{versionSuccess}</p>}
-
-          <button
-            type="button"
-            className="arc-release-btn"
-            onClick={handleRelease}
-            disabled={versionSaving || versionInput.trim() === currentVersion}
-          >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2L13 8M13 8L8 14M13 8H3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            {versionSaving ? "Releasing…" : "Release Version"}
-          </button>
-        </div>
-
-        {/* ── Right: Compose Notification ── */}
-        <div className="arc-card">
-          <div className="arc-card-header">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-              <path d="M1.5 6l6.5 4 6.5-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-            </svg>
-            Send Notification
-          </div>
-
-          <div className="edit-field-group">
-            <label>Subject</label>
-            <input
-              type="text"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="e.g. QuoteBuilder v6.1 is here!"
-            />
-          </div>
-
-          <div className="edit-field-group">
-            <label>Message</label>
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Write your release notes or announcement here…"
-              rows={6}
-              style={{ resize: "vertical", minHeight: 120 }}
-            />
-          </div>
-
-          <div className="edit-field-group">
-            <label>Recipients</label>
-            <div className="arc-users-list">
-              <label className="arc-user-row arc-user-row--all">
-                <input
-                  type="checkbox"
-                  checked={selectAll}
-                  onChange={toggleSelectAll}
-                />
-                <span className="arc-user-name">All Users ({users.length})</span>
-              </label>
-              {users.map((u) => (
-                <label key={u.id} className="arc-user-row">
-                  <input
-                    type="checkbox"
-                    checked={selectedEmails.has(u.email)}
-                    onChange={() => toggleUser(u.email)}
-                  />
-                  <span className="arc-user-name">{u.fullName}</span>
-                  <span className="arc-user-email">{u.email}</span>
-                  {u.role === "admin" && <span className="arc-user-role">admin</span>}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {composeError && <p className="edit-modal-error">{composeError}</p>}
-          {composeSuccess && <p className="arc-success">{composeSuccess}</p>}
-
-          <button
-            type="button"
-            className="arc-send-btn"
-            onClick={handleSend}
-            disabled={composeSending}
-          >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <path d="M14 2L1 7l5 2m8-7L9 15l-3-6m8-7L6 9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            {composeSending ? "Sending…" : `Send to ${selectedEmails.size} recipient${selectedEmails.size !== 1 ? "s" : ""}`}
-          </button>
-        </div>
-      </div>
-
-      {/* ── Notification History ── */}
-      <div className="arc-history">
-        <div className="arc-history-header">
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-            <path d="M2 4h12M2 8h8M2 12h5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-          </svg>
-          Notification History
-          <span className="arc-history-count">{notifications.length}</span>
-        </div>
-
-        {notifications.length === 0 ? (
-          <div className="admin-empty-state">No notifications yet. Send one above to get started.</div>
+      <div className="admin-content">
+        {loading ? (
+          <div className="admin-loading"><div className="spinner" /></div>
         ) : (
-          <div className="arc-history-table">
-            <div className="arc-history-row arc-history-row--head">
-              <div className="arc-col-subject">Subject / Message</div>
-              <div className="arc-col-recipients">Recipients</div>
-              <div className="arc-col-sent">Sent</div>
-              <div className="arc-col-actions" />
-            </div>
-            {notifications.map((n) => (
-              <div key={n.id} className="arc-history-row">
-                <div className="arc-col-subject">
-                  {n.subject && <strong style={{ display: "block", fontSize: 13, marginBottom: 2 }}>{n.subject}</strong>}
-                  <span className="arc-msg-preview">{n.message.slice(0, 120)}{n.message.length > 120 ? "…" : ""}</span>
+          <>
+            <div className="arc-compose-grid">
+              {/* ── Version ── */}
+              <div className="admin-table-wrap arc-panel">
+                <div className="arc-panel-heading">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4" />
+                    <path d="M8 5v3.5l2 1.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  App Version
                 </div>
-                <div className="arc-col-recipients">
-                  <span className="arc-recipients-badge">{n.recipientEmails.length} user{n.recipientEmails.length !== 1 ? "s" : ""}</span>
+
+                <div className="arc-version-row">
+                  <span className="arc-version-label">Currently released</span>
+                  <span className="arc-version-num">v{currentVersion}</span>
                 </div>
-                <div className="arc-col-sent">
-                  {n.sentAt ? (
-                    <span className="arc-sent-date">{formatDate(n.sentAt)}</span>
-                  ) : (
-                    <span className="arc-draft-badge">Draft</span>
-                  )}
+
+                <div className="edit-field-group">
+                  <label>
+                    New version
+                    <span className="edit-modal-optional"> — leave unchanged to skip version update</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={versionInput}
+                    onChange={(e) => { setVersionInput(e.target.value); setError(""); }}
+                    placeholder="e.g. 6.1"
+                    style={{ fontFamily: "monospace" }}
+                  />
                 </div>
-                <div className="arc-col-actions">
+
+                <div className="arc-suggest-row">
+                  <span className="arc-suggest-label">Quick pick:</span>
+                  <button type="button" className="admin-btn-add-secondary" onClick={() => setVersionInput(suggestMinor())}>
+                    {suggestMinor()} minor
+                  </button>
+                  <button type="button" className="admin-btn-add-secondary" onClick={() => setVersionInput(suggestMajor())}>
+                    {suggestMajor()} major
+                  </button>
+                </div>
+
+                {versionWillChange && (
+                  <div className="arc-version-hint">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                      <path d="M8 2L13 8M13 8L8 14M13 8H3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Version will be released when you send
+                  </div>
+                )}
+              </div>
+
+              {/* ── Compose ── */}
+              <div className="admin-table-wrap arc-panel">
+                <div className="arc-panel-heading">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                    <path d="M1.5 6l6.5 4 6.5-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                  </svg>
+                  Compose Notification
+                </div>
+
+                <div className="edit-field-group">
+                  <label>Subject</label>
+                  <input
+                    type="text"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    placeholder="e.g. QuoteBuilder v6.1 is here!"
+                  />
+                </div>
+
+                <div className="edit-field-group">
+                  <label>Message</label>
+                  <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Write your release notes or announcement here…"
+                    rows={5}
+                    style={{ resize: "vertical", minHeight: 110 }}
+                  />
+                </div>
+
+                <div className="edit-field-group">
+                  <label>Recipients</label>
+                  <div className="arc-users-list">
+                    <label className="arc-user-row arc-user-row--all">
+                      <input type="checkbox" checked={selectAll} onChange={toggleSelectAll} />
+                      <span className="arc-user-name">All Users ({users.length})</span>
+                    </label>
+                    {users.map((u) => (
+                      <label key={u.id} className="arc-user-row">
+                        <input type="checkbox" checked={selectedEmails.has(u.email)} onChange={() => toggleUser(u.email)} />
+                        <span className="arc-user-name">{u.fullName}</span>
+                        <span className="arc-user-email">{u.email}</span>
+                        {u.role === "admin" && <span className="arc-user-role">admin</span>}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {error && <div className="edit-modal-error">{error}</div>}
+                {success && <div className="arc-success">{success}</div>}
+
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
                   <button
                     type="button"
-                    className="admin-action-btn"
-                    onClick={() => handleClone(n.id)}
-                    title="Clone into compose"
+                    className="edit-modal-save"
+                    style={{ padding: "9px 20px", fontSize: 13 }}
+                    onClick={handleSend}
+                    disabled={sending}
                   >
-                    Clone
+                    {btnLabel}
                   </button>
-                  {deletingId === n.id ? (
-                    <>
-                      <button
-                        type="button"
-                        className="admin-action-btn danger"
-                        onClick={() => handleDelete(n.id)}
-                      >
-                        Confirm
-                      </button>
-                      <button
-                        type="button"
-                        className="admin-action-btn"
-                        onClick={() => setDeletingId(null)}
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      className="admin-action-btn danger"
-                      onClick={() => setDeletingId(n.id)}
-                      title="Delete notification"
-                    >
-                      Delete
-                    </button>
-                  )}
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+
+            {/* ── History ── */}
+            <div style={{ marginTop: 24 }}>
+              <div className="admin-toolbar">
+                <h2 style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", margin: 0 }}>
+                  Notification History
+                </h2>
+                <span className="admin-badge">{notifications.length}</span>
+              </div>
+
+              <div className="admin-table-wrap">
+                {notifications.length === 0 ? (
+                  <div className="admin-table-empty" style={{ padding: 28 }}>
+                    No notifications sent yet. Use the compose form above to send your first one.
+                  </div>
+                ) : (
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Subject / Message</th>
+                        <th>Recipients</th>
+                        <th>Sent</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {notifications.map((n) => (
+                        <tr key={n.id}>
+                          <td style={{ maxWidth: 340 }}>
+                            {n.subject && (
+                              <div className="admin-td-bold" style={{ marginBottom: 2 }}>{n.subject}</div>
+                            )}
+                            <div style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
+                              {n.message.slice(0, 120)}{n.message.length > 120 ? "…" : ""}
+                            </div>
+                          </td>
+                          <td>
+                            <span className="admin-badge">{n.recipientEmails.length} user{n.recipientEmails.length !== 1 ? "s" : ""}</span>
+                          </td>
+                          <td style={{ whiteSpace: "nowrap" }}>
+                            {n.sentAt ? (
+                              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{formatDate(n.sentAt)}</span>
+                            ) : (
+                              <span className="arc-draft-badge">Draft</span>
+                            )}
+                          </td>
+                          <td>
+                            <div className="admin-actions">
+                              <button
+                                className="admin-btn-edit"
+                                onClick={() => handleClone(n)}
+                                title="Copy into compose"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                  <rect x="5" y="5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                                  <path d="M3 11V3.5A1.5 1.5 0 0 1 4.5 2H11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                                </svg>
+                                Clone
+                              </button>
+                              {deletingId === n.id ? (
+                                <>
+                                  <button className="admin-btn-delete" onClick={() => handleDelete(n.id)}>Confirm</button>
+                                  <button className="admin-btn-edit" onClick={() => setDeletingId(null)}>Cancel</button>
+                                </>
+                              ) : (
+                                <button className="admin-btn-delete" onClick={() => setDeletingId(n.id)}>
+                                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                    <path d="M3 4h10M5 4V2.5h6V4M6 7v4M10 7v4M4 4l.5 9.5h7L12 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                  Delete
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

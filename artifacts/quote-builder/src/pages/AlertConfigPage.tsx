@@ -457,6 +457,7 @@ export default function AlertConfigPage() {
         </div>
       </div>
 
+      <div className="admin-content">
       <div className="admin-table-wrap">
         {loading ? (
           <div className="admin-table-empty" style={{ padding: 32 }}>
@@ -544,6 +545,7 @@ export default function AlertConfigPage() {
             </tbody>
           </table>
         )}
+      </div>
       </div>
 
       <style>{`
