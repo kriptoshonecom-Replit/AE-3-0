@@ -105,12 +105,12 @@ export default function CurrentSpendForm({ meta, onChange }: Props) {
         </div>
 
         <div className="field-group">
-          <label>Existing Headline Rate</label>
+          <label>Existing Transaction Fee</label>
           <input type="text" placeholder="example 0.06" {...headlineRate} />
         </div>
 
         <div className="field-group">
-          <label>Existing Interchange Rate</label>
+          <label>Existing Basis Point</label>
           <input
             type="text"
             placeholder="Enter Whole Number"
