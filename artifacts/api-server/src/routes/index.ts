@@ -10,6 +10,7 @@ import statusPassRouter from "./adminStatusPass";
 import quotesSyncRouter from "./quotesSync";
 import adminQuotesRouter from "./adminQuotes";
 import adminLogJournalRouter from "./adminLogJournal";
+import { adminReleaseRouter, publicReleaseRouter } from "./adminRelease";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,7 @@ router.use(productsRouter);
 router.use(quotesSyncRouter);
 router.use(adminQuotesRouter);
 router.use(adminLogJournalRouter);
+router.use("/admin", adminReleaseRouter);
+router.use(publicReleaseRouter);
 
 export default router;

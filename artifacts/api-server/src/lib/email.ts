@@ -133,3 +133,43 @@ export async function sendWelcomeEmail(
 
   await send(to, subject, html);
 }
+
+export async function sendReleaseNotification(
+  to: string,
+  subject: string,
+  message: string,
+  version: string,
+): Promise<void> {
+  const loginUrl = `${getAppUrl()}/sign-in`;
+  const emailSubject = subject || `QuoteBuilder Version ${version} — Release Update`;
+
+  const html = `
+    <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#1e293b">
+      <h2 style="color:#7c3aed;margin:0 0 4px">Aloha Essential CPQ 3.0</h2>
+      <p style="color:#64748b;font-size:13px;margin:0 0 28px">Quote Builder Platform</p>
+
+      <div style="background:#f8f7ff;border:1px solid #e2d9f3;border-radius:10px;padding:16px 20px;margin-bottom:24px;display:inline-block">
+        <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:#7c3aed">Release</span>
+        <span style="font-size:22px;font-weight:700;color:#1e293b;margin-left:10px">Version ${version}</span>
+      </div>
+
+      <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:20px 24px;margin-bottom:24px;white-space:pre-wrap;font-size:14px;color:#334155;line-height:1.7">
+${message}
+      </div>
+
+      <div style="text-align:center;margin-bottom:28px">
+        <a href="${loginUrl}"
+           style="display:inline-block;background:#7c3aed;color:#ffffff;font-size:15px;font-weight:600;
+                  text-decoration:none;padding:13px 32px;border-radius:8px;letter-spacing:0.01em">
+          Open QuoteBuilder →
+        </a>
+      </div>
+
+      <p style="font-size:12px;color:#94a3b8;margin:0">
+        You received this message because you are a registered user of Aloha Essential CPQ 3.0.
+      </p>
+    </div>
+  `;
+
+  await send(to, emailSubject, html);
+}

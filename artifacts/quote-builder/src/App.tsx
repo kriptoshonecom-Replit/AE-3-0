@@ -14,6 +14,7 @@ import AlertConfigPage from "@/pages/AlertConfigPage";
 import StatusPassConfigPage from "@/pages/StatusPassConfigPage";
 import QuoteLibraryPage from "@/pages/QuoteLibraryPage";
 import LogJournalPage from "@/pages/LogJournalPage";
+import AppReleasePage from "@/pages/AppReleasePage";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,9 @@ function AppRoutes() {
           </Route>
           <Route path="/admin/log-journal">
             <AdminRoute><LogJournalPage /></AdminRoute>
+          </Route>
+          <Route path="/admin/app-release">
+            <AdminRoute><AppReleasePage /></AdminRoute>
           </Route>
         </Switch>
       </QueryClientProvider>

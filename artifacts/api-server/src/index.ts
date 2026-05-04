@@ -91,6 +91,28 @@ async function runMigrations() {
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
     )
   `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS release_notifications (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      subject TEXT NOT NULL DEFAULT '',
+      message TEXT NOT NULL DEFAULT '',
+      recipient_emails JSONB NOT NULL DEFAULT '[]',
+      sent_at TIMESTAMP WITH TIME ZONE,
+      sent_by TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+    )
+  `);
+  await pool.query(`
+    INSERT INTO app_settings (key, value) VALUES ('app_version', '6.0')
+    ON CONFLICT (key) DO NOTHING
+  `);
   logger.info("DB migrations complete");
 }
 

@@ -148,6 +148,14 @@ export default function QuoteBuilder() {
   const [initialized, setInitialized] = useState(false);
   const [showAddGroup, setShowAddGroup] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [appVersion, setAppVersion] = useState<string>("");
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/app-version`)
+      .then((r) => r.json())
+      .then((d: { version?: string }) => { if (d.version) setAppVersion(d.version); })
+      .catch(() => {});
+  }, []);
   const [saved, setSaved] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -1106,6 +1114,25 @@ export default function QuoteBuilder() {
                 </svg>
                 Log Journals
               </button>
+              <button
+                type="button"
+                className="sidebar-admin-link"
+                onClick={() => { setLocation("/admin/app-release"); setSidebarOpen(false); }}
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 2L13 8M13 8L8 14M13 8H3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                App Release
+              </button>
+            </div>
+          )}
+          {appVersion && (
+            <div className="sidebar-version-footer">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2" />
+                <path d="M6 4v2.5l1.5 1" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              QuoteBuilder Version {appVersion}
             </div>
           )}
         </div>
