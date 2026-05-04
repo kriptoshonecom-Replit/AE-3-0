@@ -38,7 +38,7 @@ export default function AppReleasePage() {
   const [versionInput, setVersionInput] = useState("6.0");
 
   const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState("Refresh your browser to make sure you are viewing the latest version.");
   const [selectAll, setSelectAll] = useState(true);
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
 
