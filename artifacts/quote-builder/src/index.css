@@ -837,6 +837,31 @@ button {
   border-color: var(--accent);
 }
 
+.qty-locked {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 52px;
+  justify-content: flex-end;
+}
+
+.qty-locked-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.qty-locked-badge {
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 4px;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
 .price-input-wrap {
   display: flex;
   align-items: center;

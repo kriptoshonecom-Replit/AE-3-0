@@ -49,11 +49,13 @@ export default function QuoteGroup({ group, catalog, onChange, onRemove, tieredA
     for (const cat of catalog) {
       const found = cat.items.find((p) => p.id === productId);
       if (found) {
+        const isOnePerSite = found.text === "One Per Site";
         updateLine(idx, {
           ...group.lineItems[idx],
           productId: found.id,
           productName: found.name,
           unitPrice: found.price,
+          quantity: isOnePerSite ? 1 : group.lineItems[idx].quantity,
         });
         return;
       }
@@ -170,7 +172,8 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
   const categoryItems = allCategoryItems.filter((p) => !usedProductIds.includes(p.id));
 
   const product = allCategoryItems.find((p) => p.id === item.productId);
-  const infoEntry = product?.type && product?.text ? { type: product.type, text: product.text } : undefined;
+  const isOnePerSite = product?.text === "One Per Site";
+  const infoEntry = product?.type && product?.text && !isOnePerSite ? { type: product.type, text: product.text } : undefined;
   const [modalOpen, setModalOpen] = useState(false);
   const [imageModalOpen, setImageModalOpen] = useState(false);
 
@@ -310,15 +313,22 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
         </div>
 
         <div className="col-qty">
-          <input
-            type="number"
-            min="0"
-            step="1"
-            value={item.quantity}
-            onChange={(e) => onQtyChange(Math.max(0, parseInt(e.target.value) || 0))}
-            onFocus={(e) => e.target.select()}
-            className="qty-input"
-          />
+          {isOnePerSite ? (
+            <div className="qty-locked" title="One Per Site — quantity is fixed at 1">
+              <span className="qty-locked-value">1</span>
+              <span className="qty-locked-badge">/ site</span>
+            </div>
+          ) : (
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={item.quantity}
+              onChange={(e) => onQtyChange(Math.max(0, parseInt(e.target.value) || 0))}
+              onFocus={(e) => e.target.select()}
+              className="qty-input"
+            />
+          )}
         </div>
 
         <div className="col-price">

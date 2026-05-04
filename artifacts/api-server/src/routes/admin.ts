@@ -9,6 +9,7 @@ import { logger } from "../lib/logger";
 import { sendWelcomeEmail } from "../lib/email";
 import { DEFAULT_CATALOG } from "../lib/catalogSeed";
 import { uploadProductImage } from "../lib/productImages";
+import { readCatalogFromGCS, writeCatalogToGCS } from "../lib/catalogSync";
 
 const router = Router();
 router.use(requireAdmin);
@@ -69,6 +70,18 @@ interface Category {
 type ProductsData = { categories: Category[]; tieredAdditionalPrice?: number };
 
 async function readProducts(): Promise<ProductsData> {
+  const gcsData = await readCatalogFromGCS();
+  if (gcsData) {
+    await db
+      .insert(productCatalogTable)
+      .values({ id: CATALOG_ID, data: gcsData as Record<string, unknown> })
+      .onConflictDoUpdate({
+        target: productCatalogTable.id,
+        set: { data: gcsData as Record<string, unknown>, updatedAt: new Date() },
+      });
+    return gcsData as ProductsData;
+  }
+
   const [row] = await db
     .select()
     .from(productCatalogTable)
@@ -81,23 +94,28 @@ async function readProducts(): Promise<ProductsData> {
       .insert(productCatalogTable)
       .values({ id: CATALOG_ID, data: seed as unknown as Record<string, unknown> });
     logger.info("Product catalog seeded from defaults");
+    await writeCatalogToGCS(seed);
     return seed;
   }
 
+  await writeCatalogToGCS(row.data);
   return row.data as ProductsData;
 }
 
 async function writeProducts(data: ProductsData) {
-  await db
-    .insert(productCatalogTable)
-    .values({ id: CATALOG_ID, data: data as unknown as Record<string, unknown> })
-    .onConflictDoUpdate({
-      target: productCatalogTable.id,
-      set: {
-        data: data as unknown as Record<string, unknown>,
-        updatedAt: new Date(),
-      },
-    });
+  await Promise.all([
+    db
+      .insert(productCatalogTable)
+      .values({ id: CATALOG_ID, data: data as unknown as Record<string, unknown> })
+      .onConflictDoUpdate({
+        target: productCatalogTable.id,
+        set: {
+          data: data as unknown as Record<string, unknown>,
+          updatedAt: new Date(),
+        },
+      }),
+    writeCatalogToGCS(data),
+  ]);
 }
 
 /* ── Users ────────────────────────────────────────────── */
