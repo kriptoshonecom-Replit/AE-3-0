@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -443,6 +444,7 @@ export default function AlertConfigPage() {
       )}
 
       <div className="admin-topbar">
+        <GlobalNavTrigger />
         <button className="btn-ghost admin-back-btn" onClick={() => setLocation("/")}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

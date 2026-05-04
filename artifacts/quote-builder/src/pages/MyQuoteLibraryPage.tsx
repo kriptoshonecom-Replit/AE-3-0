@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
+import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 import { formatCurrency, quoteTotal } from "../utils/calculations";
 import { computeProductRelatedPitTotal } from "../components/ProductRelatedPitSection";
 import pitData from "../data/pit-services.json";
@@ -241,6 +242,7 @@ export default function MyQuoteLibraryPage() {
   return (
     <div className="admin-page">
       <div className="admin-topbar">
+        <GlobalNavTrigger />
         <button
           type="button"
           className="btn-ghost admin-back-btn"

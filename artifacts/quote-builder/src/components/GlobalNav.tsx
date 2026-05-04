@@ -1,15 +1,14 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
+import { useGlobalNav } from "@/context/GlobalNavContext";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
-
-const HIDE_ON = ["/", "/sign-in", "/sign-up"];
 
 export default function GlobalNav() {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
+  const { open, setOpen } = useGlobalNav();
   const [appVersion, setAppVersion] = useState<string | null>(null);
 
   useEffect(() => {
@@ -19,9 +18,9 @@ export default function GlobalNav() {
       .catch(() => {});
   }, []);
 
-  useEffect(() => { setOpen(false); }, [location]);
+  useEffect(() => { setOpen(false); }, [location, setOpen]);
 
-  if (HIDE_ON.includes(location) || !user) return null;
+  if (!user) return null;
 
   function go(path: string) {
     setLocation(path);
@@ -32,18 +31,6 @@ export default function GlobalNav() {
 
   return (
     <>
-      <button
-        type="button"
-        className="btn-icon sidebar-toggle gnav-hamburger"
-        onClick={() => setOpen((v) => !v)}
-        aria-label="Open navigation"
-        title="Open navigation"
-      >
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <path d="M2 4.5h14M2 9h14M2 13.5h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      </button>
-
       <div className={`gnav-panel${open ? " gnav-open" : ""}`}>
         <div className="gnav-header">
           <span className="gnav-title">Navigation</span>

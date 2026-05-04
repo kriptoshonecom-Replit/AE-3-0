@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
+import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -519,6 +520,7 @@ export default function PitConfigPage() {
   return (
     <div className="admin-page">
       <div className="admin-topbar">
+        <GlobalNavTrigger />
         <button
           className="btn-ghost admin-back-btn"
           onClick={() => setLocation("/")}

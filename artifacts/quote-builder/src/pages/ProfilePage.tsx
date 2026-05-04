@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "wouter";
+import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
