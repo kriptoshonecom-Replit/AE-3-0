@@ -53,6 +53,7 @@ export async function exportQuoteToPDF(
   voyixTxnFee?: number,
   gatewayTxnRate?: number,
   tieredAdditionalPrice?: number,
+  appVersion?: string,
 ): Promise<void> {
   const rate = pitHourlyRate ?? PIT_HOURLY_RATE;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -662,6 +663,13 @@ export async function exportQuoteToPDF(
     doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, 292, {
       align: "center",
     });
+    if (appVersion) {
+      doc.setFontSize(6.5);
+      doc.setTextColor(200, 200, 200);
+      doc.text(`Version Build ${appVersion}`, pageWidth - margin, 292, {
+        align: "right",
+      });
+    }
   }
 
   const filename = `${(quote.meta.quoteNumber || "quote").replace(/\s+/g, "-").toLowerCase()}.pdf`;

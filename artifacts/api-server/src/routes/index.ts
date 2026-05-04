@@ -14,18 +14,23 @@ import { adminReleaseRouter, publicReleaseRouter } from "./adminRelease";
 
 const router: IRouter = Router();
 
+// ── Public / no-auth routes first ───────────────────────────────────────────
 router.use(healthRouter);
 router.use("/auth", authRouter);
-router.use("/admin", adminRouter);
-router.use("/admin", pitAdminRouter);
-router.use("/admin", adminMediaRouter);
 router.use(alertConfigsRouter);
 router.use(statusPassRouter);
 router.use(productsRouter);
+router.use(publicReleaseRouter);
+
+// ── Authenticated user routes ────────────────────────────────────────────────
 router.use(quotesSyncRouter);
+
+// ── Admin routes (requireAdmin applied inside each router) ───────────────────
+router.use("/admin", adminRouter);
+router.use("/admin", pitAdminRouter);
+router.use("/admin", adminMediaRouter);
 router.use(adminQuotesRouter);
 router.use(adminLogJournalRouter);
 router.use("/admin", adminReleaseRouter);
-router.use(publicReleaseRouter);
 
 export default router;

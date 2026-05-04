@@ -780,6 +780,7 @@ export default function QuoteBuilder() {
         quote, pitHourlyRate, stampStatus ?? undefined,
         pspmDiscountPct, upfrontPriceDiscountPct,
         voyixTxnFee, gatewayTxnRate, tieredAdditionalPrice,
+        appVersion || undefined,
       );
     } finally {
       setExporting(false);

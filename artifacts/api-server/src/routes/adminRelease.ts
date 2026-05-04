@@ -3,6 +3,7 @@ import { requireAdmin } from "../middlewares/requireAdmin";
 import { logger } from "../lib/logger";
 import { pool } from "@workspace/db";
 import { sendReleaseNotification } from "../lib/email";
+import { readVersionFromGCS, writeVersionToGCS } from "../lib/catalogSync";
 
 interface ReleaseNotification {
   id: string;
@@ -169,6 +170,11 @@ adminRouter.delete("/release-notifications/:id", async (req, res) => {
 /* GET /api/admin/app-version */
 adminRouter.get("/app-version", async (_req, res) => {
   try {
+    const gcsVersion = await readVersionFromGCS();
+    if (gcsVersion) {
+      res.json({ version: gcsVersion });
+      return;
+    }
     const { rows } = await pool.query(
       `SELECT value FROM app_settings WHERE key = 'app_version' LIMIT 1`
     );
@@ -191,13 +197,15 @@ adminRouter.patch("/app-version", async (req, res) => {
       res.status(400).json({ error: "version must be in the format X.Y or X.Y.Z (e.g. 6.0, 6.1, 7.0)" });
       return;
     }
+    const v = version.trim();
     await pool.query(
       `INSERT INTO app_settings (key, value, updated_at)
        VALUES ('app_version', $1, NOW())
        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
-      [version.trim()]
+      [v]
     );
-    res.json({ version: version.trim() });
+    await writeVersionToGCS(v);
+    res.json({ version: v });
   } catch (err) {
     logger.error(err, "patch app-version error");
     res.status(500).json({ error: "Failed to update version" });
@@ -210,6 +218,11 @@ const publicRouter = Router();
 /* GET /api/app-version */
 publicRouter.get("/app-version", async (_req, res) => {
   try {
+    const gcsVersion = await readVersionFromGCS();
+    if (gcsVersion) {
+      res.json({ version: gcsVersion });
+      return;
+    }
     const { rows } = await pool.query(
       `SELECT value FROM app_settings WHERE key = 'app_version' LIMIT 1`
     );
