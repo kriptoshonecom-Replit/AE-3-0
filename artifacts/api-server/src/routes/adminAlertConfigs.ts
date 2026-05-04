@@ -4,6 +4,16 @@ import { alertConfigsTable } from "@workspace/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/requireAdmin";
 import { logger } from "../lib/logger";
+import { readAlertConfigsFromGCS, writeAlertConfigsToGCS } from "../lib/catalogSync";
+
+async function snapshotAlertConfigsToGCS(): Promise<void> {
+  try {
+    const all = await db.select().from(alertConfigsTable).orderBy(asc(alertConfigsTable.createdAt));
+    await writeAlertConfigsToGCS(all);
+  } catch (err) {
+    logger.warn({ err }, "alertConfigSync: failed to snapshot after write");
+  }
+}
 
 const router = Router();
 
@@ -11,6 +21,12 @@ const router = Router();
 router.get("/alert-configs", async (_req, res) => {
   res.setHeader("Cache-Control", "no-store");
   try {
+    const gcsAll = await readAlertConfigsFromGCS();
+    if (gcsAll) {
+      const active = gcsAll.filter((c) => (c as Record<string, unknown>).is_active === true);
+      res.json(active);
+      return;
+    }
     const configs = await db
       .select()
       .from(alertConfigsTable)
@@ -29,6 +45,11 @@ router.use("/admin/alert-configs", requireAdmin);
 router.get("/admin/alert-configs", async (_req, res) => {
   res.setHeader("Cache-Control", "no-store");
   try {
+    const gcsAll = await readAlertConfigsFromGCS();
+    if (gcsAll) {
+      res.json(gcsAll);
+      return;
+    }
     const configs = await db
       .select()
       .from(alertConfigsTable)
@@ -82,6 +103,7 @@ router.post("/admin/alert-configs", async (req, res) => {
       })
       .returning();
 
+    void snapshotAlertConfigsToGCS();
     res.status(201).json(row);
   } catch (err) {
     logger.error(err, "alert-config create error");
@@ -137,6 +159,7 @@ router.patch("/admin/alert-configs/:id", async (req, res) => {
       .where(eq(alertConfigsTable.id, id))
       .returning();
 
+    void snapshotAlertConfigsToGCS();
     res.json(updated);
   } catch (err) {
     logger.error(err, "alert-config update error");
@@ -157,6 +180,7 @@ router.delete("/admin/alert-configs/:id", async (req, res) => {
       return;
     }
     await db.delete(alertConfigsTable).where(eq(alertConfigsTable.id, id));
+    void snapshotAlertConfigsToGCS();
     res.json({ success: true });
   } catch (err) {
     logger.error(err, "alert-config delete error");

@@ -4,6 +4,7 @@ import { pitCatalogTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/requireAdmin";
 import { DEFAULT_PIT_CATALOG } from "../lib/pitCatalogSeed";
+import { readPitCatalogFromGCS, writePitCatalogToGCS } from "../lib/catalogSync";
 
 const router = Router();
 router.use(requireAdmin);
@@ -32,6 +33,19 @@ interface PitCatalog {
 }
 
 async function readCatalog(): Promise<PitCatalog> {
+  const gcsData = await readPitCatalogFromGCS();
+  if (gcsData) {
+    const d = gcsData as PitCatalog;
+    if (d.hourlyRate === undefined) d.hourlyRate = DEFAULT_HOURLY_RATE;
+    await db
+      .insert(pitCatalogTable)
+      .values({ id: PIT_ID, data: gcsData as Record<string, unknown> })
+      .onConflictDoUpdate({
+        target: pitCatalogTable.id,
+        set: { data: gcsData as Record<string, unknown>, updatedAt: new Date() },
+      });
+    return d;
+  }
   const [row] = await db
     .select()
     .from(pitCatalogTable)
@@ -43,13 +57,16 @@ async function readCatalog(): Promise<PitCatalog> {
 }
 
 async function writeCatalog(data: PitCatalog): Promise<PitCatalog> {
-  await db
-    .insert(pitCatalogTable)
-    .values({ id: PIT_ID, data: data as unknown as Record<string, unknown> })
-    .onConflictDoUpdate({
-      target: pitCatalogTable.id,
-      set: { data: data as unknown as Record<string, unknown>, updatedAt: new Date() },
-    });
+  await Promise.all([
+    db
+      .insert(pitCatalogTable)
+      .values({ id: PIT_ID, data: data as unknown as Record<string, unknown> })
+      .onConflictDoUpdate({
+        target: pitCatalogTable.id,
+        set: { data: data as unknown as Record<string, unknown>, updatedAt: new Date() },
+      }),
+    writePitCatalogToGCS(data),
+  ]);
   return data;
 }
 

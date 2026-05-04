@@ -51,6 +51,87 @@ export async function writeCatalogToGCS(data: unknown): Promise<void> {
   }
 }
 
+// ── PIT catalog ─────────────────────────────────────────────────────────────
+
+const PIT_GCS_PATH = "catalog/pit.json";
+
+export async function readPitCatalogFromGCS(): Promise<unknown | null> {
+  try {
+    const file = gcs.bucket(getBucketId()).file(PIT_GCS_PATH);
+    const [exists] = await file.exists();
+    if (!exists) return null;
+    const [buf] = await file.download();
+    return JSON.parse(buf.toString("utf8"));
+  } catch (err) {
+    logger.warn({ err }, "pitSync: failed to read from GCS, falling back to DB");
+    return null;
+  }
+}
+
+export async function writePitCatalogToGCS(data: unknown): Promise<void> {
+  try {
+    const file = gcs.bucket(getBucketId()).file(PIT_GCS_PATH);
+    await file.save(JSON.stringify(data), { contentType: "application/json", resumable: false });
+  } catch (err) {
+    logger.warn({ err }, "pitSync: failed to write to GCS — DB was still updated");
+  }
+}
+
+// ── Alert configs ────────────────────────────────────────────────────────────
+
+const ALERT_CONFIGS_GCS_PATH = "settings/alert_configs.json";
+
+export async function readAlertConfigsFromGCS(): Promise<unknown[] | null> {
+  try {
+    const file = gcs.bucket(getBucketId()).file(ALERT_CONFIGS_GCS_PATH);
+    const [exists] = await file.exists();
+    if (!exists) return null;
+    const [buf] = await file.download();
+    const parsed = JSON.parse(buf.toString("utf8"));
+    return Array.isArray(parsed) ? parsed : null;
+  } catch (err) {
+    logger.warn({ err }, "alertConfigSync: failed to read from GCS, falling back to DB");
+    return null;
+  }
+}
+
+export async function writeAlertConfigsToGCS(data: unknown[]): Promise<void> {
+  try {
+    const file = gcs.bucket(getBucketId()).file(ALERT_CONFIGS_GCS_PATH);
+    await file.save(JSON.stringify(data), { contentType: "application/json", resumable: false });
+  } catch (err) {
+    logger.warn({ err }, "alertConfigSync: failed to write to GCS — DB was still updated");
+  }
+}
+
+// ── Status pass config ───────────────────────────────────────────────────────
+
+const STATUS_PASS_GCS_PATH = "settings/status_pass.json";
+
+export async function readStatusPassFromGCS(): Promise<unknown | null> {
+  try {
+    const file = gcs.bucket(getBucketId()).file(STATUS_PASS_GCS_PATH);
+    const [exists] = await file.exists();
+    if (!exists) return null;
+    const [buf] = await file.download();
+    return JSON.parse(buf.toString("utf8"));
+  } catch (err) {
+    logger.warn({ err }, "statusPassSync: failed to read from GCS, falling back to DB");
+    return null;
+  }
+}
+
+export async function writeStatusPassToGCS(data: unknown): Promise<void> {
+  try {
+    const file = gcs.bucket(getBucketId()).file(STATUS_PASS_GCS_PATH);
+    await file.save(JSON.stringify(data), { contentType: "application/json", resumable: false });
+  } catch (err) {
+    logger.warn({ err }, "statusPassSync: failed to write to GCS — DB was still updated");
+  }
+}
+
+// ── App version ──────────────────────────────────────────────────────────────
+
 export async function readVersionFromGCS(): Promise<string | null> {
   try {
     const file = gcs.bucket(getBucketId()).file(VERSION_GCS_PATH);

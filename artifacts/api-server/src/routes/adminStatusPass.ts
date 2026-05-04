@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/requireAdmin";
 import { requireAuth } from "../middlewares/requireAuth";
 import pino from "pino";
+import { readStatusPassFromGCS, writeStatusPassToGCS } from "../lib/catalogSync";
 
 const logger = pino();
 const router = Router();
@@ -182,6 +183,29 @@ const DEFAULT_DATA: StatusPassData = {
 };
 
 async function readConfig(): Promise<StatusPassData> {
+  const gcsData = await readStatusPassFromGCS();
+  if (gcsData) {
+    const stored = gcsData as Partial<StatusPassData> & { _version?: string };
+    if (stored._version === DATA_VERSION) {
+      const merged: StatusPassData = {
+        costBuffer: DEFAULT_DATA.costBuffer,
+        paymentCosts: DEFAULT_DATA.paymentCosts,
+        gatewayCost: DEFAULT_DATA.gatewayCost,
+        processingCost: DEFAULT_DATA.processingCost,
+        ...stored,
+        categories: stored.categories ?? DEFAULT_DATA.categories,
+      };
+      await db
+        .insert(statusPassConfigTable)
+        .values({ id: CONFIG_ID, data: gcsData as Record<string, unknown> })
+        .onConflictDoUpdate({
+          target: statusPassConfigTable.id,
+          set: { data: gcsData as Record<string, unknown>, updatedAt: new Date() },
+        });
+      return merged;
+    }
+  }
+
   const [row] = await db
     .select()
     .from(statusPassConfigTable)
@@ -190,7 +214,6 @@ async function readConfig(): Promise<StatusPassData> {
 
   const storedVersion = (row?.data as Record<string, unknown>)?._version as string | undefined;
   if (!row || storedVersion !== DATA_VERSION) {
-    // No record or stale version — seed / overwrite with current defaults
     const seedData = { ...DEFAULT_DATA, _version: DATA_VERSION } as unknown as Record<string, unknown>;
     await db
       .insert(statusPassConfigTable)
@@ -202,7 +225,6 @@ async function readConfig(): Promise<StatusPassData> {
     return DEFAULT_DATA;
   }
 
-  // Merge stored data with defaults for any new top-level fields added after initial seed
   const stored = row.data as Partial<StatusPassData>;
   return {
     costBuffer: DEFAULT_DATA.costBuffer,
@@ -215,13 +237,16 @@ async function readConfig(): Promise<StatusPassData> {
 }
 
 async function writeConfig(data: StatusPassData) {
-  await db
-    .insert(statusPassConfigTable)
-    .values({ id: CONFIG_ID, data: data as unknown as Record<string, unknown> })
-    .onConflictDoUpdate({
-      target: statusPassConfigTable.id,
-      set: { data: data as unknown as Record<string, unknown>, updatedAt: new Date() },
-    });
+  await Promise.all([
+    db
+      .insert(statusPassConfigTable)
+      .values({ id: CONFIG_ID, data: data as unknown as Record<string, unknown> })
+      .onConflictDoUpdate({
+        target: statusPassConfigTable.id,
+        set: { data: data as unknown as Record<string, unknown>, updatedAt: new Date() },
+      }),
+    writeStatusPassToGCS(data),
+  ]);
 }
 
 // Auth-only (any logged-in user) — returns the full config so the blended
@@ -268,8 +293,9 @@ router.patch(
   requireAdmin,
   async (req, res) => {
     try {
-      const { catId, modelId, tierIdx } = req.params;
-      const idx = parseInt(tierIdx, 10);
+      const catId = req.params.catId as string;
+      const modelId = req.params.modelId as string;
+      const idx = parseInt(req.params.tierIdx as string, 10);
       const updates = req.body as Partial<Pick<Tier, "lowVolume" | "highVolume" | "txnRate">>;
 
       const data = await readConfig();
