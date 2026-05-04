@@ -131,12 +131,11 @@ export default function QuoteList({
     }
     // Remove from localStorage cache
     deleteQuote(q.meta.id, userId);
-    // Refresh the sidebar list
+    // Remove from local state immediately for instant UI feedback regardless of whether it's active
+    setQuotes((prev) => prev.filter((sq) => sq.meta.id !== q.meta.id));
+    // If the deleted quote was the one currently open, open a new blank quote
     if (q.meta.id === currentId) {
       onNew();
-    } else {
-      // Remove from local state immediately for instant UI feedback
-      setQuotes((prev) => prev.filter((sq) => sq.meta.id !== q.meta.id));
     }
   }
 
@@ -190,7 +189,10 @@ export default function QuoteList({
         </p>
       )}
       {!loading && quotes.length === 0 && (
-        <p className="ql-empty">No saved quotes yet.</p>
+        <p className="ql-empty" style={{ textAlign: "center", lineHeight: 1.5, padding: "12px 8px" }}>
+          Your quote library is empty.<br />
+          <span style={{ color: "var(--accent, #6c47ff)", fontWeight: 500 }}>Click + New to create your first quote.</span>
+        </p>
       )}
       {!loading && quotes.length > 0 && filtered.length === 0 && (
         <p className="ql-empty">No quotes match &ldquo;{search}&rdquo;.</p>
