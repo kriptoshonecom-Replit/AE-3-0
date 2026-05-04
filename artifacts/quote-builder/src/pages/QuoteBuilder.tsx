@@ -1018,20 +1018,6 @@ export default function QuoteBuilder() {
             apiBase={API_BASE}
           />
 
-          <div className="sidebar-user-links">
-            <button
-              type="button"
-              className="sidebar-admin-link sidebar-admin-link--highlight"
-              onClick={() => { setLocation("/my-quotes"); setSidebarOpen(false); }}
-            >
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                <path d="M4.5 5.5h7M4.5 8h7M4.5 10.5h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-              </svg>
-              My Quote Library
-            </button>
-          </div>
-
           {user?.role === "admin" && (
             <div className="sidebar-admin-links">
               <button
