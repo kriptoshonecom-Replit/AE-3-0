@@ -7,6 +7,7 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 import { serveProductImage } from "./lib/productImages";
 import { migrateFilesystemImages } from "./lib/startupMigration";
+import { pool } from "@workspace/db";
 
 const app: Express = express();
 
@@ -54,6 +55,31 @@ app.use("/api/images", express.static(legacyUploadsDir, { maxAge: "7d" }));
 app.use("/api/images", express.static(legacyPublicDir,  { maxAge: "7d" }));
 
 app.use("/api", router);
+
+// Create sessions + login_events tables if they don't exist yet (idempotent)
+pool.query(`
+  CREATE TABLE IF NOT EXISTS sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    session_token TEXT UNIQUE NOT NULL,
+    ip_address TEXT,
+    user_agent TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_active_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS login_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID,
+    email TEXT NOT NULL,
+    ip_address TEXT,
+    user_agent TEXT,
+    success BOOLEAN NOT NULL,
+    failure_reason TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+`).catch((err: unknown) => logger.warn(err, "session table migration failed"));
 
 // Run filesystem-to-GCS migration in background on startup (idempotent — safe to re-run)
 migrateFilesystemImages(process.cwd()).catch((err) =>

@@ -1,8 +1,9 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
+import { randomUUID } from "crypto";
 import { db } from "@workspace/db";
-import { usersTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { usersTable, sessionsTable, loginEventsTable } from "@workspace/db/schema";
+import { eq, and } from "drizzle-orm";
 import { signToken } from "../lib/auth";
 import { requireAuth } from "../middlewares/requireAuth";
 import { logger } from "../lib/logger";
@@ -10,13 +11,14 @@ import { logger } from "../lib/logger";
 const router = Router();
 
 const BCRYPT_ROUNDS = 10;
+const SESSION_DAYS = 7;
 
 function cookieOptions() {
   return {
     httpOnly: true,
     sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: SESSION_DAYS * 24 * 60 * 60 * 1000,
     path: "/",
   };
 }
@@ -32,6 +34,57 @@ function isStrongPassword(pw: string): boolean {
 
 function userDto(u: typeof usersTable.$inferSelect) {
   return { id: u.id, email: u.email, fullName: u.fullName, role: u.role, createdAt: u.createdAt };
+}
+
+function getClientIp(req: Parameters<typeof router.post>[1] extends (req: infer R, ...rest: unknown[]) => unknown ? R : never): string | undefined {
+  const forwarded = req.headers["x-forwarded-for"];
+  if (typeof forwarded === "string") return forwarded.split(",")[0].trim();
+  return req.socket?.remoteAddress ?? undefined;
+}
+
+async function createSession(userId: string, req: Parameters<typeof router.post>[1] extends (req: infer R, ...rest: unknown[]) => unknown ? R : never) {
+  const sessionToken = randomUUID();
+  const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
+  const ip = getClientIp(req);
+  const ua = (req.headers["user-agent"] as string | undefined) ?? null;
+
+  await db.update(sessionsTable)
+    .set({ isActive: false })
+    .where(and(eq(sessionsTable.userId, userId), eq(sessionsTable.isActive, true)));
+
+  await db.insert(sessionsTable).values({
+    userId,
+    sessionToken,
+    ipAddress: ip ?? null,
+    userAgent: ua,
+    expiresAt,
+    isActive: true,
+  });
+
+  return sessionToken;
+}
+
+async function recordLoginEvent(opts: {
+  userId?: string;
+  email: string;
+  success: boolean;
+  failureReason?: string;
+  req: Parameters<typeof router.post>[1] extends (req: infer R, ...rest: unknown[]) => unknown ? R : never;
+}) {
+  try {
+    const ip = getClientIp(opts.req);
+    const ua = (opts.req.headers["user-agent"] as string | undefined) ?? null;
+    await db.insert(loginEventsTable).values({
+      userId: opts.userId ?? null,
+      email: opts.email,
+      ipAddress: ip ?? null,
+      userAgent: ua,
+      success: opts.success,
+      failureReason: opts.failureReason ?? null,
+    });
+  } catch (err) {
+    logger.warn(err, "failed to record login event");
+  }
 }
 
 router.post("/register", async (req, res) => {
@@ -72,7 +125,10 @@ router.post("/register", async (req, res) => {
       .values({ email: email.toLowerCase().trim(), passwordHash, fullName: fullName.trim(), role: "user" })
       .returning();
 
-    const token = signToken({ userId: user.id, email: user.email, fullName: user.fullName, role: user.role });
+    const sessionToken = await createSession(user.id, req);
+    await recordLoginEvent({ userId: user.id, email: user.email, success: true, req });
+
+    const token = signToken({ userId: user.id, email: user.email, fullName: user.fullName, role: user.role, sessionToken });
     res.cookie("session", token, cookieOptions());
     res.json({ user: userDto(user) });
   } catch (err) {
@@ -93,18 +149,30 @@ router.post("/login", async (req, res) => {
       return;
     }
 
+    const normalised = email.toLowerCase().trim();
+
     const [user] = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.email, email.toLowerCase().trim()))
+      .where(eq(usersTable.email, normalised))
       .limit(1);
 
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+      await recordLoginEvent({
+        userId: user?.id,
+        email: normalised,
+        success: false,
+        failureReason: "Invalid email or password",
+        req,
+      });
       res.status(401).json({ error: "Invalid email or password" });
       return;
     }
 
-    const token = signToken({ userId: user.id, email: user.email, fullName: user.fullName, role: user.role });
+    const sessionToken = await createSession(user.id, req);
+    await recordLoginEvent({ userId: user.id, email: user.email, success: true, req });
+
+    const token = signToken({ userId: user.id, email: user.email, fullName: user.fullName, role: user.role, sessionToken });
     res.cookie("session", token, cookieOptions());
     res.json({ user: userDto(user) });
   } catch (err) {
@@ -185,7 +253,8 @@ router.patch("/profile", requireAuth, async (req, res) => {
       .where(eq(usersTable.id, user.id))
       .returning();
 
-    const token = signToken({ userId: updated.id, email: updated.email, fullName: updated.fullName, role: updated.role });
+    const sessionToken = req.auth!.sessionToken ?? (await createSession(updated.id, req));
+    const token = signToken({ userId: updated.id, email: updated.email, fullName: updated.fullName, role: updated.role, sessionToken });
     res.cookie("session", token, cookieOptions());
     res.json({ user: userDto(updated) });
   } catch (err) {
@@ -194,7 +263,17 @@ router.patch("/profile", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/logout", (_req, res) => {
+router.post("/logout", requireAuth, async (req, res) => {
+  try {
+    const sessionToken = req.auth?.sessionToken;
+    if (sessionToken) {
+      await db.update(sessionsTable)
+        .set({ isActive: false })
+        .where(eq(sessionsTable.sessionToken, sessionToken));
+    }
+  } catch (err) {
+    logger.warn(err, "logout session cleanup error");
+  }
   res.clearCookie("session", { path: "/" });
   res.json({ success: true });
 });
@@ -211,6 +290,13 @@ router.get("/me", requireAuth, async (req, res) => {
       res.clearCookie("session", { path: "/" });
       res.status(401).json({ error: "User not found" });
       return;
+    }
+
+    if (req.auth?.sessionToken) {
+      db.update(sessionsTable)
+        .set({ lastActiveAt: new Date() })
+        .where(eq(sessionsTable.sessionToken, req.auth.sessionToken))
+        .catch(() => {});
     }
 
     res.json(userDto(user));

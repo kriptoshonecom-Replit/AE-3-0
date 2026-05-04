@@ -9,6 +9,7 @@ import alertConfigsRouter from "./adminAlertConfigs";
 import statusPassRouter from "./adminStatusPass";
 import quotesSyncRouter from "./quotesSync";
 import adminQuotesRouter from "./adminQuotes";
+import adminLogJournalRouter from "./adminLogJournal";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use(statusPassRouter);
 router.use(productsRouter);
 router.use(quotesSyncRouter);
 router.use(adminQuotesRouter);
+router.use(adminLogJournalRouter);
 
 export default router;

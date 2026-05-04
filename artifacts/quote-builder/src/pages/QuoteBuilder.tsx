@@ -1094,6 +1094,18 @@ export default function QuoteBuilder() {
                 </svg>
                 Quote Library
               </button>
+              <button
+                type="button"
+                className="sidebar-admin-link"
+                onClick={() => { setLocation("/admin/log-journal"); setSidebarOpen(false); }}
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 4h12M2 8h8M2 12h5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                  <circle cx="13" cy="11.5" r="2.5" stroke="currentColor" strokeWidth="1.3" />
+                  <path d="M13 10.5v1l.7.7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                </svg>
+                Log Journals
+              </button>
             </div>
           )}
         </div>
