@@ -34,11 +34,14 @@ export default function GlobalNav() {
     <>
       <button
         type="button"
-        className="gnav-hamburger"
+        className="btn-icon sidebar-toggle gnav-hamburger"
         onClick={() => setOpen((v) => !v)}
         aria-label="Open navigation"
+        title="Open navigation"
       >
-        <span /><span /><span />
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M2 4.5h14M2 9h14M2 13.5h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
       </button>
 
       <div className={`gnav-panel${open ? " gnav-open" : ""}`}>
