@@ -2,6 +2,7 @@ import { Switch, Route, Redirect } from "wouter";
 import { Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import GlobalNav from "@/components/GlobalNav";
 import QuoteBuilder from "@/pages/QuoteBuilder";
 import SignInPage from "@/pages/SignInPage";
 import SignUpPage from "@/pages/SignUpPage";
@@ -62,6 +63,7 @@ function AppRoutes() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
+        <GlobalNav />
         <Switch>
           <Route path="/" component={HomeRoute} />
           <Route path="/sign-in" component={SignInPage} />
