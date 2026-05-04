@@ -32,26 +32,36 @@ function parsePngDimensions(buf: Buffer): { width: number; height: number } | nu
 router.get("/media", async (_req, res) => {
   res.setHeader("Cache-Control", "no-store");
   try {
-    // Auto-sync: register any GCS files not yet in the DB
+    // Auto-sync: keep DB in sync with GCS (source of truth)
     try {
       const gcsSlugs = await listProductImageSlugs();
-      if (gcsSlugs.length > 0) {
-        const existing = await db
-          .select({ slug: mediaFilesTable.slug })
-          .from(mediaFilesTable)
-          .where(inArray(mediaFilesTable.slug, gcsSlugs));
-        const existingSet = new Set(existing.map((r) => r.slug));
-        const toInsert = gcsSlugs
-          .filter((slug) => !existingSet.has(slug))
-          .map((slug) => ({
-            originalName: slug,
-            slug,
-            path: `/api/images/products/${slug}`,
-          }));
-        if (toInsert.length > 0) {
-          await db.insert(mediaFilesTable).values(toInsert).onConflictDoNothing();
-          logger.info({ count: toInsert.length }, "Auto-registered GCS images into media_files");
-        }
+      const gcsSet = new Set(gcsSlugs);
+
+      const allDbRows = await db
+        .select({ id: mediaFilesTable.id, slug: mediaFilesTable.slug })
+        .from(mediaFilesTable);
+      const dbSet = new Set(allDbRows.map((r) => r.slug));
+
+      // 1. Add GCS files not yet in DB (new uploads from another env)
+      const toInsert = gcsSlugs
+        .filter((slug) => !dbSet.has(slug))
+        .map((slug) => ({
+          originalName: slug,
+          slug,
+          path: `/api/images/products/${slug}`,
+        }));
+      if (toInsert.length > 0) {
+        await db.insert(mediaFilesTable).values(toInsert).onConflictDoNothing();
+        logger.info({ count: toInsert.length }, "media-sync: registered new GCS images into DB");
+      }
+
+      // 2. Remove DB records whose GCS file no longer exists (deletes from another env)
+      const staleIds = allDbRows
+        .filter((r) => !gcsSet.has(r.slug))
+        .map((r) => r.id);
+      if (staleIds.length > 0) {
+        await db.delete(mediaFilesTable).where(inArray(mediaFilesTable.id, staleIds));
+        logger.info({ count: staleIds.length }, "media-sync: pruned stale DB records for deleted GCS images");
       }
     } catch (syncErr) {
       logger.warn(syncErr, "GCS sync skipped (non-fatal)");
