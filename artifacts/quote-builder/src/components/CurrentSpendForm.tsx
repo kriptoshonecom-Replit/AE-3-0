@@ -72,7 +72,7 @@ export default function CurrentSpendForm({ meta, onChange }: Props) {
     meta.aeCurrentVoyixPaySpend ?? "",
     set("aeCurrentVoyixPaySpend"),
   );
-  const headlineRate = usePercentField(
+  const headlineRate = useCurrencyField(
     meta.existingHeadlineRate ?? "",
     set("existingHeadlineRate"),
   );
@@ -105,7 +105,7 @@ export default function CurrentSpendForm({ meta, onChange }: Props) {
         </div>
 
         <div className="field-group">
-          <label>Existing Transaction Fee</label>
+          <label>Existing Transaction Fee ($)</label>
           <input type="text" placeholder="example 0.06" {...headlineRate} />
         </div>
 
