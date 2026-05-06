@@ -173,7 +173,7 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
 
   const product = allCategoryItems.find((p) => p.id === item.productId);
   const isOnePerSite = product?.text?.includes("One Per Site") ?? false;
-  const infoEntry = product?.type && product?.text && !isOnePerSite ? { type: product.type, text: product.text } : undefined;
+  const infoEntry = product?.type && product?.text ? { type: product.type, text: product.text } : undefined;
   const [modalOpen, setModalOpen] = useState(false);
   const [imageModalOpen, setImageModalOpen] = useState(false);
 
