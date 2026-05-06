@@ -49,7 +49,7 @@ export default function QuoteGroup({ group, catalog, onChange, onRemove, tieredA
     for (const cat of catalog) {
       const found = cat.items.find((p) => p.id === productId);
       if (found) {
-        const isOnePerSite = found.text === "One Per Site";
+        const isOnePerSite = found.text?.includes("One Per Site") ?? false;
         updateLine(idx, {
           ...group.lineItems[idx],
           productId: found.id,
@@ -172,7 +172,7 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
   const categoryItems = allCategoryItems.filter((p) => !usedProductIds.includes(p.id));
 
   const product = allCategoryItems.find((p) => p.id === item.productId);
-  const isOnePerSite = product?.text === "One Per Site";
+  const isOnePerSite = product?.text?.includes("One Per Site") ?? false;
   const infoEntry = product?.type && product?.text && !isOnePerSite ? { type: product.type, text: product.text } : undefined;
   const [modalOpen, setModalOpen] = useState(false);
   const [imageModalOpen, setImageModalOpen] = useState(false);
