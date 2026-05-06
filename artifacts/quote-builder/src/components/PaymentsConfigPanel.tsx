@@ -98,7 +98,7 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
     meta.requestedSubscriptionAmount ?? "",
     set("requestedSubscriptionAmount"),
   );
-  const voyixPayFee = usePercentField(
+  const voyixPayFee = useCurrencyField(
     meta.voyixPayTransactionFee ?? "",
     set("voyixPayTransactionFee"),
   );
@@ -230,7 +230,7 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
 
         {/* 8 — Voyix Pay Transaction Fee */}
         <div className="field-group">
-          <label>Voyix Pay Transaction Fee</label>
+          <label>Voyix Pay Transaction Fee ($)</label>
           <input type="text" placeholder="example 0.06" {...voyixPayFee} />
         </div>
 
