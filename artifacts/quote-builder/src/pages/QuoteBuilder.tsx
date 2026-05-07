@@ -148,6 +148,7 @@ export default function QuoteBuilder() {
   const [initialized, setInitialized] = useState(false);
   const [showAddGroup, setShowAddGroup] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
   const [appVersion, setAppVersion] = useState<string>("");
 
   useEffect(() => {
@@ -1218,144 +1219,161 @@ export default function QuoteBuilder() {
           </div>
         </header>
 
+        {/* Tab bar */}
+        <div className="qb-tab-bar">
+          <button className={`qb-tab${activeTab === 0 ? " qb-tab-active" : ""}`} onClick={() => setActiveTab(0)}>
+            Quote
+          </button>
+          <button className={`qb-tab${activeTab === 1 ? " qb-tab-active" : ""}`} onClick={() => setActiveTab(1)}>
+            Payments &amp; PIT
+          </button>
+          <button className={`qb-tab${activeTab === 2 ? " qb-tab-active" : ""}`} onClick={() => setActiveTab(2)}>
+            Product PIT
+          </button>
+        </div>
+
         {/* Content */}
         <div className="content" ref={printAreaRef}>
           <div className="content-inner">
-            {/* Meta section */}
-            <section className="section">
-              <h2 className="section-title">Quote Details</h2>
-              <QuoteMetaForm
-                meta={quote.meta}
-                onChange={handleMetaChange}
-                pspmDiscountPct={pspmDiscountPct}
-                upfrontPriceDiscountPct={upfrontPriceDiscountPct}
-              />
-            </section>
 
-            {/* Current Aloha Essential Spend section */}
-            <section className="section">
-              <h2 className="section-title">Current Aloha Essential Spend</h2>
-              <CurrentSpendForm meta={quote.meta} onChange={handleMetaChange} />
-            </section>
+            {/* ── Tab 0: Quote ── */}
+            {activeTab === 0 && (
+              <>
+                <section className="section">
+                  <h2 className="section-title">Current Aloha Essential Spend</h2>
+                  <CurrentSpendForm meta={quote.meta} onChange={handleMetaChange} />
+                </section>
 
-            {/* PIT section */}
-            <section className="section">
-              <h2 className="section-title">PIT</h2>
-              <PitSection
-                pitType={quote.meta.pitType ?? ""}
-                onChange={handlePitTypeChange}
-                recurringPit={quote.meta.recurringPit ?? false}
-                onRecurringPitChange={handleRecurringPitChange}
-                yesNoToggles={yesNoToggles}
-                onYesNoChange={handleYesNoChange}
-                optionalProgramToggles={optionalProgramToggles}
-                onOptionalProgramToggle={handleOptionalProgramToggle}
-                pitCategories={pitCategories}
-                pitHourlyRate={pitHourlyRate}
-              />
-            </section>
-
-            {/* Product Related PIT section */}
-            <section className="section">
-              <h2 className="section-title">Product Related PIT</h2>
-              <ProductRelatedPitSection
-                groups={quote.groups}
-                yesNoToggles={yesNoToggles}
-                optionalProgramToggles={optionalProgramToggles}
-                pitType={quote.meta.pitType ?? ""}
-                catalogMap={catalogMap}
-                pitHourlyRate={pitHourlyRate}
-              />
-            </section>
-
-            {/* Heatmap & Cabling section */}
-            <section className="section">
-              <h2 className="section-title">Heatmap &amp; Cabling</h2>
-              <HeatmapSection
-                toggles={heatmapToggles}
-                onToggle={handleHeatmapToggle}
-                items={heatmapItems.length > 0 ? heatmapItems : undefined}
-              />
-            </section>
-
-            {/* Payments Configuration Panel */}
-            <section className="section">
-              <h2 className="section-title">Payments Configuration Panel</h2>
-              <PaymentsConfigPanel meta={quote.meta} onChange={handleMetaChange} />
-            </section>
-
-            {/* Groups section */}
-            <section className="section">
-              <div className="section-header">
-                <h2 className="section-title">Line Items</h2>
-              </div>
-
-              <div className="groups-list">
-                {quote.groups.map((group, idx) => (
-                  <QuoteGroupComponent
-                    key={group.id}
-                    group={group}
-                    catalog={productCategories}
-                    onChange={(g) => handleGroupChange(idx, g)}
-                    onRemove={() => handleGroupRemove(idx)}
-                    tieredAdditionalPrice={tieredAdditionalPrice}
-                  />
-                ))}
-              </div>
-
-              {quote.groups.length === 0 && (
-                <div className="empty-groups">
-                  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" opacity="0.3">
-                    <rect x="5" y="10" width="30" height="22" rx="3" stroke="currentColor" strokeWidth="1.5" />
-                    <path d="M5 16h30" stroke="currentColor" strokeWidth="1.5" />
-                    <path d="M12 22h8M12 26h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                  <p>No groups yet. Add a product group to start building your quote.</p>
-                </div>
-              )}
-
-              {!allGroupsAdded && (
-                <button
-                  type="button"
-                  className="btn-add-group"
-                  onClick={() => setShowAddGroup(true)}
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                  Add Product Group
-                </button>
-              )}
-            </section>
-
-            {/* Summary */}
-            {quote.groups.some((g) => g.lineItems.length > 0) && (
-              <section className="section summary-section">
-                <h2 className="section-title">Summary</h2>
-                <div className="summary-stamp-wrap">
-                  <QuoteSummary
-                    quote={quote}
-                    pitTotal={_pitTotal}
-                    productPitTotal={_productPitTotal}
-                    heatmapTotal={_heatmapTotal}
-                    legacyTotal={0}
+                <section className="section">
+                  <h2 className="section-title">Quote Details</h2>
+                  <QuoteMetaForm
+                    meta={quote.meta}
+                    onChange={handleMetaChange}
                     pspmDiscountPct={pspmDiscountPct}
                     upfrontPriceDiscountPct={upfrontPriceDiscountPct}
-                    voyixTxnFee={voyixTxnFee}
-                    gatewayTxnRate={gatewayTxnRate}
                   />
-                  {stampStatus && (
-                    <div className="summary-stamp-overlay">
-                      <img
-                        className="summary-stamp-img"
-                        src={stampStatus === "pass" ? "/pass.png" : "/fail.png"}
-                        alt={stampStatus === "pass" ? "PASS" : "FAIL"}
+                </section>
+
+                <section className="section">
+                  <div className="section-header">
+                    <h2 className="section-title">Line Items</h2>
+                  </div>
+                  <div className="groups-list">
+                    {quote.groups.map((group, idx) => (
+                      <QuoteGroupComponent
+                        key={group.id}
+                        group={group}
+                        catalog={productCategories}
+                        onChange={(g) => handleGroupChange(idx, g)}
+                        onRemove={() => handleGroupRemove(idx)}
+                        tieredAdditionalPrice={tieredAdditionalPrice}
                       />
+                    ))}
+                  </div>
+                  {quote.groups.length === 0 && (
+                    <div className="empty-groups">
+                      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" opacity="0.3">
+                        <rect x="5" y="10" width="30" height="22" rx="3" stroke="currentColor" strokeWidth="1.5" />
+                        <path d="M5 16h30" stroke="currentColor" strokeWidth="1.5" />
+                        <path d="M12 22h8M12 26h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                      <p>No groups yet. Add a product group to start building your quote.</p>
                     </div>
                   )}
-                </div>
+                  {!allGroupsAdded && (
+                    <button
+                      type="button"
+                      className="btn-add-group"
+                      onClick={() => setShowAddGroup(true)}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                      Add Product Group
+                    </button>
+                  )}
+                </section>
+
+                {quote.groups.some((g) => g.lineItems.length > 0) && (
+                  <section className="section summary-section">
+                    <h2 className="section-title">Summary</h2>
+                    <div className="summary-stamp-wrap">
+                      <QuoteSummary
+                        quote={quote}
+                        pitTotal={_pitTotal}
+                        productPitTotal={_productPitTotal}
+                        heatmapTotal={_heatmapTotal}
+                        legacyTotal={0}
+                        pspmDiscountPct={pspmDiscountPct}
+                        upfrontPriceDiscountPct={upfrontPriceDiscountPct}
+                        voyixTxnFee={voyixTxnFee}
+                        gatewayTxnRate={gatewayTxnRate}
+                      />
+                      {stampStatus && (
+                        <div className="summary-stamp-overlay">
+                          <img
+                            className="summary-stamp-img"
+                            src={stampStatus === "pass" ? "/pass.png" : "/fail.png"}
+                            alt={stampStatus === "pass" ? "PASS" : "FAIL"}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                )}
+              </>
+            )}
+
+            {/* ── Tab 1: Payments & PIT ── */}
+            {activeTab === 1 && (
+              <>
+                <section className="section">
+                  <h2 className="section-title">Payments Configuration Panel</h2>
+                  <PaymentsConfigPanel meta={quote.meta} onChange={handleMetaChange} />
+                </section>
+
+                <section className="section">
+                  <h2 className="section-title">PIT</h2>
+                  <PitSection
+                    pitType={quote.meta.pitType ?? ""}
+                    onChange={handlePitTypeChange}
+                    recurringPit={quote.meta.recurringPit ?? false}
+                    onRecurringPitChange={handleRecurringPitChange}
+                    yesNoToggles={yesNoToggles}
+                    onYesNoChange={handleYesNoChange}
+                    optionalProgramToggles={optionalProgramToggles}
+                    onOptionalProgramToggle={handleOptionalProgramToggle}
+                    pitCategories={pitCategories}
+                    pitHourlyRate={pitHourlyRate}
+                  />
+                </section>
+
+                <section className="section">
+                  <h2 className="section-title">Heatmap &amp; Cabling</h2>
+                  <HeatmapSection
+                    toggles={heatmapToggles}
+                    onToggle={handleHeatmapToggle}
+                    items={heatmapItems.length > 0 ? heatmapItems : undefined}
+                  />
+                </section>
+              </>
+            )}
+
+            {/* ── Tab 2: Product Related PIT ── */}
+            {activeTab === 2 && (
+              <section className="section">
+                <h2 className="section-title">Product Related PIT</h2>
+                <ProductRelatedPitSection
+                  groups={quote.groups}
+                  yesNoToggles={yesNoToggles}
+                  optionalProgramToggles={optionalProgramToggles}
+                  pitType={quote.meta.pitType ?? ""}
+                  catalogMap={catalogMap}
+                  pitHourlyRate={pitHourlyRate}
+                />
               </section>
             )}
+
           </div>
         </div>
       </div>
