@@ -3490,7 +3490,7 @@ td:has(.inline-cell-input) {
   justify-content: center;
   padding: 6px 6px;
   border-radius: 7px;
-  border: 1.5px solid var(--accent);
+  /*border: 1.5px solid var(--accent);*/
   color: var(--accent);
   font-size: 13px;
   font-weight: 500;
