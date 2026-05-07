@@ -31,36 +31,56 @@ export default function GlobalNav() {
 
   return (
     <>
-      <div className={`gnav-panel${open ? " gnav-open" : ""}`}>
-        <div className="gnav-header">
-          <span className="gnav-title">Navigation</span>
-          <button type="button" className="gnav-close" onClick={() => setOpen(false)} aria-label="Close">
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
+      <div className={`sidebar${open ? " sidebar-open" : ""}`}>
+        <div className="sidebar-inner">
 
-        <div className="gnav-links">
-          <button type="button" className="sidebar-admin-link" onClick={() => go("/")}>
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <path d="M2 6.5L8 2l6 4.5V14H10v-4H6v4H2V6.5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Quote Builder
-          </button>
-
-          {!isAdmin && (
-            <button type="button" className="sidebar-admin-link" onClick={() => go("/my-quotes")}>
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                <path d="M4.5 5.5h7M4.5 8h7M4.5 10.5h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          {/* User profile */}
+          <div className="sidebar-user">
+            <button
+              type="button"
+              className="sidebar-user-btn"
+              onClick={() => go("/profile")}
+            >
+              <div className="sidebar-user-avatar">
+                <span>{(user.fullName?.[0] || user.email?.[0] || "U").toUpperCase()}</span>
+              </div>
+              <div className="sidebar-user-info">
+                <span className="sidebar-user-name">{user.fullName || "Your Account"}</span>
+                <span className="sidebar-user-email">{user.email}</span>
+              </div>
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" className="sidebar-user-chevron">
+                <path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              My Quote Library
             </button>
+          </div>
+
+          {/* Nav links */}
+          {!isAdmin && (
+            <div className="sidebar-user-links">
+              <button type="button" className="sidebar-admin-link" onClick={() => go("/")}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 6.5L8 2l6 4.5V14H10v-4H6v4H2V6.5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Quote Builder
+              </button>
+              <button type="button" className="sidebar-admin-link" onClick={() => go("/my-quotes")}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                  <path d="M4.5 5.5h7M4.5 8h7M4.5 10.5h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                </svg>
+                My Quote Library
+              </button>
+            </div>
           )}
 
           {isAdmin && (
-            <>
+            <div className="sidebar-admin-links">
+              <button type="button" className="sidebar-admin-link" onClick={() => go("/")}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 6.5L8 2l6 4.5V14H10v-4H6v4H2V6.5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Quote Builder
+              </button>
               <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/users")}>
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                   <circle cx="6" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.4" />
@@ -130,23 +150,24 @@ export default function GlobalNav() {
                 </svg>
                 App Release
               </button>
-            </>
+            </div>
           )}
-        </div>
 
-        {appVersion && (
-          <div className="sidebar-version-footer">
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-              <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2" />
-              <path d="M6 4v2.5l1.5 1" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            QuoteBuilder Version {appVersion}
-          </div>
-        )}
+          {appVersion && (
+            <div className="sidebar-version-footer">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2" />
+                <path d="M6 4v2.5l1.5 1" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              QuoteBuilder Version {appVersion}
+            </div>
+          )}
+
+        </div>
       </div>
 
       {open && (
-        <div className="gnav-backdrop" onClick={() => setOpen(false)} />
+        <div className="sidebar-backdrop" onClick={() => setOpen(false)} />
       )}
     </>
   );
