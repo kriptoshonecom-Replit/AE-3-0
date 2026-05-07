@@ -273,12 +273,6 @@ export default function ProfilePage() {
         </div>
 
         <div className="profile-actions">
-          <button className="btn-ghost" type="button" onClick={() => setLocation("/")}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Back to Quotes
-          </button>
           <button className="btn-signout" type="button" onClick={handleSignOut}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M9 2h3v10H9M6 4.5L3 7l3 2.5M3 7h7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />

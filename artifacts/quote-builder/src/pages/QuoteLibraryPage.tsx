@@ -274,17 +274,6 @@ export default function QuoteLibraryPage() {
       {/* ── Top bar ── */}
       <div className="admin-topbar">
         <GlobalNavTrigger />
-        <button
-          type="button"
-          className="btn-ghost admin-back-btn"
-          onClick={() => setLocation("/")}
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Back to Quotes
-        </button>
-
         <h1 className="admin-page-title">Quote Library</h1>
 
         <div className="admin-topbar-right">
