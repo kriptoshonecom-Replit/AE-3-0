@@ -3515,14 +3515,17 @@ td:has(.inline-cell-input) {
 /* ── Admin table media column ─────────────────────────── */
 
 .admin-td-media {
-  width: 44px;
+  width: 52px;
   text-align: center;
 }
 
 .admin-media-icon {
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--surface-subtle);
   display: inline-block;
   vertical-align: middle;
   opacity: 0.85;

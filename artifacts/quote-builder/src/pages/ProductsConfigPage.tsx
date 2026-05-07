@@ -690,7 +690,7 @@ export default function ProductsConfigPage() {
                         <td className="admin-td-bold">{item.name}</td>
                         <td className="admin-td-media">
                           {item.image && (
-                            <img src="/product-btn.png" alt="Has media" className="admin-media-icon" title={item.image} />
+                            <img src={item.image} alt={item.name} className="admin-media-icon" title={item.image} />
                           )}
                         </td>
                         <td><span className={`admin-type-badge type-${item.type}`}>{item.type ?? "—"}</span></td>
