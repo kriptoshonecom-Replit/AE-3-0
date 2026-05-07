@@ -734,6 +734,16 @@ button {
   flex-shrink: 0;
 }
 
+.product-thumb-btn-img {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--surface-subtle);
+  display: block;
+}
+
 .col-info {
   display: flex;
   align-items: center;

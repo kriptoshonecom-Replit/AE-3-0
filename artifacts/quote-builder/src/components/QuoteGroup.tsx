@@ -200,10 +200,9 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
                 aria-label="View product image"
               >
                 <img
-                  src="/product-btn.png"
-                  alt="View product"
-                  className="info-icon-img"
-                  style={{ width: 25, height: 25 }}
+                  src={product.image}
+                  alt={product.name}
+                  className="product-thumb-btn-img"
                 />
               </button>
               {imageModalOpen && (
