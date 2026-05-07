@@ -735,8 +735,8 @@ button {
 }
 
 .product-thumb-btn-img {
-  width: 28px;
-  height: 28px;
+  width: 35px;
+  height: 35px;
   object-fit: cover;
   border-radius: 5px;
   border: 1px solid var(--border);
@@ -3488,7 +3488,7 @@ td:has(.inline-cell-input) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 14px;
+  padding: 6px 6px;
   border-radius: 7px;
   border: 1.5px solid var(--accent);
   color: var(--accent);
