@@ -735,8 +735,8 @@ button {
 }
 
 .product-thumb-btn-img {
-  width: 35px;
-  height: 35px;
+  width: 40px;
+  height: 40px;
   object-fit: cover;
   border-radius: 5px;
   border: 1px solid var(--border);
