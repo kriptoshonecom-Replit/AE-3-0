@@ -3501,7 +3501,8 @@ td:has(.inline-cell-input) {
   transition: background 0.15s, color 0.15s;
 }
 
-.product-img-btn:hover { background: transparent; }
+.product-img-btn:hover { background: var(--accent); color: white; }
+.info-icon-btn.product-img-btn:hover { background: transparent; color: inherit; }
 .product-img-btn[aria-disabled="true"] { opacity: 0.55; pointer-events: none; }
 
 .product-img-error {
