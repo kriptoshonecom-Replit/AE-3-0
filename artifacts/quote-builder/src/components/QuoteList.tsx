@@ -47,6 +47,7 @@ interface Props {
   currentStatus?: "pass" | "fail" | null;
   onSelect: (quote: Quote) => void;
   onNew: () => void;
+  onDuplicate: (quote: Quote) => void;
   refreshTrigger: number;
   userId: string;
   userFullName?: string;
@@ -59,6 +60,7 @@ export default function QuoteList({
   currentStatus,
   onSelect,
   onNew,
+  onDuplicate,
   refreshTrigger,
   userId,
   userFullName,
@@ -225,6 +227,20 @@ export default function QuoteList({
                   </span>
                   <div className="ql-item-top-right">
                     <span className="ql-item-total">{formatCurrency(quoteGrandTotal(q))}</span>
+                    <button
+                      type="button"
+                      className="ql-duplicate"
+                      title="Duplicate quote"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDuplicate(q);
+                      }}
+                    >
+                      <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                        <rect x="5" y="5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                        <path d="M3 11V3h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
                     <button
                       type="button"
                       className="ql-delete"

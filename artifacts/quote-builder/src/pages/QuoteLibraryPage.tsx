@@ -242,6 +242,56 @@ export default function QuoteLibraryPage() {
 
   useEffect(() => { void load(); }, [load]);
 
+  async function handleDuplicate(row: AdminQuoteRow) {
+    if (!row.data) return;
+    const now = new Date().toISOString().slice(0, 10);
+    const copy: Quote = {
+      ...row.data,
+      meta: {
+        ...row.data.meta,
+        id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        quoteNumber: row.data.meta.quoteNumber ? `${row.data.meta.quoteNumber} (Copy)` : "",
+        createdAt: now,
+        updatedAt: now,
+        updatedByName: undefined,
+      },
+      groups: row.data.groups.map((g) => ({
+        ...g,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        lineItems: g.lineItems.map((li) => ({
+          ...li,
+          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        })),
+      })),
+    };
+    try {
+      const res = await fetch(`${API_BASE}/api/quotes/sync`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(copy),
+      });
+      if (!res.ok) throw new Error("Duplicate failed");
+      const newRow: AdminQuoteRow = {
+        id: copy.meta.id,
+        data: copy,
+        quoteNumber: copy.meta.quoteNumber || null,
+        companyName: copy.meta.companyName || null,
+        customerName: copy.meta.customerName || null,
+        createdAt: now,
+        updatedAt: now,
+        updatedByName: null,
+        passStatus: null,
+        userId: row.userId,
+        creatorName: row.creatorName,
+        creatorEmail: row.creatorEmail,
+      };
+      setQuotes((prev) => [newRow, ...prev]);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Duplicate failed");
+    }
+  }
+
   async function handleDelete(id: string, ownerId: string) {
     if (!window.confirm("Permanently delete this quote?")) return;
     try {
@@ -389,6 +439,18 @@ export default function QuoteLibraryPage() {
                             <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                           Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="admin-btn-duplicate"
+                          onClick={() => void handleDuplicate(row)}
+                          title="Duplicate quote"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                            <rect x="5" y="5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                            <path d="M3 11V3h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          Duplicate
                         </button>
                         <button
                           type="button"

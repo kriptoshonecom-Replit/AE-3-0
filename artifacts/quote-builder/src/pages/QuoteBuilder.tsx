@@ -803,6 +803,34 @@ export default function QuoteBuilder() {
     void saveQuoteToServerNow(newQ).then(() => setRefreshTrigger((n) => n + 1));
   };
 
+  const handleDuplicateQuote = (source: Quote) => {
+    const now = todayString();
+    const copy: Quote = {
+      ...source,
+      meta: {
+        ...source.meta,
+        id: generateId(),
+        quoteNumber: source.meta.quoteNumber ? `${source.meta.quoteNumber} (Copy)` : "",
+        createdAt: now,
+        updatedAt: now,
+        updatedByName: undefined,
+      },
+      groups: source.groups.map((g) => ({
+        ...g,
+        id: generateId(),
+        lineItems: g.lineItems.map((li) => ({ ...li, id: generateId() })),
+      })),
+    };
+    setQuote(copy);
+    if (copy.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...copy.meta.yesNoToggles });
+    setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(copy.meta.optionalProgramToggles ?? {}) });
+    setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(copy.meta.heatmapToggles ?? {}) });
+    saveQuote(copy, userId!);
+    isDirtyRef.current = false;
+    setSidebarOpen(false);
+    void saveQuoteToServerNow(copy).then(() => setRefreshTrigger((n) => n + 1));
+  };
+
   // Collect all alert-config mismatches for the given groups
   const collectMismatches = (groups: QuoteGroup[]): AlertEntry[] => {
     const result: AlertEntry[] = [];
@@ -1012,6 +1040,7 @@ export default function QuoteBuilder() {
             currentStatus={stampStatus}
             onSelect={handleSelectQuote}
             onNew={handleNewQuote}
+            onDuplicate={handleDuplicateQuote}
             refreshTrigger={refreshTrigger}
             userId={userId}
             userFullName={user?.fullName}
