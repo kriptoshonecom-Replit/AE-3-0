@@ -2707,6 +2707,7 @@ textarea:focus::placeholder {
 }
 
 .sidebar-version-footer {
+  margin-top: auto;
   display: flex;
   align-items: center;
   gap: 5px;
