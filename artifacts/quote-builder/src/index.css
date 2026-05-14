@@ -1371,22 +1371,6 @@ textarea:focus::placeholder {
   white-space: nowrap;
 }
 
-.ql-duplicate {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  color: var(--text-3);
-  transition: all 0.12s;
-}
-
-.ql-duplicate:hover {
-  background: #e0f2fe;
-  color: #0ea5e9;
-}
-
 .ql-delete {
   display: flex;
   align-items: center;
@@ -3264,27 +3248,6 @@ td:has(.inline-cell-input) {
   border-color: var(--danger);
   color: var(--danger);
   background: var(--danger-light);
-}
-
-.admin-btn-duplicate {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-2);
-  cursor: pointer;
-  transition: all 0.12s;
-  white-space: nowrap;
-}
-
-.admin-btn-duplicate:hover {
-  border-color: #0ea5e9;
-  color: #0ea5e9;
 }
 
 /* ── Admin modal ─────────────────────────────────────── */
