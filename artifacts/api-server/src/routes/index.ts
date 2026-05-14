@@ -11,6 +11,7 @@ import quotesSyncRouter from "./quotesSync";
 import adminQuotesRouter from "./adminQuotes";
 import adminLogJournalRouter from "./adminLogJournal";
 import { adminReleaseRouter, publicReleaseRouter } from "./adminRelease";
+import adminDashboardRouter from "./adminDashboard";
 
 const router: IRouter = Router();
 
@@ -31,6 +32,7 @@ router.use("/admin", pitAdminRouter);
 router.use("/admin", adminMediaRouter);
 router.use(adminQuotesRouter);
 router.use(adminLogJournalRouter);
+router.use(adminDashboardRouter);
 router.use("/admin", adminReleaseRouter);
 
 export default router;
