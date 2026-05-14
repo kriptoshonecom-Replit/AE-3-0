@@ -140,6 +140,14 @@ export default function AddressMapSection({ values, onChange }: Props) {
 
       mapRef.current = map;
       setMapReady(true);
+
+      // Force Leaflet to recalculate container dimensions after the
+      // browser has finished painting — fixes blank/broken tile render
+      // on first mount, especially on desktop where CSS layout may
+      // settle a frame after the map element is inserted.
+      requestAnimationFrame(() => {
+        map.invalidateSize();
+      });
     });
 
     return () => {
