@@ -83,6 +83,10 @@ body {
   overflow: hidden;
 }
 
+.sidebar-slot {
+  display: contents;
+}
+
 .sidebar-inner .quote-list {
   flex: 1;
   overflow-y: auto;

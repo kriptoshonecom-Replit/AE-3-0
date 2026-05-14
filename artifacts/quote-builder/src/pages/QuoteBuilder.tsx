@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useGlobalNav } from "@/context/GlobalNavContext";
 import { useLocation } from "wouter";
 import logo from "/logo.png";
 import type { Quote, QuoteGroup, QuoteLineItem, QuoteMeta, ProductCategory, PitCategory } from "../types";
@@ -147,7 +149,7 @@ export default function QuoteBuilder() {
   const [quote, setQuote] = useState<Quote>(createNewQuote);
   const [initialized, setInitialized] = useState(false);
   const [showAddGroup, setShowAddGroup] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { open: sidebarOpen, setOpen: setSidebarOpen } = useGlobalNav();
   const [activeTab, setActiveTab] = useState(0);
   const [appVersion, setAppVersion] = useState<string>("");
 
@@ -986,191 +988,19 @@ export default function QuoteBuilder() {
         />
       )}
 
-      {/* Sidebar */}
-      <div className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
-        <div className="sidebar-inner">
-          <div className="sidebar-user">
-            <button
-              type="button"
-              className="sidebar-user-btn"
-              onClick={() => { setLocation("/profile"); setSidebarOpen(false); }}
-            >
-              <div className="sidebar-user-avatar">
-                <span>{(user?.fullName?.[0] || user?.email?.[0] || "U").toUpperCase()}</span>
-              </div>
-              <div className="sidebar-user-info">
-                <span className="sidebar-user-name">{user?.fullName || "Your Account"}</span>
-                <span className="sidebar-user-email">{user?.email}</span>
-              </div>
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" className="sidebar-user-chevron">
-                <path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </div>
-          <QuoteList
-            currentId={quote.meta.id}
-            currentStatus={stampStatus}
-            onSelect={handleSelectQuote}
-            onNew={handleNewQuote}
-            refreshTrigger={refreshTrigger}
-            userId={userId}
-            userFullName={user?.fullName}
-            isAdmin={user?.role === "admin"}
-            apiBase={API_BASE}
-          />
-
-          {user?.role !== "admin" && (
-            <div className="sidebar-user-links">
-              <button
-                type="button"
-                className="sidebar-admin-link"
-                onClick={() => { setLocation("/my-quotes"); setSidebarOpen(false); }}
-              >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  <path d="M4.5 5.5h7M4.5 8h7M4.5 10.5h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                </svg>
-                My Quote Library
-              </button>
-            </div>
-          )}
-
-          {user?.role === "admin" && (
-            <div className="sidebar-admin-links">
-              <button
-                type="button"
-                className="sidebar-admin-link"
-                onClick={() => { setLocation("/admin/dashboard"); setSidebarOpen(false); }}
-              >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="9" y="1.5" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="1.5" y="9" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="9" y="9" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                </svg>
-                Dashboard
-              </button>
-              <button
-                type="button"
-                className="sidebar-admin-link"
-                onClick={() => { setLocation("/admin/users"); setSidebarOpen(false); }}
-              >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <circle cx="6" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.4" />
-                  <path d="M1 13c0-2.5 2-4 5-4s5 1.5 5 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                  <path d="M13 7v4M11 9h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                </svg>
-                Users
-              </button>
-              <button
-                type="button"
-                className="sidebar-admin-link"
-                onClick={() => { setLocation("/admin/products"); setSidebarOpen(false); }}
-              >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <rect x="1.5" y="1.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="9.5" y="1.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="1.5" y="9.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="9.5" y="9.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                </svg>
-                Products Configuration
-              </button>
-              <button
-                type="button"
-                className="sidebar-admin-link"
-                onClick={() => { setLocation("/admin/pit"); setSidebarOpen(false); }}
-              >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M2 12V4l5-2 5 2v8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M7 14v-4h2v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M4 7h2M10 7h2M4 10h2M10 10h2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                </svg>
-                PIT Configuration
-              </button>
-              <button
-                type="button"
-                className="sidebar-admin-link"
-                onClick={() => { setLocation("/admin/media"); setSidebarOpen(false); }}
-              >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  <circle cx="5.5" cy="7" r="1.5" stroke="currentColor" strokeWidth="1.2" />
-                  <path d="M1.5 11l3.5-3 3 3 2.5-2.5 3.5 3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                Media Files
-              </button>
-              <button
-                type="button"
-                className="sidebar-admin-link"
-                onClick={() => { setLocation("/admin/alerts"); setSidebarOpen(false); }}
-              >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 2a5 5 0 0 1 5 5c0 2.5.8 3.5 1.5 4.5H1.5C2.2 10.5 3 9.5 3 7a5 5 0 0 1 5-5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M6.5 11.5a1.5 1.5 0 0 0 3 0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                </svg>
-                Alert Configuration
-              </button>
-              <button
-                type="button"
-                className="sidebar-admin-link"
-                onClick={() => { setLocation("/admin/status-pass"); setSidebarOpen(false); }}
-              >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  <path d="M1.5 7h13" stroke="currentColor" strokeWidth="1.2" />
-                  <path d="M5.5 7v5.5M10.5 7v5.5" stroke="currentColor" strokeWidth="1.2" />
-                </svg>
-                StatusPass Config
-              </button>
-              <button
-                type="button"
-                className="sidebar-admin-link"
-                onClick={() => { setLocation("/admin/quote-library"); setSidebarOpen(false); }}
-              >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  <path d="M4.5 5.5h7M4.5 8h7M4.5 10.5h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                </svg>
-                Quote Library
-              </button>
-              <button
-                type="button"
-                className="sidebar-admin-link"
-                onClick={() => { setLocation("/admin/log-journal"); setSidebarOpen(false); }}
-              >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M2 4h12M2 8h8M2 12h5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                  <circle cx="13" cy="11.5" r="2.5" stroke="currentColor" strokeWidth="1.3" />
-                  <path d="M13 10.5v1l.7.7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                </svg>
-                Log Journals
-              </button>
-              <button
-                type="button"
-                className="sidebar-admin-link"
-                onClick={() => { setLocation("/admin/app-release"); setSidebarOpen(false); }}
-              >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 2L13 8M13 8L8 14M13 8H3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                App Release
-              </button>
-            </div>
-          )}
-          {appVersion && (
-            <div className="sidebar-version-footer">
-              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-                <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2" />
-                <path d="M6 4v2.5l1.5 1" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              QuoteBuilder Version {appVersion}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {sidebarOpen && (
-        <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />
+      {createPortal(
+        <QuoteList
+          currentId={quote.meta.id}
+          currentStatus={stampStatus}
+          onSelect={handleSelectQuote}
+          onNew={handleNewQuote}
+          refreshTrigger={refreshTrigger}
+          userId={userId}
+          userFullName={user?.fullName}
+          isAdmin={user?.role === "admin"}
+          apiBase={API_BASE}
+        />,
+        document.getElementById("global-sidebar-slot") ?? document.body
       )}
 
       {/* Main */}

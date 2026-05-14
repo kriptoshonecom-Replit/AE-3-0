@@ -54,6 +54,9 @@ export default function GlobalNav() {
             </button>
           </div>
 
+          {/* Sidebar slot — QuoteBuilder portals QuoteList here */}
+          <div id="global-sidebar-slot" className="sidebar-slot" />
+
           {/* Nav links */}
           {!isAdmin && (
             <div className="sidebar-user-links">
