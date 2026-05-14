@@ -184,47 +184,24 @@ export async function exportQuoteToPDF(
   if (quote.meta.customerEmail)
     rightRow("Customer Email:", quote.meta.customerEmail);
 
-  // ── Business Operation Address ──────────────────────
-  const addrParts = [
-    [quote.meta.addressNumber, quote.meta.addressName].filter(Boolean).join(" "),
-    quote.meta.zipCode,
-    quote.meta.addressCountry,
-  ].filter(Boolean);
+  // ── Business Operation Address — right column, below customer info ──
+  const addrStreet = [quote.meta.addressNumber, quote.meta.addressName]
+    .filter(Boolean).join(" ");
+  const addrStateZip = [quote.meta.addressState, quote.meta.zipCode]
+    .filter(Boolean).join(", ");
 
-  if (addrParts.length > 0) {
-    const addrLine1 = addrParts[0];
-    const addrLine2 = addrParts.slice(1).join(", ");
-
-    y = Math.max(leftY, rightY) + 3;
-
-    const addrBoxH = addrLine2 ? 19 : 14;
-    doc.setFillColor(248, 250, 252);
-    doc.rect(margin, y, contentWidth, addrBoxH, "F");
-    doc.setDrawColor(220, 220, 218);
-    doc.setLineWidth(0.3);
-    doc.rect(margin, y, contentWidth, addrBoxH, "S");
-
-    // Left accent strip
-    doc.setFillColor(124, 58, 237);
-    doc.rect(margin, y, 2.5, addrBoxH, "F");
-
-    y += 4;
+  if (addrStreet || addrStateZip || quote.meta.addressCountry) {
+    // Small divider label on the right
+    rightY += 1.5;
     doc.setFontSize(7);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(120, 120, 118);
-    doc.text("BUSINESS OPERATION ADDRESS", margin + 6, y);
-    y += 4.5;
-    doc.setFontSize(8.5);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(30, 41, 59);
-    if (addrLine1) doc.text(addrLine1, margin + 6, y);
-    if (addrLine2) {
-      y += 4.5;
-      doc.text(addrLine2, margin + 6, y);
-    }
+    doc.setTextColor(150, 150, 148);
+    doc.text("BUSINESS ADDRESS", rightLabelStart, rightY);
+    rightY += 4;
 
-    leftY = y + 4;
-    rightY = leftY;
+    if (addrStreet) rightRow("Street:", addrStreet);
+    if (addrStateZip) rightRow("State / ZIP:", addrStateZip);
+    if (quote.meta.addressCountry) rightRow("Country:", quote.meta.addressCountry);
   }
 
   const parseCrAmt = (v?: string) => {
