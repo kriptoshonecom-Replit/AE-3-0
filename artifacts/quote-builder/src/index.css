@@ -587,6 +587,113 @@ button {
   background: var(--surface);
 }
 
+/* ── Business Operation Address ─────────────────────── */
+
+.address-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.address-section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-3);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.address-section-icon {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.address-fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.address-fields-grid .field-group label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-3);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.address-fields-grid .field-group input,
+.address-fields-grid .field-group select {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  font-size: 13.5px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+.address-fields-grid .field-group select {
+  cursor: pointer;
+  appearance: auto;
+}
+
+.address-fields-grid .field-group input:focus,
+.address-fields-grid .field-group select:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+.address-map-wrap {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  height: 220px;
+  background: var(--surface);
+}
+
+.address-map {
+  width: 100%;
+  height: 100%;
+}
+
+.address-map-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+  color: var(--text-2);
+  backdrop-filter: blur(2px);
+}
+
+.address-geo-error {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: #fff3cd;
+  border: 1px solid #f0c040;
+  color: #7a5c00;
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 /* ── Quote Group ─────────────────────────────────────── */
 
 .quote-group {

@@ -1,5 +1,7 @@
 import React, { useState } from "react";
+import "leaflet/dist/leaflet.css";
 import type { QuoteMeta } from "../types";
+import AddressMapSection from "./AddressMapSection";
 
 interface Props {
   meta: QuoteMeta;
@@ -117,6 +119,18 @@ export default function QuoteMetaForm({ meta, onChange, pspmDiscountPct, upfront
               className="input-readonly-computed"
             />
           </div>
+        </div>
+
+        <div className="field-group span-2">
+          <AddressMapSection
+            values={{
+              addressName: meta.addressName ?? "",
+              addressNumber: meta.addressNumber ?? "",
+              zipCode: meta.zipCode ?? "",
+              addressCountry: meta.addressCountry ?? "",
+            }}
+            onChange={(fields) => onChange({ ...meta, ...fields })}
+          />
         </div>
 
         <div className="field-group span-2">

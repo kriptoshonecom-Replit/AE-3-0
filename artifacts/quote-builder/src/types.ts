@@ -79,6 +79,10 @@ export interface QuoteMeta {
   creatorName?: string;
   updatedByName?: string;
   passStatus?: "pass" | "fail";
+  addressName?: string;
+  addressNumber?: string;
+  zipCode?: string;
+  addressCountry?: string;
 }
 
 export interface PitLineItem {
