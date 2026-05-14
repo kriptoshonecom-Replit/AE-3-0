@@ -694,54 +694,6 @@ button {
   pointer-events: none;
 }
 
-.address-poi-bar {
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: rgba(255,255,255,0.92);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 4px 8px;
-  backdrop-filter: blur(4px);
-  box-shadow: 0 1px 6px rgba(0,0,0,0.1);
-  white-space: nowrap;
-}
-
-.address-poi-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 3px 9px;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-3);
-  cursor: pointer;
-  transition: all 0.12s;
-}
-
-.address-poi-btn.active {
-  background: transparent;
-}
-
-.address-poi-btn:hover {
-  opacity: 0.8;
-}
-
-.address-poi-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
 
 /* ── Quote Group ─────────────────────────────────────── */
 

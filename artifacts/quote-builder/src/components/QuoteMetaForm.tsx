@@ -126,8 +126,9 @@ export default function QuoteMetaForm({ meta, onChange, pspmDiscountPct, upfront
             values={{
               addressName: meta.addressName ?? "",
               addressNumber: meta.addressNumber ?? "",
+              addressState: meta.addressState ?? "",
               zipCode: meta.zipCode ?? "",
-              addressCountry: meta.addressCountry ?? "",
+              addressCountry: meta.addressCountry ?? "United States",
             }}
             onChange={(fields) => onChange({ ...meta, ...fields })}
           />

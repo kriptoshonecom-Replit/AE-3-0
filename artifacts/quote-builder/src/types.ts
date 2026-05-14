@@ -81,6 +81,7 @@ export interface QuoteMeta {
   passStatus?: "pass" | "fail";
   addressName?: string;
   addressNumber?: string;
+  addressState?: string;
   zipCode?: string;
   addressCountry?: string;
 }
