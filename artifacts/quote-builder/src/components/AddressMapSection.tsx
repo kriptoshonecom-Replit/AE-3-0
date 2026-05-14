@@ -27,15 +27,10 @@ const COUNTRIES = [
 interface NominatimAddress {
   house_number?: string;
   road?: string;
-  suburb?: string;
-  city?: string;
-  town?: string;
-  village?: string;
-  county?: string;
   state?: string;
+  county?: string;
   postcode?: string;
   country?: string;
-  country_code?: string;
 }
 
 interface NominatimReverseResult {
@@ -50,10 +45,7 @@ function buildQuery(f: AddressFields): string {
 
 function matchCountry(raw: string | undefined): string {
   if (!raw) return "United States";
-  const found = COUNTRIES.find(
-    (c) => c.toLowerCase() === raw.toLowerCase()
-  );
-  return found ?? raw;
+  return COUNTRIES.find((c) => c.toLowerCase() === raw.toLowerCase()) ?? raw;
 }
 
 export default function AddressMapSection({ values, onChange }: Props) {
@@ -61,40 +53,55 @@ export default function AddressMapSection({ values, onChange }: Props) {
   const mapRef = useRef<LeafletMap | null>(null);
   const markerRef = useRef<import("leaflet").Marker | null>(null);
   const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const skipForwardRef = useRef(false);
+
+  // Keep latest onChange in a ref — the map click handler reads from this
+  // so the map init effect never needs to re-run when onChange changes.
+  const onChangeRef = useRef(onChange);
+  useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
+
+  // When this is >0 we skip the next forward-geocode tick (prevents the
+  // fields filled by reverse-geocode from bouncing the map back).
+  const skipForwardRef = useRef(0);
+
   const [mapReady, setMapReady] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [reversing, setReversing] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
 
+  // Stable reverse-geocode called directly from the map click handler via ref.
   const reverseGeocode = useCallback(async (lat: number, lon: number) => {
     setReversing(true);
     setGeoError(null);
     try {
-      const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`;
+      const url =
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`;
       const res = await fetch(url, { headers: { "Accept-Language": "en" } });
       const data = await res.json() as NominatimReverseResult;
       const addr = data.address ?? {};
 
-      skipForwardRef.current = true;
-      onChange({
+      // Suppress the next forward-geocode triggered by these field changes.
+      skipForwardRef.current += 1;
+
+      onChangeRef.current({
         addressNumber: addr.house_number ?? "",
         addressName: addr.road ?? "",
         addressState: addr.state ?? addr.county ?? "",
         zipCode: addr.postcode ?? "",
         addressCountry: matchCountry(addr.country),
       });
-
-      setTimeout(() => { skipForwardRef.current = false; }, 1500);
     } catch {
       setGeoError("Could not fetch address for this location.");
     } finally {
       setReversing(false);
     }
-  }, [onChange]);
+  }, []); // no deps — reads onChange via onChangeRef
 
+  // ── Map initialisation — runs exactly once ────────────────────────────
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
+
+    // Keep a stable reference to the callback for the click listener.
+    const reverseGeocodeStable = reverseGeocode;
 
     import("leaflet").then((L) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -113,10 +120,12 @@ export default function AddressMapSection({ values, onChange }: Props) {
       });
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        attribution:
+          '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
       }).addTo(map);
 
+      // Click / POI tap → place pin + reverse geocode
       map.on("click", (e: import("leaflet").LeafletMouseEvent) => {
         const { lat, lng } = e.latlng;
 
@@ -126,7 +135,7 @@ export default function AddressMapSection({ values, onChange }: Props) {
           markerRef.current = L.marker([lat, lng]).addTo(map);
         }
 
-        void reverseGeocode(lat, lng);
+        void reverseGeocodeStable(lat, lng);
       });
 
       mapRef.current = map;
@@ -137,8 +146,10 @@ export default function AddressMapSection({ values, onChange }: Props) {
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [reverseGeocode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally empty — map is created once, never torn down on re-renders
 
+  // ── Forward geocode (fields → pin) ───────────────────────────────────
   const geocode = useCallback(async (fields: AddressFields) => {
     const query = buildQuery(fields);
     if (!query || !mapRef.current) return;
@@ -147,13 +158,13 @@ export default function AddressMapSection({ values, onChange }: Props) {
     setGeoError(null);
 
     try {
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
+      const url =
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
       const res = await fetch(url, { headers: { "Accept-Language": "en" } });
       const data = await res.json() as Array<{ lat: string; lon: string }>;
 
       if (!data || data.length === 0) {
         setGeoError("Address not found — try adding more detail.");
-        setGeocoding(false);
         return;
       }
 
@@ -176,15 +187,24 @@ export default function AddressMapSection({ values, onChange }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!mapReady || skipForwardRef.current) return;
+    if (!mapReady) return;
+
+    // If this update was caused by a reverse geocode, skip forward geocode.
+    if (skipForwardRef.current > 0) {
+      skipForwardRef.current -= 1;
+      return;
+    }
+
     const query = buildQuery(values);
     if (!query) return;
 
     if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
     geocodeTimer.current = setTimeout(() => { void geocode(values); }, 900);
 
-    return () => { if (geocodeTimer.current) clearTimeout(geocodeTimer.current); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [values.addressName, values.addressNumber, values.addressState, values.zipCode, values.addressCountry, mapReady, geocode]);
 
   const set = (key: keyof AddressFields) =>
@@ -197,8 +217,11 @@ export default function AddressMapSection({ values, onChange }: Props) {
     <div className="address-section">
       <div className="address-section-header">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="address-section-icon">
-          <path d="M8 1.5C5.515 1.5 3.5 3.515 3.5 6c0 3.5 4.5 8.5 4.5 8.5s4.5-5 4.5-8.5c0-2.485-2.015-4.5-4.5-4.5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
-          <circle cx="8" cy="6" r="1.5" stroke="currentColor" strokeWidth="1.3"/>
+          <path
+            d="M8 1.5C5.515 1.5 3.5 3.515 3.5 6c0 3.5 4.5 8.5 4.5 8.5s4.5-5 4.5-8.5c0-2.485-2.015-4.5-4.5-4.5z"
+            stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"
+          />
+          <circle cx="8" cy="6" r="1.5" stroke="currentColor" strokeWidth="1.3" />
         </svg>
         Business Operation Address
       </div>
@@ -206,19 +229,31 @@ export default function AddressMapSection({ values, onChange }: Props) {
       <div className="address-fields-grid">
         <div className="field-group">
           <label>Street Name</label>
-          <input type="text" value={values.addressName} onChange={set("addressName")} placeholder="e.g. Main Street" />
+          <input
+            type="text" value={values.addressName}
+            onChange={set("addressName")} placeholder="e.g. Main Street"
+          />
         </div>
         <div className="field-group">
           <label>Street Number</label>
-          <input type="text" value={values.addressNumber} onChange={set("addressNumber")} placeholder="e.g. 123" />
+          <input
+            type="text" value={values.addressNumber}
+            onChange={set("addressNumber")} placeholder="e.g. 123"
+          />
         </div>
         <div className="field-group">
           <label>State / Province</label>
-          <input type="text" value={values.addressState} onChange={set("addressState")} placeholder="e.g. California" />
+          <input
+            type="text" value={values.addressState}
+            onChange={set("addressState")} placeholder="e.g. California"
+          />
         </div>
         <div className="field-group">
           <label>ZIP / Postal Code</label>
-          <input type="text" value={values.zipCode} onChange={set("zipCode")} placeholder="e.g. 90210" />
+          <input
+            type="text" value={values.zipCode}
+            onChange={set("zipCode")} placeholder="e.g. 90210"
+          />
         </div>
         <div className="field-group span-2">
           <label>Country</label>
@@ -241,8 +276,8 @@ export default function AddressMapSection({ values, onChange }: Props) {
         <div ref={mapContainerRef} className="address-map" style={{ cursor: "crosshair" }} />
         <div className="address-map-hint">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M8 7v5M8 5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4" />
+            <path d="M8 7v5M8 5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           Click anywhere on the map — or select a POI — to auto-fill address fields
         </div>
