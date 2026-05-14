@@ -1225,9 +1225,12 @@ export default function QuoteBuilder() {
             Quote
           </button>
           <button className={`qb-tab${activeTab === 1 ? " qb-tab-active" : ""}`} onClick={() => setActiveTab(1)}>
-            Payments &amp; PIT
+            Line Items
           </button>
           <button className={`qb-tab${activeTab === 2 ? " qb-tab-active" : ""}`} onClick={() => setActiveTab(2)}>
+            Payments &amp; PIT
+          </button>
+          <button className={`qb-tab${activeTab === 3 ? " qb-tab-active" : ""}`} onClick={() => setActiveTab(3)}>
             Product PIT
           </button>
         </div>
@@ -1253,7 +1256,12 @@ export default function QuoteBuilder() {
                     upfrontPriceDiscountPct={upfrontPriceDiscountPct}
                   />
                 </section>
+              </>
+            )}
 
+            {/* ── Tab 1: Line Items ── */}
+            {activeTab === 1 && (
+              <>
                 <section className="section">
                   <div className="section-header">
                     <h2 className="section-title">Line Items</h2>
@@ -1324,8 +1332,8 @@ export default function QuoteBuilder() {
               </>
             )}
 
-            {/* ── Tab 1: Payments & PIT ── */}
-            {activeTab === 1 && (
+            {/* ── Tab 2: Payments & PIT ── */}
+            {activeTab === 2 && (
               <>
                 <section className="section">
                   <h2 className="section-title">Payments Configuration Panel</h2>
@@ -1359,8 +1367,8 @@ export default function QuoteBuilder() {
               </>
             )}
 
-            {/* ── Tab 2: Product Related PIT ── */}
-            {activeTab === 2 && (
+            {/* ── Tab 3: Product Related PIT ── */}
+            {activeTab === 3 && (
               <section className="section">
                 <h2 className="section-title">Product Related PIT</h2>
                 <ProductRelatedPitSection

@@ -184,6 +184,49 @@ export async function exportQuoteToPDF(
   if (quote.meta.customerEmail)
     rightRow("Customer Email:", quote.meta.customerEmail);
 
+  // ── Business Operation Address ──────────────────────
+  const addrParts = [
+    [quote.meta.addressNumber, quote.meta.addressName].filter(Boolean).join(" "),
+    quote.meta.zipCode,
+    quote.meta.addressCountry,
+  ].filter(Boolean);
+
+  if (addrParts.length > 0) {
+    const addrLine1 = addrParts[0];
+    const addrLine2 = addrParts.slice(1).join(", ");
+
+    y = Math.max(leftY, rightY) + 3;
+
+    const addrBoxH = addrLine2 ? 19 : 14;
+    doc.setFillColor(248, 250, 252);
+    doc.rect(margin, y, contentWidth, addrBoxH, "F");
+    doc.setDrawColor(220, 220, 218);
+    doc.setLineWidth(0.3);
+    doc.rect(margin, y, contentWidth, addrBoxH, "S");
+
+    // Left accent strip
+    doc.setFillColor(124, 58, 237);
+    doc.rect(margin, y, 2.5, addrBoxH, "F");
+
+    y += 4;
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(120, 120, 118);
+    doc.text("BUSINESS OPERATION ADDRESS", margin + 6, y);
+    y += 4.5;
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(30, 41, 59);
+    if (addrLine1) doc.text(addrLine1, margin + 6, y);
+    if (addrLine2) {
+      y += 4.5;
+      doc.text(addrLine2, margin + 6, y);
+    }
+
+    leftY = y + 4;
+    rightY = leftY;
+  }
+
   const parseCrAmt = (v?: string) => {
     const n = parseFloat((v ?? "").replace(/[^0-9.]/g, ""));
     return n > 0 ? formatCurrency(n) : null;
