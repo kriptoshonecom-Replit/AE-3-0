@@ -221,6 +221,7 @@ export default function QuoteLibraryPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [editRow, setEditRow] = useState<AdminQuoteRow | null>(null);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -241,6 +242,25 @@ export default function QuoteLibraryPage() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+
+  async function handleDuplicate(id: string) {
+    setDuplicatingId(id);
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/quotes/${id}/duplicate`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const d = (await res.json()) as { error?: string };
+        throw new Error(d.error ?? "Duplicate failed");
+      }
+      await load();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to duplicate quote");
+    } finally {
+      setDuplicatingId(null);
+    }
+  }
 
   async function handleDelete(id: string, ownerId: string) {
     if (!window.confirm("Permanently delete this quote?")) return;
@@ -389,6 +409,23 @@ export default function QuoteLibraryPage() {
                             <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                           Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="admin-btn-edit"
+                          onClick={() => void handleDuplicate(row.id)}
+                          disabled={duplicatingId === row.id}
+                          title="Duplicate quote (copy assigned to original owner)"
+                        >
+                          {duplicatingId === row.id ? (
+                            <span className="spinner" style={{ width: 11, height: 11 }} />
+                          ) : (
+                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                              <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                              <path d="M3 11V2h9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                          {duplicatingId === row.id ? "Copying…" : "Duplicate"}
                         </button>
                         <button
                           type="button"

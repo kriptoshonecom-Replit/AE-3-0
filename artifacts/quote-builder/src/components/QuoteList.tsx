@@ -47,6 +47,7 @@ interface Props {
   currentStatus?: "pass" | "fail" | null;
   onSelect: (quote: Quote) => void;
   onNew: () => void;
+  onDuplicate?: (quote: Quote) => Promise<void>;
   refreshTrigger: number;
   userId: string;
   userFullName?: string;
@@ -59,6 +60,7 @@ export default function QuoteList({
   currentStatus,
   onSelect,
   onNew,
+  onDuplicate,
   refreshTrigger,
   userId,
   userFullName,
@@ -66,6 +68,7 @@ export default function QuoteList({
 }: Props) {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const hasFetchedOnce = useRef(false);
 
   // Fetch quotes from server whenever refreshTrigger changes.
@@ -225,6 +228,28 @@ export default function QuoteList({
                   </span>
                   <div className="ql-item-top-right">
                     <span className="ql-item-total">{formatCurrency(quoteGrandTotal(q))}</span>
+                    {onDuplicate && (
+                      <button
+                        type="button"
+                        className="ql-duplicate"
+                        title="Duplicate quote"
+                        disabled={duplicatingId === q.meta.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDuplicatingId(q.meta.id);
+                          onDuplicate(q).finally(() => setDuplicatingId(null));
+                        }}
+                      >
+                        {duplicatingId === q.meta.id ? (
+                          <span className="spinner" style={{ width: 10, height: 10 }} />
+                        ) : (
+                          <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+                            <rect x="4" y="4" width="8" height="8" rx="1.2" stroke="currentColor" strokeWidth="1.4" />
+                            <path d="M2 10V2h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="ql-delete"

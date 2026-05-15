@@ -1526,6 +1526,27 @@ textarea:focus::placeholder {
   color: var(--danger);
 }
 
+.ql-duplicate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  color: var(--text-3);
+  transition: all 0.12s;
+}
+
+.ql-duplicate:hover {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.ql-duplicate:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 /* ── Add Group Modal ─────────────────────────────────── */
 
 .modal-overlay {

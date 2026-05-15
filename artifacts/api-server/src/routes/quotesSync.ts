@@ -117,7 +117,7 @@ router.post("/quotes/sync", requireAuth, async (req, res) => {
 router.patch("/quotes/:id", requireAuth, async (req, res) => {
   const userId = req.auth!.userId;
   const { fullName } = req.auth!;
-  const { id } = req.params;
+  const id = String(req.params.id);
   const { meta, passStatus } = req.body as {
     meta: Record<string, unknown>;
     passStatus?: string | null;
@@ -139,7 +139,7 @@ router.patch("/quotes/:id", requireAuth, async (req, res) => {
     const existingMeta = (existingData.meta ?? {}) as Record<string, unknown>;
     const now = new Date();
 
-    const newMeta = {
+    const newMeta: Record<string, unknown> = {
       ...existingMeta,
       ...meta,
       updatedAt: now.toISOString().split("T")[0],
@@ -168,9 +168,64 @@ router.patch("/quotes/:id", requireAuth, async (req, res) => {
   }
 });
 
+/* ── POST /api/quotes/:id/duplicate — create a copy for the same user ── */
+router.post("/quotes/:id/duplicate", requireAuth, async (req, res) => {
+  const { userId } = req.auth!;
+  const id = String(req.params.id);
+  try {
+    const existing = await db
+      .select()
+      .from(quotesTable)
+      .where(and(eq(quotesTable.id, id), eq(quotesTable.userId, userId)))
+      .limit(1);
+
+    if (!existing.length) {
+      res.status(404).json({ error: "Quote not found" });
+      return;
+    }
+
+    const original = existing[0].data as Record<string, unknown>;
+    const originalMeta = ((original.meta ?? {}) as Record<string, unknown>);
+    const now = new Date();
+    const newId = Math.random().toString(36).slice(2, 10);
+    const today = now.toISOString().split("T")[0];
+    const origNumber = (originalMeta.quoteNumber as string | undefined) ?? "";
+
+    const newMeta: Record<string, unknown> = {
+      ...originalMeta,
+      id: newId,
+      quoteNumber: origNumber ? `Copy of ${origNumber}` : "Copy",
+      createdAt: today,
+      updatedAt: today,
+      passStatus: null,
+      updatedByName: null,
+      updatedByUserId: null,
+    };
+
+    const newData = { ...original, meta: newMeta };
+
+    await db.insert(quotesTable).values({
+      id: newId,
+      userId,
+      data: newData,
+      quoteNumber: (newMeta.quoteNumber as string) || null,
+      companyName: (newMeta.companyName as string) || null,
+      customerName: (newMeta.customerName as string) || null,
+      passStatus: null,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    res.json({ ok: true, id: newId, quote: newData });
+  } catch (err) {
+    req.log.error(err, "POST /quotes/:id/duplicate error");
+    res.status(500).json({ error: "Failed to duplicate quote" });
+  }
+});
+
 router.delete("/quotes/:id", requireAuth, async (req, res) => {
   const userId = req.auth!.userId;
-  const { id } = req.params;
+  const id = String(req.params.id);
   try {
     await db
       .delete(quotesTable)

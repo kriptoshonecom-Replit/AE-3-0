@@ -863,6 +863,21 @@ export default function QuoteBuilder() {
     runPreflightCheck("new");
   };
 
+  const handleDuplicateQuote = async (q: Quote) => {
+    const res = await fetch(`/api/quotes/${q.meta.id}/duplicate`, {
+      method: "POST",
+      credentials: "include",
+    });
+    if (!res.ok) {
+      alert("Failed to duplicate quote. Please try again.");
+      return;
+    }
+    const { quote: newQuote } = (await res.json()) as { quote: Quote };
+    saveQuote(newQuote, userId!);
+    handleSelectQuote(newQuote);
+    setRefreshTrigger((n) => n + 1);
+  };
+
   const handleUnsavedYes = () => {
     handleSave();
     const action = pendingAction;
@@ -994,6 +1009,7 @@ export default function QuoteBuilder() {
           currentStatus={stampStatus}
           onSelect={handleSelectQuote}
           onNew={handleNewQuote}
+          onDuplicate={handleDuplicateQuote}
           refreshTrigger={refreshTrigger}
           userId={userId}
           userFullName={user?.fullName}

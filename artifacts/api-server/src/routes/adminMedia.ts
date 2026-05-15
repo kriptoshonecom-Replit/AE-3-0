@@ -121,7 +121,7 @@ router.post("/media/upload", upload.single("file"), async (req, res) => {
     const file = req.file;
     if (!file) { res.status(400).json({ error: "No file uploaded" }); return; }
 
-    if (!file.name?.toLowerCase().endsWith(".png") && !file.originalname?.toLowerCase().endsWith(".png")) {
+    if (!file.originalname?.toLowerCase().endsWith(".png")) {
       res.status(400).json({ error: "Only PNG files are accepted" }); return;
     }
 
