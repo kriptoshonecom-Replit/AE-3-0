@@ -1139,24 +1139,26 @@ export default function QuoteBuilder() {
 
                 <section className="section">
                   <h2 className="section-title">Business Operation Address</h2>
-                  <AddressMapSection
-                    values={{
-                      addressName: quote.meta.addressName ?? "",
-                      addressNumber: quote.meta.addressNumber ?? "",
-                      addressState: quote.meta.addressState ?? "",
-                      zipCode: quote.meta.zipCode ?? "",
-                      addressCountry: quote.meta.addressCountry ?? "United States",
-                    }}
-                    onChange={(fields) => handleMetaChange({ ...quote.meta, ...fields })}
-                  />
-                  <div className="field-group">
-                    <label>Notes</label>
-                    <textarea
-                      value={quote.meta.notes}
-                      onChange={(e) => handleMetaChange({ ...quote.meta, notes: e.target.value })}
-                      rows={3}
-                      placeholder="Payment terms, delivery notes, special conditions…"
+                  <div className="quote-meta-form">
+                    <AddressMapSection
+                      values={{
+                        addressName: quote.meta.addressName ?? "",
+                        addressNumber: quote.meta.addressNumber ?? "",
+                        addressState: quote.meta.addressState ?? "",
+                        zipCode: quote.meta.zipCode ?? "",
+                        addressCountry: quote.meta.addressCountry ?? "United States",
+                      }}
+                      onChange={(fields) => handleMetaChange({ ...quote.meta, ...fields })}
                     />
+                    <div className="field-group" style={{ marginTop: 12 }}>
+                      <label>Notes</label>
+                      <textarea
+                        value={quote.meta.notes}
+                        onChange={(e) => handleMetaChange({ ...quote.meta, notes: e.target.value })}
+                        rows={3}
+                        placeholder="Payment terms, delivery notes, special conditions…"
+                      />
+                    </div>
                   </div>
                 </section>
               </>

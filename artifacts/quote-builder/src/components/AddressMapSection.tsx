@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import "leaflet/dist/leaflet.css";
 import type { Map as LeafletMap } from "leaflet";
 
 interface AddressFields {
