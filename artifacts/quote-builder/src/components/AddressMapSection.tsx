@@ -47,12 +47,18 @@ const POI_COLORS: Record<string, string> = {
   restaurant: "#f97316",
   bar: "#3b82f6",
   nightclub: "#a855f7",
+  cafe: "#92400e",
+  bakery: "#d97706",
+  fuel: "#16a34a",
 };
 
 const POI_LABELS: Record<string, string> = {
   restaurant: "Restaurant",
   bar: "Bar",
   nightclub: "Nightclub",
+  cafe: "Coffee Shop",
+  bakery: "Bakery / Pastry",
+  fuel: "Gas Station",
 };
 
 const POI_ZOOM_THRESHOLD = 13;
@@ -170,7 +176,7 @@ export default function AddressMapSection({ values, onChange }: Props) {
 
         const query =
           `[out:json][timeout:10];` +
-          `node["amenity"~"^(restaurant|bar|nightclub)$"](${bbox});` +
+          `node["amenity"~"^(restaurant|bar|nightclub|cafe|bakery|fuel)$"](${bbox});` +
           `out body;`;
 
         try {
