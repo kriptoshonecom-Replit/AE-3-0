@@ -133,7 +133,7 @@ export default function LogJournalPage() {
       </div>
 
       {/* Stats bar */}
-      <div style={{ display: "flex", gap: 12, padding: "0 24px 16px", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 12, padding: "24px 24px 16px", flexWrap: "wrap" }}>
         {[
           { label: "Total Events", value: events.length, color: "var(--text)" },
           { label: "Successful Logins", value: successCount, color: "var(--success, #16a34a)" },
