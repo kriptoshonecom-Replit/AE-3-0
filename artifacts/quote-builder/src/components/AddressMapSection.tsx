@@ -284,7 +284,13 @@ export default function AddressMapSection({ values, onChange }: Props) {
         {geoError && !busy && (
           <div className="address-geo-error">{geoError}</div>
         )}
-        <div ref={mapContainerRef} className="address-map" style={{ cursor: "crosshair" }} />
+        <div
+          ref={mapContainerRef}
+          className="address-map"
+          style={{
+            cursor: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='28' viewBox='0 0 20 28'%3E%3Cpath d='M10 2 L10 22 M4 16 L10 24 L16 16' stroke='%23333333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E") 10 24, crosshair`,
+          }}
+        />
         <div className="address-map-hint">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
             <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4" />
