@@ -91,9 +91,14 @@ body {
 }
 
 .sidebar-slot {
-  display: contents;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
+.sidebar-slot .quote-list,
 .sidebar-inner .quote-list {
   flex: 1;
   overflow-y: auto;
@@ -2988,7 +2993,7 @@ textarea:focus::placeholder {
 
 
 .sidebar-user-links {
-  margin-top: auto;
+  flex-shrink: 0;
   padding: 10px 12px 0;
   border-top: 1px solid var(--border);
   display: flex;
@@ -2997,17 +3002,17 @@ textarea:focus::placeholder {
 }
 
 .sidebar-admin-links {
-  flex: 1;
+  flex-shrink: 0;
   overflow-y: auto;
   padding: 6px 12px 8px;
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 2px;
+  max-height: 60vh;
 }
 
 .sidebar-version-footer {
-  margin-top: auto;
   display: flex;
   align-items: center;
   gap: 5px;
