@@ -12,15 +12,15 @@ function parseDate(s: string | undefined | null): Date {
   return isNaN(d.getTime()) ? new Date() : d;
 }
 
-function computeQuoteTotal(data: Record<string, unknown>): number {
+function computeQuoteValues(data: Record<string, unknown>): { mrr: number; arr: number } {
   const meta = (data.meta ?? {}) as Record<string, unknown>;
 
-  // Primary: use "Requested Subscription Amount" if entered and non-zero
+  // Primary: Requested Subscription Amount is a monthly (MRR) figure → ARR = ×12
   const reqSubRaw = String(meta.requestedSubscriptionAmount ?? "");
   const reqSub = parseFloat(reqSubRaw.replace(/[^0-9.]/g, ""));
-  if (!isNaN(reqSub) && reqSub > 0) return reqSub;
+  if (!isNaN(reqSub) && reqSub > 0) return { mrr: reqSub, arr: reqSub * 12 };
 
-  // Fallback: calculate from line items with discount and tax
+  // Fallback: line-item total with discount/tax (not a recurring value)
   const groups = (data.groups ?? []) as Array<Record<string, unknown>>;
   const discount = Number(meta.discount ?? 0);
   const tax = Number(meta.tax ?? 0);
@@ -32,7 +32,7 @@ function computeQuoteTotal(data: Record<string, unknown>): number {
     }
   }
   const afterDiscount = subtotal * (1 - discount / 100);
-  return afterDiscount * (1 + tax / 100);
+  return { mrr: 0, arr: afterDiscount * (1 + tax / 100) };
 }
 
 /* ── GET /api/quotes/stats — per-user summary stats ── */
@@ -46,22 +46,25 @@ router.get("/quotes/stats", requireAuth, async (req, res) => {
 
     let passCount = 0;
     let failCount = 0;
-    let passValue = 0;
-    let totalValue = 0;
+    let passMrr = 0;
+    let passArr = 0;
+    let totalMrr = 0;
+    let totalArr = 0;
 
     for (const row of rows) {
       const data = row.data as Record<string, unknown>;
       const meta = (data.meta ?? {}) as Record<string, unknown>;
-      const value = computeQuoteTotal(data);
-      totalValue += value;
+      const { mrr, arr } = computeQuoteValues(data);
+      totalMrr += mrr;
+      totalArr += arr;
       const status = (row.passStatus ?? (meta.passStatus as string | undefined) ?? "").toLowerCase();
-      if (status === "pass") { passCount++; passValue += value; }
+      if (status === "pass") { passCount++; passMrr += mrr; passArr += arr; }
       else if (status === "fail") failCount++;
     }
 
     const total = rows.length;
     const successRate = total > 0 ? Math.round((passCount / total) * 100) : 0;
-    res.json({ total, passCount, failCount, passValue, totalValue, successRate });
+    res.json({ total, passCount, failCount, passMrr, passArr, totalMrr, totalArr, successRate });
   } catch (err) {
     req.log.error(err, "GET /quotes/stats error");
     res.status(500).json({ error: "Failed to load stats" });

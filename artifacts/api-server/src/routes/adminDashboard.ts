@@ -6,15 +6,15 @@ import { requireAdmin } from "../middlewares/requireAdmin";
 
 const router = Router();
 
-function computeQuoteTotal(data: Record<string, unknown>): number {
+function computeQuoteValues(data: Record<string, unknown>): { mrr: number; arr: number } {
   const meta = (data.meta ?? {}) as Record<string, unknown>;
 
-  // Primary: use "Requested Subscription Amount" if entered and non-zero
+  // Primary: Requested Subscription Amount is a monthly (MRR) figure → ARR = ×12
   const reqSubRaw = String(meta.requestedSubscriptionAmount ?? "");
   const reqSub = parseFloat(reqSubRaw.replace(/[^0-9.]/g, ""));
-  if (!isNaN(reqSub) && reqSub > 0) return reqSub;
+  if (!isNaN(reqSub) && reqSub > 0) return { mrr: reqSub, arr: reqSub * 12 };
 
-  // Fallback: calculate from line items with discount and tax
+  // Fallback: line-item total with discount/tax (not a recurring value)
   const groups = (data.groups ?? []) as Array<Record<string, unknown>>;
   const discount = Number(meta.discount ?? 0);
   const tax = Number(meta.tax ?? 0);
@@ -26,7 +26,11 @@ function computeQuoteTotal(data: Record<string, unknown>): number {
     }
   }
   const afterDiscount = subtotal * (1 - discount / 100);
-  return afterDiscount * (1 + tax / 100);
+  return { mrr: 0, arr: afterDiscount * (1 + tax / 100) };
+}
+
+function computeQuoteTotal(data: Record<string, unknown>): number {
+  return computeQuoteValues(data).arr;
 }
 
 router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
@@ -54,6 +58,7 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
     let totalPipelineValue = 0;
+    let totalMRR = 0;
     let quotesThisMonth = 0;
     let passCount = 0;
     let failCount = 0;
@@ -67,8 +72,10 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
     for (const row of rows) {
       const data = row.data as Record<string, unknown>;
       const meta = (data.meta ?? {}) as Record<string, unknown>;
-      const quoteValue = computeQuoteTotal(data);
-      totalPipelineValue += quoteValue;
+      const { mrr, arr } = computeQuoteValues(data);
+      const quoteValue = arr;
+      totalPipelineValue += arr;
+      totalMRR += mrr;
 
       const normalizedStatus =
         row.passStatus ??
@@ -153,6 +160,7 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
     res.json({
       kpis: {
         totalPipelineValue,
+        totalMRR,
         totalQuotes,
         quotesThisMonth,
         passRate,

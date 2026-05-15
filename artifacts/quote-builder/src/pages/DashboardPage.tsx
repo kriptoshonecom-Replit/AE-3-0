@@ -6,6 +6,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
 interface KPIs {
   totalPipelineValue: number;
+  totalMRR: number;
   totalQuotes: number;
   quotesThisMonth: number;
   passRate: number;
@@ -144,9 +145,9 @@ export default function DashboardPage() {
 
   const kpiCards = [
     {
-      label: "Total Pipeline Value",
+      label: "Total Pipeline (ARR)",
       value: fmt(kpis.totalPipelineValue),
-      sub: `across ${kpis.totalQuotes} quotes`,
+      sub: `MRR ${fmt(kpis.totalMRR)} · ${kpis.totalQuotes} quotes`,
       color: "#7c3aed",
       icon: (
         <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
@@ -181,7 +182,7 @@ export default function DashboardPage() {
     {
       label: "Avg Quote Value",
       value: fmt(kpis.avgQuoteValue),
-      sub: "per quote (MRR)",
+      sub: "per quote (ARR)",
       color: "#f97316",
       icon: (
         <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
@@ -370,7 +371,7 @@ export default function DashboardPage() {
             <div className="db-card-header">
               <span className="db-card-title">Monthly Pipeline</span>
             </div>
-            <div style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 14 }}>MRR value of quotes created</div>
+            <div style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 14 }}>ARR value of quotes created per month</div>
             <div className="db-bar-chart">
               {monthlyData.map((d, i) => (
                 <div key={d.month} className="db-bar-col">

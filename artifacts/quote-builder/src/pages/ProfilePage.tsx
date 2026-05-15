@@ -204,8 +204,10 @@ interface QuoteStats {
   total: number;
   passCount: number;
   failCount: number;
-  passValue: number;
-  totalValue: number;
+  passMrr: number;
+  passArr: number;
+  totalMrr: number;
+  totalArr: number;
   successRate: number;
 }
 
@@ -248,9 +250,9 @@ function ProfileStats({ stats, loading }: { stats: QuoteStats | null; loading: b
           <span className="profile-stat-sub">pass / total quotes</span>
         </div>
         <div className="profile-stat-card">
-          <span className="profile-stat-label">Won Value</span>
-          <span className="profile-stat-value psc-money">{fmtMoney(stats.passValue)}</span>
-          <span className="profile-stat-sub">of {fmtMoney(stats.totalValue)} pipeline</span>
+          <span className="profile-stat-label">Won Value (ARR)</span>
+          <span className="profile-stat-value psc-money">{fmtMoney(stats.passArr)}</span>
+          <span className="profile-stat-sub">MRR {fmtMoney(stats.passMrr)} · pipeline {fmtMoney(stats.totalArr)}</span>
         </div>
       </div>
     </div>
