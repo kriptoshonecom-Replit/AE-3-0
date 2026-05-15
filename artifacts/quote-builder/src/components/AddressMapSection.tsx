@@ -37,6 +37,26 @@ interface NominatimReverseResult {
   address: NominatimAddress;
 }
 
+interface OverpassElement {
+  lat: number;
+  lon: number;
+  tags: Record<string, string>;
+}
+
+const POI_COLORS: Record<string, string> = {
+  restaurant: "#f97316",
+  bar: "#3b82f6",
+  nightclub: "#a855f7",
+};
+
+const POI_LABELS: Record<string, string> = {
+  restaurant: "Restaurant",
+  bar: "Bar",
+  nightclub: "Nightclub",
+};
+
+const POI_ZOOM_THRESHOLD = 13;
+
 function buildQuery(f: AddressFields): string {
   return [f.addressNumber, f.addressName, f.addressState, f.zipCode, f.addressCountry]
     .filter(Boolean)
@@ -52,23 +72,21 @@ export default function AddressMapSection({ values, onChange }: Props) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const markerRef = useRef<import("leaflet").Marker | null>(null);
+  const poiLayerGroupRef = useRef<import("leaflet").LayerGroup | null>(null);
   const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const poiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Keep latest onChange in a ref — the map click handler reads from this
-  // so the map init effect never needs to re-run when onChange changes.
   const onChangeRef = useRef(onChange);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
 
-  // When this is >0 we skip the next forward-geocode tick (prevents the
-  // fields filled by reverse-geocode from bouncing the map back).
   const skipForwardRef = useRef(0);
 
   const [mapReady, setMapReady] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [reversing, setReversing] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
+  const [mapZoom, setMapZoom] = useState(4);
 
-  // Stable reverse-geocode called directly from the map click handler via ref.
   const reverseGeocode = useCallback(async (lat: number, lon: number) => {
     setReversing(true);
     setGeoError(null);
@@ -79,7 +97,6 @@ export default function AddressMapSection({ values, onChange }: Props) {
       const data = await res.json() as NominatimReverseResult;
       const addr = data.address ?? {};
 
-      // Suppress the next forward-geocode triggered by these field changes.
       skipForwardRef.current += 1;
 
       onChangeRef.current({
@@ -94,14 +111,14 @@ export default function AddressMapSection({ values, onChange }: Props) {
     } finally {
       setReversing(false);
     }
-  }, []); // no deps — reads onChange via onChangeRef
+  }, []);
 
   // ── Map initialisation — runs exactly once ────────────────────────────
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
-    // Keep a stable reference to the callback for the click listener.
     const reverseGeocodeStable = reverseGeocode;
+    const setMapZoomStable = setMapZoom;
 
     import("leaflet").then((L) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -130,7 +147,89 @@ export default function AddressMapSection({ values, onChange }: Props) {
         }
       ).addTo(map);
 
-      // Click / POI tap → place pin + reverse geocode
+      // ── POI layer setup ────────────────────────────────────────────────
+      const poiGroup = L.layerGroup().addTo(map);
+      poiLayerGroupRef.current = poiGroup;
+
+      async function loadPOIs() {
+        const zoom = map.getZoom();
+        setMapZoomStable(zoom);
+
+        if (zoom < POI_ZOOM_THRESHOLD) {
+          poiGroup.clearLayers();
+          return;
+        }
+
+        const b = map.getBounds();
+        const bbox = [
+          b.getSouth().toFixed(4),
+          b.getWest().toFixed(4),
+          b.getNorth().toFixed(4),
+          b.getEast().toFixed(4),
+        ].join(",");
+
+        const query =
+          `[out:json][timeout:10];` +
+          `node["amenity"~"^(restaurant|bar|nightclub)$"](${bbox});` +
+          `out body;`;
+
+        try {
+          const res = await fetch("https://overpass-api.de/api/interpreter", {
+            method: "POST",
+            body: query,
+          });
+          if (!res.ok) return;
+          const data = await res.json() as { elements: OverpassElement[] };
+
+          poiGroup.clearLayers();
+
+          for (const el of data.elements) {
+            const amenity = el.tags?.amenity ?? "";
+            const rawName = el.tags?.name;
+            const name = rawName ?? (POI_LABELS[amenity] ?? amenity);
+            const color = POI_COLORS[amenity] ?? "#64748b";
+
+            const cm = L.circleMarker([el.lat, el.lon], {
+              radius: 6,
+              fillColor: color,
+              color: "#fff",
+              weight: 1.5,
+              fillOpacity: 0.9,
+              interactive: true,
+            }).addTo(poiGroup);
+
+            cm.bindTooltip(name, {
+              permanent: false,
+              direction: "top",
+              className: "poi-tooltip",
+            });
+
+            cm.on("click", (e: import("leaflet").LeafletMouseEvent) => {
+              L.DomEvent.stopPropagation(e);
+              if (markerRef.current) {
+                markerRef.current.setLatLng([el.lat, el.lon]);
+              } else {
+                markerRef.current = L.marker([el.lat, el.lon]).addTo(map);
+              }
+              void reverseGeocodeStable(el.lat, el.lon);
+            });
+          }
+        } catch {
+          // Silently ignore POI loading errors — map still works without them
+        }
+      }
+
+      // Debounced POI loader so rapid panning doesn't spam Overpass
+      function schedulePOILoad() {
+        if (poiTimer.current) clearTimeout(poiTimer.current);
+        poiTimer.current = setTimeout(() => { void loadPOIs(); }, 600);
+      }
+
+      map.on("moveend", schedulePOILoad);
+      map.on("zoomend", schedulePOILoad);
+      map.on("zoom", () => { setMapZoomStable(map.getZoom()); });
+
+      // ── Click / POI tap → place pin + reverse geocode ─────────────────
       map.on("click", (e: import("leaflet").LeafletMouseEvent) => {
         const { lat, lng } = e.latlng;
 
@@ -146,19 +245,18 @@ export default function AddressMapSection({ values, onChange }: Props) {
       mapRef.current = map;
       setMapReady(true);
 
-      // Force Leaflet to recalculate container dimensions after layout
-      // settles — needed on desktop where flexbox resolves a frame or
-      // two after the element is inserted into the DOM.
       requestAnimationFrame(() => map.invalidateSize());
       setTimeout(() => { if (mapRef.current) mapRef.current.invalidateSize(); }, 300);
     });
 
     return () => {
+      if (poiTimer.current) clearTimeout(poiTimer.current);
+      poiLayerGroupRef.current = null;
       mapRef.current?.remove();
       mapRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // intentionally empty — map is created once, never torn down on re-renders
+  }, []);
 
   // ── Forward geocode (fields → pin) ───────────────────────────────────
   const geocode = useCallback(async (fields: AddressFields) => {
@@ -200,7 +298,6 @@ export default function AddressMapSection({ values, onChange }: Props) {
   useEffect(() => {
     if (!mapReady) return;
 
-    // If this update was caused by a reverse geocode, skip forward geocode.
     if (skipForwardRef.current > 0) {
       skipForwardRef.current -= 1;
       return;
@@ -223,6 +320,7 @@ export default function AddressMapSection({ values, onChange }: Props) {
       onChange({ [key]: e.target.value });
 
   const busy = geocoding || reversing;
+  const showPOILegend = mapZoom >= POI_ZOOM_THRESHOLD;
 
   return (
     <div className="address-section">
@@ -296,9 +394,22 @@ export default function AddressMapSection({ values, onChange }: Props) {
             <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4" />
             <path d="M8 7v5M8 5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
-          Click anywhere on the map — or select a POI — to auto-fill address fields
+          {showPOILegend
+            ? "Click a coloured dot or anywhere on the map to auto-fill the address fields"
+            : "Click anywhere on the map — or zoom in closer to see restaurant, bar & nightclub markers"}
         </div>
       </div>
+
+      {showPOILegend && (
+        <div className="poi-legend">
+          {Object.entries(POI_LABELS).map(([key, label]) => (
+            <span key={key} className="poi-legend-item">
+              <span className="poi-dot" style={{ background: POI_COLORS[key] }} />
+              {label}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

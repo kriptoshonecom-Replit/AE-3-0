@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
+import { useAuth } from "@/context/AuthContext";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 import { formatCurrency, quoteTotal } from "../utils/calculations";
 import { computeProductRelatedPitTotal } from "../components/ProductRelatedPitSection";
 import pitData from "../data/pit-services.json";
 import { PIT_HOURLY_RATE } from "../data/pit-config";
-import { deleteQuote } from "../utils/storage";
+import { deleteQuote, setPendingOpenQuote } from "../utils/storage";
 import type { Quote, QuoteMeta } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
@@ -216,6 +217,7 @@ function EditDrawer({ row, onClose, onSaved }: EditDrawerProps) {
 /* ── Main Page ───────────────────────────────────────────── */
 export default function QuoteLibraryPage() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const [quotes, setQuotes] = useState<AdminQuoteRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -402,13 +404,30 @@ export default function QuoteLibraryPage() {
                         <button
                           type="button"
                           className="admin-btn-edit"
+                          onClick={() => {
+                            if (row.data) {
+                              setPendingOpenQuote(row.data, row.userId);
+                            }
+                            setLocation("/");
+                          }}
+                          title="Open quote in builder"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                            <path d="M7 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M10 1h5v5M15 1L8 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          Open
+                        </button>
+                        <button
+                          type="button"
+                          className="admin-btn-edit"
                           onClick={() => setEditRow(row)}
-                          title="Edit quote"
+                          title="Edit quote metadata (status, numbers)"
+                          style={{ padding: "4px 7px" }}
                         >
                           <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
                             <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
-                          Edit
                         </button>
                         <button
                           type="button"

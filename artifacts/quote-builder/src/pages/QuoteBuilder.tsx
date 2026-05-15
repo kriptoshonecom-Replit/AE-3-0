@@ -29,7 +29,7 @@ import QuoteGroupComponent from "../components/QuoteGroup";
 import QuoteSummary from "../components/QuoteSummary";
 import QuoteList from "../components/QuoteList";
 import AddGroupModal from "../components/AddGroupModal";
-import { saveQuote, loadAllQuotes, getActiveQuoteId, loadQuote } from "../utils/storage";
+import { saveQuote, loadAllQuotes, getActiveQuoteId, loadQuote, consumePendingOpenQuote } from "../utils/storage";
 import { syncQuoteToServer, saveQuoteToServerNow, adminSaveQuoteToServer, fetchServerQuotes, bulkUploadQuotesToServer } from "../utils/serverSync";
 import { exportQuoteToPDF } from "../utils/pdfExport";
 import { generateId, todayString, thirtyDaysOut, quoteTotal } from "../utils/calculations";
@@ -447,6 +447,25 @@ export default function QuoteBuilder() {
   // Load the correct quote once we know who the user is
   useEffect(() => {
     if (!userId || initialized) return;
+
+    // Quote Library redirected here with a specific quote to open
+    const pending = consumePendingOpenQuote();
+    if (pending) {
+      const { quote: pq, ownerId } = pending;
+      if (ownerId !== userId) {
+        // Admin opening another user's quote — tag it so saves go to the right owner
+        const taggedMeta = { ...pq.meta, _adminOwnerId: ownerId } as typeof pq.meta;
+        handleSelectQuote({ ...pq, meta: taggedMeta });
+      } else {
+        setQuote(pq);
+        if (pq.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...pq.meta.yesNoToggles });
+        setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(pq.meta.optionalProgramToggles ?? {}) });
+        setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(pq.meta.heatmapToggles ?? {}) });
+      }
+      setInitialized(true);
+      return;
+    }
+
     const activeId = getActiveQuoteId(userId);
     if (activeId) {
       const q = loadQuote(activeId, userId);
@@ -468,6 +487,7 @@ export default function QuoteBuilder() {
       setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(q.meta.heatmapToggles ?? {}) });
     }
     setInitialized(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, initialized]);
 
   /* On startup: pull server quotes, migrate any localStorage-only quotes,

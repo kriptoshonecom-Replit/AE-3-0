@@ -41,3 +41,20 @@ export function getActiveQuoteId(userId: string): string | null {
 export function setActiveQuoteId(id: string, userId: string): void {
   localStorage.setItem(activeKey(userId), id);
 }
+
+const PENDING_OPEN_KEY = "cpq_pending_open_quote";
+
+export function setPendingOpenQuote(quote: Quote, ownerId: string): void {
+  localStorage.setItem(PENDING_OPEN_KEY, JSON.stringify({ quote, ownerId }));
+}
+
+export function consumePendingOpenQuote(): { quote: Quote; ownerId: string } | null {
+  const raw = localStorage.getItem(PENDING_OPEN_KEY);
+  if (!raw) return null;
+  localStorage.removeItem(PENDING_OPEN_KEY);
+  try {
+    return JSON.parse(raw) as { quote: Quote; ownerId: string };
+  } catch {
+    return null;
+  }
+}
