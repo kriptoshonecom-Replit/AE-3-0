@@ -2141,6 +2141,29 @@ textarea:focus::placeholder {
     grid-column: 1;
   }
 
+  /* Address section — stack fields and shrink map */
+  .address-fields-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .address-fields-grid .field-group.span-2 {
+    grid-column: 1;
+  }
+
+  .address-map-wrap {
+    height: 220px;
+  }
+
+  .poi-legend {
+    flex-wrap: wrap;
+    gap: 8px 14px;
+  }
+
+  /* Any 2-column field row (e.g. in meta form, payments) → single column */
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+
   .line-row {
     grid-template-columns: minmax(130px, 1fr) 28px 60px 80px 70px 36px;
   }
