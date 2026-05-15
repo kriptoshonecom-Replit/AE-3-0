@@ -7,20 +7,10 @@
 }
 
 /* ── Leaflet + Tailwind compatibility ────────────────────
-   Tailwind v4's CSS reset sets `img { max-width:100%; height:auto }`
-   which collapses Leaflet tile images. These rules restore correct
-   Leaflet tile rendering without affecting the rest of the app.    */
+   Leaflet's own CSS already handles tile max-width. The only
+   rule needed here is to ensure the container outline is clean. */
 .leaflet-container {
   outline: none;
-}
-.leaflet-container img,
-.leaflet-tile {
-  max-width: none !important;
-  height: auto;
-}
-.leaflet-tile {
-  width: 256px !important;
-  height: 256px !important;
 }
 
 .auth-clerk-root {

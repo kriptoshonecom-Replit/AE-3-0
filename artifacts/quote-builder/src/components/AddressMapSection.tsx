@@ -119,11 +119,16 @@ export default function AddressMapSection({ values, onChange }: Props) {
         scrollWheelZoom: false,
       });
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution:
-          '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19,
-      }).addTo(map);
+      L.tileLayer(
+        "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+        {
+          attribution:
+            '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ' +
+            '© <a href="https://carto.com/attributions">CARTO</a>',
+          subdomains: "abcd",
+          maxZoom: 19,
+        }
+      ).addTo(map);
 
       // Click / POI tap → place pin + reverse geocode
       map.on("click", (e: import("leaflet").LeafletMouseEvent) => {
@@ -141,13 +146,11 @@ export default function AddressMapSection({ values, onChange }: Props) {
       mapRef.current = map;
       setMapReady(true);
 
-      // Force Leaflet to recalculate container dimensions after the
-      // browser has finished painting — fixes blank/broken tile render
-      // on first mount, especially on desktop where CSS layout may
-      // settle a frame after the map element is inserted.
-      requestAnimationFrame(() => {
-        map.invalidateSize();
-      });
+      // Force Leaflet to recalculate container dimensions after layout
+      // settles — needed on desktop where flexbox resolves a frame or
+      // two after the element is inserted into the DOM.
+      requestAnimationFrame(() => map.invalidateSize());
+      setTimeout(() => { if (mapRef.current) mapRef.current.invalidateSize(); }, 300);
     });
 
     return () => {
