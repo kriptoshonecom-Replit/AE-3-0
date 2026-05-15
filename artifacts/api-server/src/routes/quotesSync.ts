@@ -12,6 +12,55 @@ function parseDate(s: string | undefined | null): Date {
   return isNaN(d.getTime()) ? new Date() : d;
 }
 
+function computeQuoteTotal(data: Record<string, unknown>): number {
+  const meta = (data.meta ?? {}) as Record<string, unknown>;
+  const groups = (data.groups ?? []) as Array<Record<string, unknown>>;
+  const discount = Number(meta.discount ?? 0);
+  const tax = Number(meta.tax ?? 0);
+  let subtotal = 0;
+  for (const group of groups) {
+    const lineItems = (group.lineItems ?? []) as Array<Record<string, unknown>>;
+    for (const item of lineItems) {
+      subtotal += Number(item.quantity ?? 0) * Number(item.unitPrice ?? 0);
+    }
+  }
+  const afterDiscount = subtotal * (1 - discount / 100);
+  return afterDiscount * (1 + tax / 100);
+}
+
+/* ── GET /api/quotes/stats — per-user summary stats ── */
+router.get("/quotes/stats", requireAuth, async (req, res) => {
+  const { userId } = req.auth!;
+  try {
+    const rows = await db
+      .select({ data: quotesTable.data, passStatus: quotesTable.passStatus })
+      .from(quotesTable)
+      .where(eq(quotesTable.userId, userId));
+
+    let passCount = 0;
+    let failCount = 0;
+    let passValue = 0;
+    let totalValue = 0;
+
+    for (const row of rows) {
+      const data = row.data as Record<string, unknown>;
+      const meta = (data.meta ?? {}) as Record<string, unknown>;
+      const value = computeQuoteTotal(data);
+      totalValue += value;
+      const status = (row.passStatus ?? (meta.passStatus as string | undefined) ?? "").toLowerCase();
+      if (status === "pass") { passCount++; passValue += value; }
+      else if (status === "fail") failCount++;
+    }
+
+    const total = rows.length;
+    const successRate = total > 0 ? Math.round((passCount / total) * 100) : 0;
+    res.json({ total, passCount, failCount, passValue, totalValue, successRate });
+  } catch (err) {
+    req.log.error(err, "GET /quotes/stats error");
+    res.status(500).json({ error: "Failed to load stats" });
+  }
+});
+
 router.get("/quotes", requireAuth, async (req, res) => {
   const userId = req.auth!.userId;
   try {

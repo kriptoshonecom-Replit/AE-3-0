@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "wouter";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
@@ -200,10 +200,79 @@ function EditModal({ user, onClose, onSaved }: EditModalProps) {
   );
 }
 
+interface QuoteStats {
+  total: number;
+  passCount: number;
+  failCount: number;
+  passValue: number;
+  totalValue: number;
+  successRate: number;
+}
+
+function fmtMoney(n: number) {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`;
+  return `$${n.toFixed(0)}`;
+}
+
+function ProfileStats({ stats, loading }: { stats: QuoteStats | null; loading: boolean }) {
+  if (loading) {
+    return (
+      <div className="profile-stats">
+        <p className="profile-stats-title">Quote Performance</p>
+        <div className="profile-stats-loading"><div className="spinner" /></div>
+      </div>
+    );
+  }
+  if (!stats) return null;
+
+  const unset = stats.total - stats.passCount - stats.failCount;
+
+  return (
+    <div className="profile-stats">
+      <p className="profile-stats-title">Quote Performance</p>
+      <div className="profile-stats-grid">
+        <div className="profile-stat-card">
+          <span className="profile-stat-label">Won</span>
+          <span className="profile-stat-value psc-pass">{stats.passCount}</span>
+          <span className="profile-stat-sub">of {stats.total} quotes</span>
+        </div>
+        <div className="profile-stat-card">
+          <span className="profile-stat-label">Lost</span>
+          <span className="profile-stat-value psc-fail">{stats.failCount}</span>
+          <span className="profile-stat-sub">{unset} pending review</span>
+        </div>
+        <div className="profile-stat-card">
+          <span className="profile-stat-label">Success Rate</span>
+          <span className="profile-stat-value psc-rate">{stats.successRate}%</span>
+          <span className="profile-stat-sub">pass / total quotes</span>
+        </div>
+        <div className="profile-stat-card">
+          <span className="profile-stat-label">Won Value</span>
+          <span className="profile-stat-value psc-money">{fmtMoney(stats.passValue)}</span>
+          <span className="profile-stat-sub">of {fmtMoney(stats.totalValue)} pipeline</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   const { user, isLoaded, signOut, refetch } = useAuth();
   const [, setLocation] = useLocation();
   const [showEdit, setShowEdit] = useState(false);
+  const [stats, setStats] = useState<QuoteStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    setStatsLoading(true);
+    fetch(`${API_BASE}/api/quotes/stats`, { credentials: "include" })
+      .then((r) => r.ok ? r.json() as Promise<QuoteStats> : Promise.reject())
+      .then((data) => setStats(data))
+      .catch(() => setStats(null))
+      .finally(() => setStatsLoading(false));
+  }, [isLoaded]);
 
   if (!isLoaded) {
     return (
@@ -271,6 +340,8 @@ export default function ProfilePage() {
             </span>
           </div>
         </div>
+
+        <ProfileStats stats={stats} loading={statsLoading} />
 
         <div className="profile-actions">
           <button className="btn-ghost" type="button" onClick={() => history.back()}>

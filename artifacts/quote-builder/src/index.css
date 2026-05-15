@@ -2355,6 +2355,73 @@ textarea:focus::placeholder {
   font-weight: 500;
 }
 
+/* ── Profile stats mini-dashboard ─────────────────────── */
+.profile-stats {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-stats-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-3);
+  margin: 0 0 2px;
+}
+
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.profile-stat-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 11px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.profile-stat-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+}
+
+.profile-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.profile-stat-value.psc-pass  { color: #16a34a; }
+.profile-stat-value.psc-fail  { color: #dc2626; }
+.profile-stat-value.psc-rate  { color: var(--accent); }
+.profile-stat-value.psc-money { color: #16a34a; font-size: 16px; }
+
+.profile-stat-sub {
+  font-size: 10.5px;
+  color: var(--text-3);
+}
+
+.profile-stats-loading {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+  opacity: 0.5;
+}
+
+/* ─────────────────────────────────────────────────────── */
 .profile-actions {
   display: flex;
   align-items: center;
