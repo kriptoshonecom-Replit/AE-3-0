@@ -10,6 +10,7 @@ import pitDataStatic from "../data/pit-services.json";
 import { PIT_HOURLY_RATE } from "../data/pit-config";
 import QuoteMetaForm from "../components/QuoteMetaForm";
 import CurrentSpendForm from "../components/CurrentSpendForm";
+import AddressMapSection from "../components/AddressMapSection";
 import HeatmapSection, { computeHeatmapTotal, type HeatmapItem } from "../components/HeatmapSection";
 import PaymentsConfigPanel from "../components/PaymentsConfigPanel";
 
@@ -1134,6 +1135,29 @@ export default function QuoteBuilder() {
                     pspmDiscountPct={pspmDiscountPct}
                     upfrontPriceDiscountPct={upfrontPriceDiscountPct}
                   />
+                </section>
+
+                <section className="section">
+                  <h2 className="section-title">Business Operation Address</h2>
+                  <AddressMapSection
+                    values={{
+                      addressName: quote.meta.addressName ?? "",
+                      addressNumber: quote.meta.addressNumber ?? "",
+                      addressState: quote.meta.addressState ?? "",
+                      zipCode: quote.meta.zipCode ?? "",
+                      addressCountry: quote.meta.addressCountry ?? "United States",
+                    }}
+                    onChange={(fields) => handleMetaChange({ ...quote.meta, ...fields })}
+                  />
+                  <div className="field-group">
+                    <label>Notes</label>
+                    <textarea
+                      value={quote.meta.notes}
+                      onChange={(e) => handleMetaChange({ ...quote.meta, notes: e.target.value })}
+                      rows={3}
+                      placeholder="Payment terms, delivery notes, special conditions…"
+                    />
+                  </div>
                 </section>
               </>
             )}

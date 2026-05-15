@@ -330,17 +330,6 @@ export default function AddressMapSection({ values, onChange }: Props) {
 
   return (
     <div className="address-section">
-      <div className="address-section-header">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="address-section-icon">
-          <path
-            d="M8 1.5C5.515 1.5 3.5 3.515 3.5 6c0 3.5 4.5 8.5 4.5 8.5s4.5-5 4.5-8.5c0-2.485-2.015-4.5-4.5-4.5z"
-            stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"
-          />
-          <circle cx="8" cy="6" r="1.5" stroke="currentColor" strokeWidth="1.3" />
-        </svg>
-        Business Operation Address
-      </div>
-
       <div className="address-fields-grid">
         <div className="field-group">
           <label>Street Name</label>
