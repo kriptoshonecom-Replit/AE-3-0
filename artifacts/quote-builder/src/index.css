@@ -5350,3 +5350,79 @@ td:has(.inline-cell-input) {
   margin-top: 3px;
   flex-shrink: 0;
 }
+
+/* ── Dashboard mobile responsive ─────────────────────── */
+
+@media (max-width: 700px) {
+  /* Topbar: tighter, wrap right side if needed */
+  .admin-topbar {
+    padding: 10px 14px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .admin-topbar-right {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  /* Hide month badge on very small topbars — saves space */
+  .admin-topbar-right .admin-badge {
+    display: none;
+  }
+
+  /* Content: tighter padding */
+  .admin-content {
+    padding: 14px;
+    overflow-x: hidden;
+  }
+
+  /* KPI cards: ensure card wraps cleanly */
+  .db-kpi-card {
+    padding: 12px 14px;
+  }
+
+  .db-kpi-value {
+    font-size: 20px;
+  }
+
+  /* Cards: less padding */
+  .db-card {
+    padding: 12px 14px;
+  }
+
+  /* Recent Quotes table: hide low-priority columns so the
+     remaining 4 columns fit without horizontal page overflow.
+     Columns: 1=Quote# 2=Company 3=Location 4=SalesRep 5=Value 6=Status 7=Updated */
+  .db-table th:nth-child(3),
+  .db-table td:nth-child(3),
+  .db-table th:nth-child(4),
+  .db-table td:nth-child(4),
+  .db-table th:nth-child(7),
+  .db-table td:nth-child(7) {
+    display: none;
+  }
+
+  /* Tighter cell padding in remaining columns */
+  .db-table th,
+  .db-table td {
+    padding: 7px 8px;
+    font-size: 12px;
+  }
+
+  /* Bar chart: fewer bars show cleanly */
+  .db-bar-chart {
+    gap: 4px;
+  }
+
+  .db-bar-label {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Single-column KPI grid on phones */
+  .db-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
