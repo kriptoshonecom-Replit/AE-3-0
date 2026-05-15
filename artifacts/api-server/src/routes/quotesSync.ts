@@ -14,6 +14,13 @@ function parseDate(s: string | undefined | null): Date {
 
 function computeQuoteTotal(data: Record<string, unknown>): number {
   const meta = (data.meta ?? {}) as Record<string, unknown>;
+
+  // Primary: use "Requested Subscription Amount" if entered and non-zero
+  const reqSubRaw = String(meta.requestedSubscriptionAmount ?? "");
+  const reqSub = parseFloat(reqSubRaw.replace(/[^0-9.]/g, ""));
+  if (!isNaN(reqSub) && reqSub > 0) return reqSub;
+
+  // Fallback: calculate from line items with discount and tax
   const groups = (data.groups ?? []) as Array<Record<string, unknown>>;
   const discount = Number(meta.discount ?? 0);
   const tax = Number(meta.tax ?? 0);
