@@ -9,7 +9,6 @@ import catalog from "../data/products.json";
 import pitDataStatic from "../data/pit-services.json";
 import { PIT_HOURLY_RATE } from "../data/pit-config";
 import QuoteMetaForm from "../components/QuoteMetaForm";
-import AddressMapSection from "../components/AddressMapSection";
 import CurrentSpendForm from "../components/CurrentSpendForm";
 import HeatmapSection, { computeHeatmapTotal, type HeatmapItem } from "../components/HeatmapSection";
 import PaymentsConfigPanel from "../components/PaymentsConfigPanel";
@@ -1136,17 +1135,6 @@ export default function QuoteBuilder() {
                     upfrontPriceDiscountPct={upfrontPriceDiscountPct}
                   />
                 </section>
-
-                <AddressMapSection
-                  values={{
-                    addressName: quote.meta.addressName ?? "",
-                    addressNumber: quote.meta.addressNumber ?? "",
-                    addressState: quote.meta.addressState ?? "",
-                    zipCode: quote.meta.zipCode ?? "",
-                    addressCountry: quote.meta.addressCountry ?? "United States",
-                  }}
-                  onChange={(fields) => handleMetaChange({ ...quote.meta, ...fields })}
-                />
               </>
             )}
 
