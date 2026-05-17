@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "hello": "tsx ./src/hello.ts",
+    "backup-product-images": "tsx ./src/backup-product-images.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^7.19.0"
   },
   "devDependencies": {
     "@types/node": "catalog:",

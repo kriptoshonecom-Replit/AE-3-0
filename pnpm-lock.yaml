@@ -692,6 +692,10 @@ importers:
         version: 0.31.9
 
   scripts:
+    dependencies:
+      '@google-cloud/storage':
+        specifier: ^7.19.0
+        version: 7.19.0
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
