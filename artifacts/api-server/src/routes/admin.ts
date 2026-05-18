@@ -406,6 +406,26 @@ router.patch("/products/categories/:catId/items/:itemId/move", async (req, res) 
   }
 });
 
+router.patch("/products/categories/:catId/reorder", async (req, res) => {
+  try {
+    const { catId } = req.params;
+    const { itemIds } = req.body as { itemIds: string[] };
+    if (!Array.isArray(itemIds)) { res.status(400).json({ error: "itemIds must be an array" }); return; }
+    const data = await readProducts();
+    const cat = data.categories.find((c) => c.id === catId);
+    if (!cat) { res.status(404).json({ error: "Category not found" }); return; }
+    const itemMap = new Map(cat.items.map((i) => [i.id, i]));
+    const reordered = itemIds.map((id) => itemMap.get(id)).filter(Boolean) as typeof cat.items;
+    const missing = cat.items.filter((i) => !itemIds.includes(i.id));
+    cat.items = [...reordered, ...missing];
+    await writeProducts(data);
+    res.json(data);
+  } catch (err) {
+    logger.error(err, "admin reorder products error");
+    res.status(500).json({ error: "Failed to reorder products" });
+  }
+});
+
 router.delete("/products/categories/:catId", async (req, res) => {
   try {
     const { catId } = req.params;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useLocation } from "wouter";
 import MediaPickerModal from "@/components/MediaPickerModal";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
@@ -525,6 +525,52 @@ export default function ProductsConfigPage() {
 
   const allIds = (data?.categories ?? []).flatMap((c) => c.items.map((i) => i.id.toLowerCase()));
 
+  // ── Drag-to-reorder state ───────────────────────────────────────────────────
+  const dragSrcIdx = useRef<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  // Reset drag state whenever the active category changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useMemo(() => { dragSrcIdx.current = null; setDragOverIdx(null); }, [activeCat]);
+
+  async function reorderItems(catId: string, items: ProductItem[]) {
+    // Optimistic update
+    setData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        categories: prev.categories.map((cat) =>
+          cat.id !== catId ? cat : { ...cat, items },
+        ),
+      };
+    });
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/admin/products/categories/${catId}/reorder`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ itemIds: items.map((i) => i.id) }),
+        },
+      );
+      if (res.ok) {
+        const d = await res.json() as ProductsData;
+        setData(d);
+      }
+    } catch { /* silent — optimistic state stays */ }
+  }
+
+  function moveItemInDirection(catId: string, idx: number, dir: -1 | 1) {
+    const cat = data?.categories.find((c) => c.id === catId);
+    if (!cat) return;
+    const items = [...cat.items];
+    const target = idx + dir;
+    if (target < 0 || target >= items.length) return;
+    [items[idx], items[target]] = [items[target], items[idx]];
+    void reorderItems(catId, items);
+  }
+
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -667,6 +713,7 @@ export default function ProductsConfigPage() {
                 <table className="admin-table admin-products-table">
                   <thead>
                     <tr>
+                      <th style={{ width: 24 }}></th>
                       <th>ID</th>
                       <th>Name</th>
                       <th>Media</th>
@@ -687,8 +734,32 @@ export default function ProductsConfigPage() {
                     {currentCat.items.length === 0 && (
                       <tr><td colSpan={12} className="admin-table-empty">No products in this category</td></tr>
                     )}
-                    {currentCat.items.map((item) => (
-                      <tr key={item.id}>
+                    {currentCat.items.map((item, idx) => (
+                      <tr
+                        key={item.id}
+                        draggable
+                        onDragStart={() => { dragSrcIdx.current = idx; }}
+                        onDragOver={(e) => { e.preventDefault(); if (dragOverIdx !== idx) setDragOverIdx(idx); }}
+                        onDragEnd={() => { dragSrcIdx.current = null; setDragOverIdx(null); }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const src = dragSrcIdx.current;
+                          if (src === null || src === idx) { setDragOverIdx(null); return; }
+                          const items = [...currentCat.items];
+                          const [moved] = items.splice(src, 1);
+                          items.splice(idx, 0, moved);
+                          void reorderItems(currentCat.id, items);
+                          dragSrcIdx.current = null;
+                          setDragOverIdx(null);
+                        }}
+                        className={
+                          dragSrcIdx.current === idx ? "admin-row-dragging" :
+                          dragOverIdx === idx ? "admin-row-drag-over" : ""
+                        }
+                      >
+                        <td className="drag-handle-cell">
+                          <span className="drag-handle" title="Drag to reorder">⠿</span>
+                        </td>
                         <td><code className="admin-code">{item.id}</code></td>
                         <td className="admin-td-bold">{item.name}</td>
                         <td className="admin-td-media">
@@ -768,6 +839,18 @@ export default function ProductsConfigPage() {
                         </td>
                         <td>
                           <div className="admin-actions">
+                            <button
+                              className="admin-btn-reorder"
+                              title="Move up"
+                              disabled={idx === 0}
+                              onClick={() => moveItemInDirection(currentCat.id, idx, -1)}
+                            >▲</button>
+                            <button
+                              className="admin-btn-reorder"
+                              title="Move down"
+                              disabled={idx === currentCat.items.length - 1}
+                              onClick={() => moveItemInDirection(currentCat.id, idx, 1)}
+                            >▼</button>
                             <button className="admin-btn-move" onClick={() => setMovingItem(item)}>
                               <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
                                 <path d="M8 2v12M2 8l6-6 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

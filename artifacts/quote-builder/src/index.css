@@ -3609,6 +3609,60 @@ td:has(.inline-cell-input) {
   background: var(--danger-light);
 }
 
+/* ── Drag-to-reorder ─────────────────────────────────── */
+.drag-handle-cell {
+  width: 24px;
+  padding: 0 4px !important;
+  text-align: center;
+  cursor: grab;
+  user-select: none;
+}
+.drag-handle {
+  display: inline-block;
+  color: var(--text-3);
+  font-size: 14px;
+  line-height: 1;
+  cursor: grab;
+  opacity: 0.4;
+  transition: opacity 0.12s;
+}
+tr:hover .drag-handle { opacity: 1; }
+.drag-handle:active { cursor: grabbing; }
+
+.admin-row-dragging {
+  opacity: 0.35;
+  background: var(--surface-hover, #f3f4f6) !important;
+}
+.admin-row-drag-over td {
+  border-top: 2px solid var(--accent) !important;
+}
+
+.admin-btn-reorder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-2);
+  font-size: 11px;
+  font-family: inherit;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.12s;
+  flex-shrink: 0;
+}
+.admin-btn-reorder:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.admin-btn-reorder:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
 /* ── Admin modal ─────────────────────────────────────── */
 
 .admin-modal-backdrop {
