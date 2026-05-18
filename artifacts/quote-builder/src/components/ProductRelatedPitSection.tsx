@@ -50,6 +50,22 @@ function getProductDuration(
   return entry[field];
 }
 
+// ── Merged product groups ─────────────────────────────────────────────────────
+// Products that share identical Pro/Train hours appear as a single line item
+// in Programming & Training, and as a single optional toggle in PitSection.
+export const MERGED_PRODUCT_GROUPS: ReadonlyArray<{
+  readonly id: string;
+  readonly label: string;
+  readonly productIds: ReadonlyArray<string>;
+}> = [
+  { id: "kds-solution", label: "KDS Solution", productIds: ["exp-001", "prp-001"] },
+] as const;
+
+// Fast lookup: productId → its merged group (if any)
+export const MERGED_PRODUCT_LOOKUP: ReadonlyMap<string, typeof MERGED_PRODUCT_GROUPS[0]> = new Map(
+  MERGED_PRODUCT_GROUPS.flatMap((g) => g.productIds.map((pid) => [pid, g] as const)),
+);
+
 // ── Section definitions ───────────────────────────────────────────────────────
 // Install & Staging scale by quantity (qty × duration).
 // Programming & Training are presence-based (one entry per unique product in quote).
@@ -120,12 +136,17 @@ function computeSectionRows(
           : li.productName;
         rows.push({ name: label, hours: totalHrs, price: totalHrs * rate });
       } else {
-        // Programming / Training: presence-based, respects optional program toggle
-        // Default is true (included) — only excluded when explicitly toggled off
-        if (optionalProgramToggles[li.productId] === false) continue;
-        if (!seen.has(li.productId)) {
-          seen.add(li.productId);
-          rows.push({ name: li.productName, hours: hrs, price: hrs * rate });
+        // Programming / Training: presence-based, respects optional program toggle.
+        // Products in a merged group collapse into one entry under the group label.
+        const mergedGroup = MERGED_PRODUCT_LOOKUP.get(li.productId);
+        const toggleKey = mergedGroup ? mergedGroup.id : li.productId;
+        const seenKey  = mergedGroup ? mergedGroup.id : li.productId;
+        const label    = mergedGroup ? mergedGroup.label : li.productName;
+
+        if (optionalProgramToggles[toggleKey] === false) continue;
+        if (!seen.has(seenKey)) {
+          seen.add(seenKey);
+          rows.push({ name: label, hours: hrs, price: hrs * rate });
         }
       }
     }

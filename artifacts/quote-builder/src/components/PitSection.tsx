@@ -2,14 +2,15 @@ import pitDataStatic from "../data/pit-services.json";
 import { PIT_HOURLY_RATE as STATIC_PIT_HOURLY_RATE } from "../data/pit-config";
 import type { PitCategory, QuoteGroup } from "../types";
 import type { ProductCatalogMap } from "./ProductRelatedPitSection";
+import { MERGED_PRODUCT_LOOKUP } from "./ProductRelatedPitSection";
 
 const STATIC_PIT_CATEGORIES = (pitDataStatic.categories as unknown as PitCategory[]).filter(
   (c) => c.id !== "heatmap",
 );
 
 // Derive optional-program toggle items directly from products in the quote
-// that carry non-zero pro or train durations. Keys are product IDs so the
-// list automatically expands when new products are added to the catalog.
+// that carry non-zero pro or train durations. Products in a merged group
+// (e.g. exp-001 + prp-001 → "KDS Solution") appear as a single toggle.
 function deriveOptionalPrograms(
   groups: QuoteGroup[],
   catalogMap: ProductCatalogMap,
@@ -18,11 +19,21 @@ function deriveOptionalPrograms(
   const items: Array<{ id: string; label: string }> = [];
   for (const group of groups) {
     for (const li of group.lineItems) {
-      if (li.quantity <= 0 || seen.has(li.productId)) continue;
+      if (li.quantity <= 0) continue;
       const entry = catalogMap.get(li.productId);
-      if (entry && (entry.produration > 0 || entry.traduration > 0)) {
-        seen.add(li.productId);
-        items.push({ id: li.productId, label: li.productName });
+      if (!entry || (entry.produration <= 0 && entry.traduration <= 0)) continue;
+
+      const mergedGroup = MERGED_PRODUCT_LOOKUP.get(li.productId);
+      if (mergedGroup) {
+        if (!seen.has(mergedGroup.id)) {
+          seen.add(mergedGroup.id);
+          items.push({ id: mergedGroup.id, label: mergedGroup.label });
+        }
+      } else {
+        if (!seen.has(li.productId)) {
+          seen.add(li.productId);
+          items.push({ id: li.productId, label: li.productName });
+        }
       }
     }
   }
