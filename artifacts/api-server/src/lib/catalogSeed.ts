@@ -14,7 +14,8 @@ export const DEFAULT_CATALOG = {
           "traduration": 0,
           "instaduration": 0,
           "stageduration": 0,
-          "pci": 0
+          "pci": 0,
+          "exclusiveGroup": "core-suite"
         },
         {
           "id": "co-002",
@@ -26,7 +27,8 @@ export const DEFAULT_CATALOG = {
           "traduration": 0,
           "instaduration": 0,
           "stageduration": 0,
-          "pci": 0
+          "pci": 0,
+          "exclusiveGroup": "core-suite"
         }
       ]
     },

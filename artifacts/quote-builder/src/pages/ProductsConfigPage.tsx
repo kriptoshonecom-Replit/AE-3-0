@@ -20,6 +20,8 @@ interface ProductItem {
   stageduration?: number;
   /** Quantity Limit Toggle — when true, quantity is locked to 1 in quotes */
   qlt?: boolean;
+  /** Exclusive Group — products sharing the same label are mutually exclusive */
+  exclusiveGroup?: string;
 }
 
 interface Category {
@@ -47,10 +49,11 @@ interface InlineCellProps {
   prefix?: string;
   suffix?: string;
   className?: string;
+  placeholder?: string;
   onSave: (raw: string) => void;
 }
 
-function InlineCell({ value, type, step = 1, min = 0, prefix = "", suffix = "", className = "", onSave }: InlineCellProps) {
+function InlineCell({ value, type, step = 1, min = 0, prefix = "", suffix = "", className = "", placeholder, onSave }: InlineCellProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
   const inputRef = useRef<HTMLInputElement>(null);
@@ -83,6 +86,7 @@ function InlineCell({ value, type, step = 1, min = 0, prefix = "", suffix = "", 
         min={min}
         autoFocus
         className={`inline-cell-input ${className}`}
+        placeholder={placeholder}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
         onKeyDown={handleKeyDown}
@@ -587,9 +591,9 @@ export default function ProductsConfigPage() {
 
   useEffect(() => { void load(); }, [load]);
 
-  async function patchItem(catId: string, itemId: string, field: string, raw: string | boolean) {
+  async function patchItem(catId: string, itemId: string, field: string, raw: string | boolean | null) {
     const numFields = ["price", "pci", "hwmc", "produration", "traduration", "instaduration", "stageduration"];
-    const val = typeof raw === "boolean" ? raw : numFields.includes(field) ? Number(raw) : raw;
+    const val = raw === null ? null : typeof raw === "boolean" ? raw : numFields.includes(field) ? Number(raw) : raw;
     // Optimistic update
     setData((prev) => {
       if (!prev) return prev;
@@ -726,13 +730,14 @@ export default function ProductsConfigPage() {
                       <th>Install</th>
                       <th>Stage</th>
                       <th title="Quantity Limit Toggle — when On, quantity is locked to 1">QLT</th>
+                      <th title="Exclusive Group — products sharing the same label are mutually exclusive in the quote builder">Excl. Group</th>
                       <th>Description</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {currentCat.items.length === 0 && (
-                      <tr><td colSpan={12} className="admin-table-empty">No products in this category</td></tr>
+                      <tr><td colSpan={16} className="admin-table-empty">No products in this category</td></tr>
                     )}
                     {currentCat.items.map((item, idx) => (
                       <tr
@@ -829,6 +834,14 @@ export default function ProductsConfigPage() {
                           >
                             <span className="pit-toggle-thumb" />
                           </button>
+                        </td>
+                        <td>
+                          <InlineCell
+                            value={item.exclusiveGroup ?? ""}
+                            type="text"
+                            placeholder="none"
+                            onSave={(v) => patchItem(currentCat.id, item.id, "exclusiveGroup", (v as string).trim() || null)}
+                          />
                         </td>
                         <td className="admin-td-desc">
                           <InlineCell

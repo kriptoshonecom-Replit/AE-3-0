@@ -2,25 +2,33 @@
 // quoteLogic.ts
 // Custom business logic: price calculations, restrictions, and rules.
 // ─────────────────────────────────────────────────────────────────────────────
-import type { QuoteGroup } from "../types";
+import type { QuoteGroup, ProductItem } from "../types";
 
 
 // ── Mutual Exclusion Restriction ──────────────────────────────────────────────
-// co-001 and co-002 cannot both be selected in the same group at the same time.
-
-const MUTUALLY_EXCLUSIVE_IDS: string[] = ["co-001", "co-002"];
+// Products that share the same non-empty `exclusiveGroup` string are mutually
+// exclusive: if one is already used in a row, all others in the same group are
+// hidden from the dropdown in every other row of the same category.
 
 /**
- * Given the product IDs already used in other rows of a group,
- * returns any additional IDs that should be blocked for the current row.
- * If one exclusive item is already taken, all others in the set are blocked.
+ * Given the product IDs already used in other rows of a group and the full list
+ * of items in the current category, returns any IDs that should be blocked for
+ * the current row due to `exclusiveGroup` conflicts.
  */
-export function getAdditionalExcludedIds(usedProductIds: string[]): string[] {
-  const takenExclusive = usedProductIds.find((id) => MUTUALLY_EXCLUSIVE_IDS.includes(id));
-  if (takenExclusive) {
-    return MUTUALLY_EXCLUSIVE_IDS.filter((id) => id !== takenExclusive);
+export function getAdditionalExcludedIds(
+  usedProductIds: string[],
+  allCategoryItems: ProductItem[],
+): string[] {
+  const excluded = new Set<string>();
+  for (const usedId of usedProductIds) {
+    const item = allCategoryItems.find((i) => i.id === usedId);
+    if (item?.exclusiveGroup) {
+      allCategoryItems
+        .filter((i) => i.exclusiveGroup === item.exclusiveGroup && i.id !== usedId)
+        .forEach((i) => excluded.add(i.id));
+    }
   }
-  return [];
+  return [...excluded];
 }
 
 

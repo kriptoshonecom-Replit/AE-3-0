@@ -111,7 +111,8 @@ export default function QuoteGroup({ group, catalog, onChange, onRemove, tieredA
                   .filter((_, i) => i !== idx)
                   .map((li) => li.productId)
                   .filter(Boolean);
-                const excludedIds = [...usedIds, ...getAdditionalExcludedIds(usedIds)];
+                const allCategoryItems = catalog.find((c) => c.id === group.categoryId)?.items ?? [];
+                const excludedIds = [...usedIds, ...getAdditionalExcludedIds(usedIds, allCategoryItems)];
                 return (
                   <LineItemRow
                     key={item.id}

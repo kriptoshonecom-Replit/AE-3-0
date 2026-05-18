@@ -13,6 +13,12 @@ export interface ProductItem {
   sitecopytradiration?: number;
   /** Quantity Limit Toggle — when true, quantity is locked to 1 */
   qlt?: boolean;
+  /**
+   * Exclusive Group — products sharing the same non-empty string are mutually
+   * exclusive: selecting one hides all others in the same group from the dropdown.
+   * Set from the Products Config admin page.
+   */
+  exclusiveGroup?: string;
 }
 
 export interface ProductCategory {
