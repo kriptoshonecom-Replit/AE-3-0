@@ -17,6 +17,8 @@ interface Props {
   upfrontPriceDiscountPct?: number;
   voyixTxnFee?: number;
   gatewayTxnRate?: number;
+  recurringPit?: boolean;
+  upfrontOverride?: number;
 }
 
 export default function QuoteSummary({
@@ -29,6 +31,8 @@ export default function QuoteSummary({
   upfrontPriceDiscountPct,
   voyixTxnFee,
   gatewayTxnRate,
+  recurringPit = false,
+  upfrontOverride,
 }: Props) {
   const subtotal = quoteSubtotal(quote);
   const discount = quoteDiscount(quote);
@@ -86,8 +90,8 @@ export default function QuoteSummary({
         <div className="summary-divider" />
 
         <div className="summary-row total">
-          <span>Upfront Total</span>
-          <span>{formatCurrency(pitTotal + productPitTotal)}</span>
+          <span>{recurringPit ? "Monthly Upfront Total" : "Upfront Total"}</span>
+          <span>{formatCurrency(recurringPit && upfrontOverride !== undefined ? upfrontOverride : pitTotal + productPitTotal)}</span>
         </div>
 
         {heatmapTotal > 0 && (

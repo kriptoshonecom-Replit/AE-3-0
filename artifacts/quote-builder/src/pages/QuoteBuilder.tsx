@@ -25,7 +25,7 @@ import {
   findSubjectItem,
 } from "../utils/licenseSync";
 import PitSection from "../components/PitSection";
-import ProductRelatedPitSection, { computeProductRelatedPitTotal, buildProductCatalogMap, type ProductCatalogMap } from "../components/ProductRelatedPitSection";
+import ProductRelatedPitSection, { computeProductRelatedPitTotal, computeProductRelatedPitHours, buildProductCatalogMap, type ProductCatalogMap } from "../components/ProductRelatedPitSection";
 import QuoteGroupComponent from "../components/QuoteGroup";
 import QuoteSummary from "../components/QuoteSummary";
 import QuoteList from "../components/QuoteList";
@@ -962,6 +962,17 @@ export default function QuoteBuilder() {
   const _heatmapTotal = computeHeatmapTotal(
     heatmapToggles, heatmapItems.length > 0 ? heatmapItems : undefined,
   );
+  const _pitHours = _pitCat
+    ? _pitCat.lineItems.reduce((s, i) => s + i.duration, 0)
+    : 0;
+  const _productPitHours = computeProductRelatedPitHours(
+    quote.groups, yesNoToggles, optionalProgramToggles,
+    quote.meta.pitType ?? "", catalogMap,
+  );
+  const _recurringPit = quote.meta.recurringPit ?? false;
+  const _upfrontOverride = _recurringPit
+    ? (_pitHours + _productPitHours) * 4 * pitHourlyRate
+    : undefined;
   const _upfrontTotal = _pitTotal + _productPitTotal + _heatmapTotal;
   const _reqSub = parseDollarStr(quote.meta.requestedSubscriptionAmount);
   const _reqUpfront = parseDollarStr(quote.meta.requestedUpfrontAmount);
@@ -1221,6 +1232,8 @@ export default function QuoteBuilder() {
                         upfrontPriceDiscountPct={upfrontPriceDiscountPct}
                         voyixTxnFee={voyixTxnFee}
                         gatewayTxnRate={gatewayTxnRate}
+                        recurringPit={_recurringPit}
+                        upfrontOverride={_upfrontOverride}
                       />
                       {stampStatus && (
                         <div className="summary-stamp-overlay">

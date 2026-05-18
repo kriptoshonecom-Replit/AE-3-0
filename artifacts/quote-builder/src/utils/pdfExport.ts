@@ -12,7 +12,7 @@ import pitData from "../data/pit-services.json";
 
 import { PIT_HOURLY_RATE } from "../data/pit-config";
 import { computeLineItemTotal } from "./quoteLogic";
-import { computeProductRelatedPitTotal } from "../components/ProductRelatedPitSection";
+import { computeProductRelatedPitTotal, computeProductRelatedPitHours } from "../components/ProductRelatedPitSection";
 
 const DEFAULT_YES_NO: Record<string, boolean> = {
   "connected-payments-yn": false,
@@ -332,6 +332,20 @@ export async function exportQuoteToPDF(
     undefined,
     rate,
   );
+  const pitHours = pitCatForTotal
+    ? pitCatForTotal.lineItems.reduce((s, i) => s + i.duration, 0)
+    : 0;
+  const productPitHours = computeProductRelatedPitHours(
+    quote.groups,
+    yesNoToggles,
+    optToggles,
+    quote.meta.pitType ?? "",
+  );
+  const recurringPit = quote.meta.recurringPit ?? false;
+  const upfrontDisplayValue = recurringPit
+    ? (pitHours + productPitHours) * 4 * rate
+    : pitTotal + productPitTotal;
+  const upfrontLabel = recurringPit ? "Monthly Upfront Total" : "Upfront Total";
   const heatmapItems =
     (
       pitCategories as Array<{
@@ -405,7 +419,7 @@ export async function exportQuoteToPDF(
   y += 3;
 
   doc.setFontSize(11);
-  row("Upfront Total", formatCurrency(pitTotal + productPitTotal), true);
+  row(upfrontLabel, formatCurrency(upfrontDisplayValue), true);
 
   if (heatmapTotal > 0) {
     y += 2;

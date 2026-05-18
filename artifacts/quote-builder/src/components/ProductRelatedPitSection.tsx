@@ -250,6 +250,33 @@ export function computeProductRelatedPitTotal(
   return total;
 }
 
+export function computeProductRelatedPitHours(
+  groups: QuoteGroup[],
+  yesNoToggles: Record<string, boolean>,
+  optionalProgramToggles: Record<string, boolean> = {},
+  pitType: string = "",
+  catalogMap: ProductCatalogMap = DEFAULT_CATALOG_MAP,
+): number {
+  const forcedItemIds = Object.entries(YES_NO_ITEM_MAP)
+    .filter(([toggleId]) => yesNoToggles[toggleId])
+    .flatMap(([, itemIds]) => itemIds);
+
+  const excludedItemIds = buildExcludedItemIds(optionalProgramToggles);
+
+  let total = 0;
+  for (const cat of PIT_CATEGORIES) {
+    for (const item of cat.lineItems) {
+      if (excludedItemIds.has(item.id)) continue;
+      const forced = forcedItemIds.includes(item.id);
+      const hours = forced
+        ? (TOGGLE_DURATIONS[item.id] ?? 0)
+        : computeHours(item.id, cat.id, groups, pitType, catalogMap);
+      total += hours;
+    }
+  }
+  return total;
+}
+
 // ── Category table component ──────────────────────────────────────────────────
 interface PitItem { id: string; name: string }
 interface PitCat  { id: string; name: string; lineItems: PitItem[] }
