@@ -88,6 +88,7 @@ function computeSectionRows(
   section: PitSectionDef,
   groups: QuoteGroup[],
   yesNoToggles: Record<string, boolean>,
+  optionalProgramToggles: Record<string, boolean>,
   pitType: string,
   catalogMap: ProductCatalogMap,
   rate: number,
@@ -112,14 +113,16 @@ function computeSectionRows(
       if (hrs <= 0) continue;
 
       if (section.scaleByQty) {
-        // Install / Staging: qty × duration
+        // Install / Staging: qty × duration (never filtered by optional toggle)
         const totalHrs = li.quantity * hrs;
         const label = li.quantity > 1
           ? `${li.productName} ×${li.quantity}`
           : li.productName;
         rows.push({ name: label, hours: totalHrs, price: totalHrs * rate });
       } else {
-        // Programming / Training: presence-based (once per unique product type)
+        // Programming / Training: presence-based, respects optional program toggle
+        // Default is true (included) — only excluded when explicitly toggled off
+        if (optionalProgramToggles[li.productId] === false) continue;
         if (!seen.has(li.productId)) {
           seen.add(li.productId);
           rows.push({ name: li.productName, hours: hrs, price: hrs * rate });
@@ -142,7 +145,7 @@ export function computeProductRelatedPitTotal(
 ): number {
   let total = 0;
   for (const section of PIT_SECTIONS) {
-    for (const row of computeSectionRows(section, groups, yesNoToggles, pitType, catalogMap, pitHourlyRate)) {
+    for (const row of computeSectionRows(section, groups, yesNoToggles, optionalProgramToggles, pitType, catalogMap, pitHourlyRate)) {
       total += row.price;
     }
   }
@@ -159,7 +162,7 @@ export function computeProductRelatedPitHours(
   let total = 0;
   for (const section of PIT_SECTIONS) {
     // rate=1 means price === hours, so we can reuse computeSectionRows
-    for (const row of computeSectionRows(section, groups, yesNoToggles, pitType, catalogMap, 1)) {
+    for (const row of computeSectionRows(section, groups, yesNoToggles, optionalProgramToggles, pitType, catalogMap, 1)) {
       total += row.hours;
     }
   }
@@ -225,7 +228,7 @@ interface Props {
 export default function ProductRelatedPitSection({
   groups,
   yesNoToggles,
-  optionalProgramToggles: _optionalProgramToggles, // kept for API compat, not used in data-driven approach
+  optionalProgramToggles,
   pitType,
   catalogMap,
   pitHourlyRate,
@@ -239,7 +242,7 @@ export default function ProductRelatedPitSection({
 
   const sectionRows = PIT_SECTIONS.map((section) => ({
     section,
-    rows: computeSectionRows(section, groups, yesNoToggles, pitType, map, rate),
+    rows: computeSectionRows(section, groups, yesNoToggles, optionalProgramToggles, pitType, map, rate),
   }));
 
   const grandHours = sectionRows.reduce(

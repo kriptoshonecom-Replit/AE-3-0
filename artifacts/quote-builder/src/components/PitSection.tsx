@@ -1,19 +1,33 @@
 import pitDataStatic from "../data/pit-services.json";
 import { PIT_HOURLY_RATE as STATIC_PIT_HOURLY_RATE } from "../data/pit-config";
-import type { PitCategory } from "../types";
+import type { PitCategory, QuoteGroup } from "../types";
+import type { ProductCatalogMap } from "./ProductRelatedPitSection";
 
 const STATIC_PIT_CATEGORIES = (pitDataStatic.categories as unknown as PitCategory[]).filter(
   (c) => c.id !== "heatmap",
 );
 
-const OPTIONAL_PROGRAMS = [
-  { id: "consumer-marketing", label: "Consumer Marketing" },
-  { id: "insight-or-console", label: "Insight or Console" },
-  { id: "aloha-api", label: "Aloha API" },
-  { id: "kitchen", label: "Kitchen" },
-  { id: "orderpay", label: "OrderPay" },
-  { id: "aloha-delivery", label: "Aloha Delivery" },
-];
+// Derive optional-program toggle items directly from products in the quote
+// that carry non-zero pro or train durations. Keys are product IDs so the
+// list automatically expands when new products are added to the catalog.
+function deriveOptionalPrograms(
+  groups: QuoteGroup[],
+  catalogMap: ProductCatalogMap,
+): Array<{ id: string; label: string }> {
+  const seen = new Set<string>();
+  const items: Array<{ id: string; label: string }> = [];
+  for (const group of groups) {
+    for (const li of group.lineItems) {
+      if (li.quantity <= 0 || seen.has(li.productId)) continue;
+      const entry = catalogMap.get(li.productId);
+      if (entry && (entry.produration > 0 || entry.traduration > 0)) {
+        seen.add(li.productId);
+        items.push({ id: li.productId, label: li.productName });
+      }
+    }
+  }
+  return items;
+}
 
 interface Props {
   pitType: string;
@@ -26,6 +40,9 @@ interface Props {
   onOptionalProgramToggle: (id: string) => void;
   pitCategories?: PitCategory[];
   pitHourlyRate?: number;
+  // New: needed for dynamic optional-program list
+  groups?: QuoteGroup[];
+  catalogMap?: ProductCatalogMap;
 }
 
 export default function PitSection({
@@ -39,12 +56,20 @@ export default function PitSection({
   onOptionalProgramToggle,
   pitCategories,
   pitHourlyRate,
+  groups = [],
+  catalogMap,
 }: Props) {
   const PIT_HOURLY_RATE = pitHourlyRate ?? STATIC_PIT_HOURLY_RATE;
   const categories = (pitCategories ?? STATIC_PIT_CATEGORIES).filter(
     (c) => c.id !== "heatmap",
   );
   const selected = categories.find((c) => c.id === pitType) ?? null;
+
+  // Only compute when we're on the refresh type and have catalog data
+  const optionalPrograms =
+    pitType === "refresh" && catalogMap
+      ? deriveOptionalPrograms(groups, catalogMap)
+      : [];
 
   return (
     <div className="pit-card">
@@ -88,25 +113,34 @@ export default function PitSection({
         {pitType === "refresh" && (
           <div className="pit-optional-programs">
             <div className="pit-optional-title">Optional Programming</div>
-            <div className="pit-toggles-list">
-              {OPTIONAL_PROGRAMS.map((program) => (
-                <div key={program.id} className="pit-toggle-row">
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={optionalProgramToggles[program.id] ?? true}
-                    className={`pit-toggle-switch ${(optionalProgramToggles[program.id] ?? true) ? "pit-toggle-on" : "pit-toggle-off"}`}
-                    onClick={() => onOptionalProgramToggle(program.id)}
-                  >
-                    <span className="pit-toggle-thumb" />
-                  </button>
-                  <span className="pit-toggle-label">{program.label}</span>
-                  <span className={`pit-toggle-state ${(optionalProgramToggles[program.id] ?? true) ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
-                    {(optionalProgramToggles[program.id] ?? true) ? "On" : "Off"}
-                  </span>
-                </div>
-              ))}
-            </div>
+            {optionalPrograms.length === 0 ? (
+              <p className="pit-optional-empty">
+                Add products with Pro or Train durations to enable optional programming toggles.
+              </p>
+            ) : (
+              <div className="pit-toggles-list">
+                {optionalPrograms.map((program) => {
+                  const isOn = optionalProgramToggles[program.id] ?? true;
+                  return (
+                    <div key={program.id} className="pit-toggle-row">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={isOn}
+                        className={`pit-toggle-switch ${isOn ? "pit-toggle-on" : "pit-toggle-off"}`}
+                        onClick={() => onOptionalProgramToggle(program.id)}
+                      >
+                        <span className="pit-toggle-thumb" />
+                      </button>
+                      <span className="pit-toggle-label">{program.label}</span>
+                      <span className={`pit-toggle-state ${isOn ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
+                        {isOn ? "On" : "Off"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>

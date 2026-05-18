@@ -42,14 +42,9 @@ const DEFAULT_YES_NO: Record<string, boolean> = {
   "online-ordering-yn": false,
 };
 
-const DEFAULT_OPT_PROGRAMS: Record<string, boolean> = {
-  "consumer-marketing": true,
-  "insight-or-console": true,
-  "aloha-api": true,
-  "kitchen": true,
-  "orderpay": true,
-  "aloha-delivery": true,
-};
+// Optional program toggles are now fully dynamic (keyed by product ID).
+// No static defaults — all products default to included (true) unless explicitly toggled off.
+const DEFAULT_OPT_PROGRAMS: Record<string, boolean> = {};
 
 const DEFAULT_HEATMAP_TOGGLES: Record<string, boolean> = {
   "heat-001": false,
@@ -1271,6 +1266,8 @@ export default function QuoteBuilder() {
                     onOptionalProgramToggle={handleOptionalProgramToggle}
                     pitCategories={pitCategories}
                     pitHourlyRate={pitHourlyRate}
+                    groups={quote.groups}
+                    catalogMap={catalogMap}
                   />
                 </section>
 
