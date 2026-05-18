@@ -49,13 +49,13 @@ export default function QuoteGroup({ group, catalog, onChange, onRemove, tieredA
     for (const cat of catalog) {
       const found = cat.items.find((p) => p.id === productId);
       if (found) {
-        const isOnePerSite = found.text?.includes("One Per Site") ?? false;
+        const isQltLocked = found.qlt === true;
         updateLine(idx, {
           ...group.lineItems[idx],
           productId: found.id,
           productName: found.name,
           unitPrice: found.price,
-          quantity: isOnePerSite ? 1 : group.lineItems[idx].quantity,
+          quantity: isQltLocked ? 1 : group.lineItems[idx].quantity,
         });
         return;
       }
@@ -172,7 +172,7 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
   const categoryItems = allCategoryItems.filter((p) => !usedProductIds.includes(p.id));
 
   const product = allCategoryItems.find((p) => p.id === item.productId);
-  const isOnePerSite = product?.text?.includes("One Per Site") ?? false;
+  const isQltLocked = product?.qlt === true;
   const infoEntry = product?.type && product?.text ? { type: product.type, text: product.text } : undefined;
   const [modalOpen, setModalOpen] = useState(false);
   const [imageModalOpen, setImageModalOpen] = useState(false);
@@ -312,10 +312,10 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
         </div>
 
         <div className="col-qty">
-          {isOnePerSite ? (
-            <div className="qty-locked" title="One Per Site — quantity is fixed at 1">
+          {isQltLocked ? (
+            <div className="qty-locked" title="Quantity is limited to 1">
               <span className="qty-locked-value">1</span>
-              <span className="qty-locked-badge">/ site</span>
+              <span className="qty-locked-badge">max</span>
             </div>
           ) : (
             <input

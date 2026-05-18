@@ -11,6 +11,8 @@ export interface ProductItem {
   stageduration?: number;
   sitecopyproduration?: number;
   sitecopytradiration?: number;
+  /** Quantity Limit Toggle — when true, quantity is locked to 1 */
+  qlt?: boolean;
 }
 
 export interface ProductCategory {

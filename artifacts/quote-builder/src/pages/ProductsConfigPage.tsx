@@ -18,6 +18,8 @@ interface ProductItem {
   traduration?: number;
   instaduration?: number;
   stageduration?: number;
+  /** Quantity Limit Toggle — when true, quantity is locked to 1 in quotes */
+  qlt?: boolean;
 }
 
 interface Category {
@@ -539,9 +541,9 @@ export default function ProductsConfigPage() {
 
   useEffect(() => { void load(); }, [load]);
 
-  async function patchItem(catId: string, itemId: string, field: string, raw: string) {
-    const numFields = ["price", "pci", "produration", "traduration", "instaduration", "stageduration"];
-    const val = numFields.includes(field) ? Number(raw) : raw;
+  async function patchItem(catId: string, itemId: string, field: string, raw: string | boolean) {
+    const numFields = ["price", "pci", "hwmc", "produration", "traduration", "instaduration", "stageduration"];
+    const val = typeof raw === "boolean" ? raw : numFields.includes(field) ? Number(raw) : raw;
     // Optimistic update
     setData((prev) => {
       if (!prev) return prev;
@@ -676,6 +678,7 @@ export default function ProductsConfigPage() {
                       <th>Train</th>
                       <th>Install</th>
                       <th>Stage</th>
+                      <th title="Quantity Limit Toggle — when On, quantity is locked to 1">QLT</th>
                       <th>Description</th>
                       <th>Actions</th>
                     </tr>
@@ -742,6 +745,19 @@ export default function ProductsConfigPage() {
                             type="number" step={1} min={0} suffix="h"
                             onSave={(v) => patchItem(currentCat.id, item.id, "stageduration", v)}
                           />
+                        </td>
+                        <td style={{ textAlign: "center" }}>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={item.qlt ?? false}
+                            title={item.qlt ? "QLT On — quantity locked to 1" : "QLT Off"}
+                            className={`pit-toggle-switch ${(item.qlt ?? false) ? "pit-toggle-on" : "pit-toggle-off"}`}
+                            style={{ transform: "scale(0.85)" }}
+                            onClick={() => patchItem(currentCat.id, item.id, "qlt", !item.qlt)}
+                          >
+                            <span className="pit-toggle-thumb" />
+                          </button>
                         </td>
                         <td className="admin-td-desc">
                           <InlineCell
