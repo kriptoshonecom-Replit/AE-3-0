@@ -23,7 +23,7 @@ router.get("/alert-configs", async (_req, res) => {
   try {
     const gcsAll = await readAlertConfigsFromGCS();
     if (gcsAll) {
-      const active = gcsAll.filter((c) => (c as Record<string, unknown>).is_active === true);
+      const active = gcsAll.filter((c) => (c as Record<string, unknown>).isActive === true);
       res.json(active);
       return;
     }
