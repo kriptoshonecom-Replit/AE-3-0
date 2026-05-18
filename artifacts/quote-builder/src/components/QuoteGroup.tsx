@@ -20,6 +20,8 @@ interface Props {
 export default function QuoteGroup({ group, catalog, onChange, onRemove, tieredAdditionalPrice, isDragging, isDragOver, onDragStart, onDragOver, onDragEnd, onDrop }: Props) {
   const [isOpen, setIsOpen] = useState(group.isOpen);
 
+  useEffect(() => { setIsOpen(group.isOpen); }, [group.isOpen]);
+
   const toggle = () => {
     setIsOpen((v) => !v);
     onChange({ ...group, isOpen: !isOpen });

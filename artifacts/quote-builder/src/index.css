@@ -395,6 +395,26 @@ body {
   color: var(--accent);
 }
 
+.btn-collapse-all {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-3);
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.12s;
+  flex-shrink: 0;
+}
+.btn-collapse-all:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* ── Buttons ─────────────────────────────────────────────── */
 
 button {

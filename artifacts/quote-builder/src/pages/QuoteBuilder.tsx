@@ -1178,6 +1178,34 @@ export default function QuoteBuilder() {
                 <section className="section">
                   <div className="section-header">
                     <h2 className="section-title">Line Items</h2>
+                    {quote.groups.length > 0 && (() => {
+                      const allOpen = quote.groups.every((g) => g.isOpen);
+                      return (
+                        <button
+                          type="button"
+                          className="btn-collapse-all"
+                          title={allOpen ? "Collapse all" : "Expand all"}
+                          onClick={() =>
+                            setQuote({
+                              ...quote,
+                              groups: quote.groups.map((g) => ({ ...g, isOpen: !allOpen })),
+                            })
+                          }
+                        >
+                          {allOpen ? (
+                            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                              <path d="M2.5 9.5l5-5 5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M2.5 12.5l5-5 5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          ) : (
+                            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                              <path d="M2.5 5.5l5 5 5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M2.5 2.5l5 5 5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </button>
+                      );
+                    })()}
                   </div>
                   <div className="groups-list">
                     {quote.groups.map((group, idx) => (
