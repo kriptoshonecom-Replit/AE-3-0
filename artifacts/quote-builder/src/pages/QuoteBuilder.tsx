@@ -1192,17 +1192,11 @@ export default function QuoteBuilder() {
                             })
                           }
                         >
-                          {allOpen ? (
-                            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                              <path d="M2.5 9.5l5-5 5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M2.5 12.5l5-5 5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                          <span className={`chevron${allOpen ? " rotated" : ""}`}>
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                              <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
-                          ) : (
-                            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                              <path d="M2.5 5.5l5 5 5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M2.5 2.5l5 5 5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          )}
+                          </span>
                         </button>
                       );
                     })()}

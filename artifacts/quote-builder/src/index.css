@@ -400,18 +400,12 @@ body {
   align-items: center;
   justify-content: center;
   background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text-3);
-  width: 26px;
-  height: 26px;
-  padding: 0;
+  border: none;
+  padding: 2px;
   cursor: pointer;
-  transition: all 0.12s;
   flex-shrink: 0;
 }
-.btn-collapse-all:hover {
-  border-color: var(--accent);
+.btn-collapse-all:hover .chevron {
   color: var(--accent);
 }
 
