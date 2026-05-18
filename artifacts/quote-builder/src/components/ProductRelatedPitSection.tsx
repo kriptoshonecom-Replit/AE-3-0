@@ -58,7 +58,8 @@ export const MERGED_PRODUCT_GROUPS: ReadonlyArray<{
   readonly label: string;
   readonly productIds: ReadonlyArray<string>;
 }> = [
-  { id: "kds-solution", label: "KDS Solution", productIds: ["exp-001", "prp-001"] },
+  { id: "kds-solution",     label: "KDS Solution",     productIds: ["exp-001", "prp-001"] },
+  { id: "orderpay-solution", label: "OrderPay Solution", productIds: ["ha-001",  "ha-002"]  },
 ] as const;
 
 // Fast lookup: productId → its merged group (if any)
