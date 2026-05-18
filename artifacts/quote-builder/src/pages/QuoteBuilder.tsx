@@ -971,7 +971,7 @@ export default function QuoteBuilder() {
   );
   const _recurringPit = quote.meta.recurringPit ?? false;
   const _upfrontOverride = _recurringPit
-    ? (_pitHours + _productPitHours) * 4 * pitHourlyRate
+    ? (_pitHours + _productPitHours) * 4
     : undefined;
   const _upfrontTotal = _pitTotal + _productPitTotal + _heatmapTotal;
   const _reqSub = parseDollarStr(quote.meta.requestedSubscriptionAmount);

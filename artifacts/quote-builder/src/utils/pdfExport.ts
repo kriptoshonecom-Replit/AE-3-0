@@ -343,7 +343,7 @@ export async function exportQuoteToPDF(
   );
   const recurringPit = quote.meta.recurringPit ?? false;
   const upfrontDisplayValue = recurringPit
-    ? (pitHours + productPitHours) * 4 * rate
+    ? (pitHours + productPitHours) * 4
     : pitTotal + productPitTotal;
   const upfrontLabel = recurringPit ? "Monthly Upfront Total" : "Upfront Total";
   const heatmapItems =
