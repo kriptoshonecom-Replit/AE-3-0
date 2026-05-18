@@ -115,41 +115,46 @@ const TOGGLE_DURATIONS: Record<string, number> = {
 };
 
 // ── Product mappings ──────────────────────────────────────────────────────────
+// Install & Staging use category-based lookup so any new product added to those
+// categories is automatically picked up (products with 0 duration contribute 0).
 type ProductMapping =
-  | { type: "category";    categoryIds: string[] }
-  | { type: "product";     productIds:  string[] }
-  | { type: "product-qty"; productIds:  string[] };
+  | { type: "category"; categoryIds: string[] }
+  | { type: "product";  productIds:  string[] };
 
 const PIT_ITEM_MAPPING: Record<string, ProductMapping> = {
-  "ins-001": { type: "product-qty",  productIds:  ["tm-001", "tm-002"] },
-  "ins-002": { type: "product-qty",  productIds:  ["se-001", "se-002"] },
-  "ins-003": { type: "product-qty",  productIds:  ["ta-001", "ta-002", "ta-003"] },
-  "ins-004": { type: "product-qty",  productIds:  ["dp-001", "dp-002"] },
-  "ins-005": { type: "category",     categoryIds: ["expo", "prep"] },
-  "ins-006": { type: "product-qty",  productIds:  ["pr-001", "pr-002", "pr-003", "pr-004", "pr-005"] },
-  "ins-007": { type: "product-qty",  productIds:  ["pi-001", "pi-002", "pi-003", "pi-004", "pi-005", "pi-006", "pi-008", "pi-009"] },
-  "ins-008": { type: "product-qty",  productIds:  ["ha-001", "ha-002"] },
+  // ── Install ──────────────────────────────────────────
+  "ins-001": { type: "category", categoryIds: ["terminals"] },
+  "ins-002": { type: "category", categoryIds: ["server", "serveradd"] },
+  "ins-003": { type: "category", categoryIds: ["tablet"] },
+  "ins-004": { type: "category", categoryIds: ["displays"] },
+  "ins-005": { type: "category", categoryIds: ["expo", "prep"] },
+  "ins-006": { type: "category", categoryIds: ["printers"] },
+  "ins-007": { type: "category", categoryIds: ["pinpads"] },
+  "ins-008": { type: "category", categoryIds: ["handheld"] },
 
-  "sta-001": { type: "product-qty",  productIds:  ["tm-001", "tm-002"] },
-  "sta-002": { type: "product-qty",  productIds:  ["se-001", "se-002"] },
-  "sta-003": { type: "product-qty",  productIds:  ["ta-001", "ta-002", "ta-003"] },
-  "sta-004": { type: "product-qty",  productIds:  ["dp-001", "dp-002"] },
-  "sta-005": { type: "category",     categoryIds: ["expo", "prep"] },
-  "sta-006": { type: "product-qty",  productIds:  ["pr-001", "pr-002", "pr-003", "pr-004", "pr-005"] },
-  "sta-007": { type: "product-qty",  productIds:  ["pi-001", "pi-002", "pi-003", "pi-004", "pi-005", "pi-006", "pi-008", "pi-009"] },
-  "sta-008": { type: "product-qty",  productIds:  ["ha-001", "ha-002"] },
+  // ── Staging ──────────────────────────────────────────
+  "sta-001": { type: "category", categoryIds: ["terminals"] },
+  "sta-002": { type: "category", categoryIds: ["server", "serveradd"] },
+  "sta-003": { type: "category", categoryIds: ["tablet"] },
+  "sta-004": { type: "category", categoryIds: ["displays"] },
+  "sta-005": { type: "category", categoryIds: ["expo", "prep"] },
+  "sta-006": { type: "category", categoryIds: ["printers"] },
+  "sta-007": { type: "category", categoryIds: ["pinpads"] },
+  "sta-008": { type: "category", categoryIds: ["handheld"] },
 
-  "pro-003": { type: "product",      productIds:  ["sa-001"] },
-  "pro-004": { type: "product",      productIds:  ["sa-002", "sa-003"] },
-  "pro-005": { type: "product",      productIds:  ["sa-005"] },
-  "pro-006": { type: "product",      productIds:  ["exp-001", "prp-001"] },
-  "pro-007": { type: "product",      productIds:  ["ha-001", "ha-002"] },
-  "pro-008": { type: "product",      productIds:  ["sa-007"] },
+  // ── Programming (presence-based: triggered by specific products) ──
+  "pro-003": { type: "product", productIds: ["sa-001"] },
+  "pro-004": { type: "product", productIds: ["sa-002", "sa-003"] },
+  "pro-005": { type: "product", productIds: ["sa-005"] },
+  "pro-006": { type: "product", productIds: ["exp-001", "prp-001"] },
+  "pro-007": { type: "product", productIds: ["ha-001", "ha-002"] },
+  "pro-008": { type: "product", productIds: ["sa-007"] },
 
-  "tr-002":  { type: "product",      productIds:  ["sa-001"] },
-  "tr-003":  { type: "product",      productIds:  ["sa-002", "sa-003"] },
-  "tr-005":  { type: "product",      productIds:  ["exp-001", "prp-001"] },
-  "tr-006":  { type: "product",      productIds:  ["ha-001", "ha-002"] },
+  // ── Training (presence-based: triggered by specific products) ──
+  "tr-002":  { type: "product", productIds: ["sa-001"] },
+  "tr-003":  { type: "product", productIds: ["sa-002", "sa-003"] },
+  "tr-005":  { type: "product", productIds: ["exp-001", "prp-001"] },
+  "tr-006":  { type: "product", productIds: ["ha-001", "ha-002"] },
 };
 
 const YES_NO_ITEM_MAP: Record<string, string[]> = {
@@ -172,18 +177,6 @@ function computeHours(itemId: string, catId: string, groups: QuoteGroup[], pitTy
   if (!mapping) return 0;
 
   const field = CATEGORY_DURATION_FIELD[catId];
-
-  if (mapping.type === "product-qty") {
-    let total = 0;
-    for (const group of groups) {
-      for (const li of group.lineItems) {
-        if (mapping.productIds.includes(li.productId)) {
-          total += li.quantity * getProductDuration(li.productId, field, pitType, catalogMap);
-        }
-      }
-    }
-    return total;
-  }
 
   if (mapping.type === "product") {
     for (const group of groups) {
