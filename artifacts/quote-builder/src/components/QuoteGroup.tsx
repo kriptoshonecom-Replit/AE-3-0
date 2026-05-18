@@ -9,9 +9,15 @@ interface Props {
   onChange: (group: QuoteGroupType) => void;
   onRemove: () => void;
   tieredAdditionalPrice?: number;
+  isDragging?: boolean;
+  isDragOver?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDragEnd?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent) => void;
 }
 
-export default function QuoteGroup({ group, catalog, onChange, onRemove, tieredAdditionalPrice }: Props) {
+export default function QuoteGroup({ group, catalog, onChange, onRemove, tieredAdditionalPrice, isDragging, isDragOver, onDragStart, onDragOver, onDragEnd, onDrop }: Props) {
   const [isOpen, setIsOpen] = useState(group.isOpen);
 
   const toggle = () => {
@@ -65,9 +71,23 @@ export default function QuoteGroup({ group, catalog, onChange, onRemove, tieredA
   const subtotal = groupSubtotal(group, tieredAdditionalPrice);
 
   return (
-    <div className={`quote-group ${isOpen ? "open" : ""}`}>
+    <div
+      className={`quote-group ${isOpen ? "open" : ""}${isDragging ? " group-dragging" : ""}${isDragOver ? " group-drag-over" : ""}`}
+      draggable={!!(onDragStart)}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDragEnd={onDragEnd}
+      onDrop={onDrop}
+    >
       <button className="group-header" onClick={toggle} type="button">
         <div className="group-header-left">
+          {onDragStart && (
+            <span
+              className="group-drag-handle"
+              title="Drag to reorder"
+              onMouseDown={(e) => e.stopPropagation()}
+            >⠿</span>
+          )}
           <span className={`chevron ${isOpen ? "rotated" : ""}`}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

@@ -162,6 +162,8 @@ export default function QuoteBuilder() {
   const [optionalProgramToggles, setOptionalProgramToggles] = useState<Record<string, boolean>>(DEFAULT_OPT_PROGRAMS);
   const [heatmapToggles, setHeatmapToggles] = useState<Record<string, boolean>>(DEFAULT_HEATMAP_TOGGLES);
   const isDirtyRef = useRef(false);
+  const groupDragSrc = useRef<number | null>(null);
+  const [groupDragOver, setGroupDragOver] = useState<number | null>(null);
   const [pendingAction, setPendingAction] = useState<null | "export" | "new">(null);
   // Tracks the original owner's userId when admin is editing another user's quote
   const [editingOtherUserId, setEditingOtherUserId] = useState<string | null>(null);
@@ -1186,6 +1188,22 @@ export default function QuoteBuilder() {
                         onChange={(g) => handleGroupChange(idx, g)}
                         onRemove={() => handleGroupRemove(idx)}
                         tieredAdditionalPrice={tieredAdditionalPrice}
+                        isDragging={groupDragSrc.current === idx}
+                        isDragOver={groupDragOver === idx}
+                        onDragStart={() => { groupDragSrc.current = idx; }}
+                        onDragOver={(e) => { e.preventDefault(); if (groupDragOver !== idx) setGroupDragOver(idx); }}
+                        onDragEnd={() => { groupDragSrc.current = null; setGroupDragOver(null); }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const from = groupDragSrc.current;
+                          if (from === null || from === idx) { setGroupDragOver(null); return; }
+                          const groups = [...quote.groups];
+                          const [moved] = groups.splice(from, 1);
+                          groups.splice(idx, 0, moved);
+                          setQuote({ ...quote, groups });
+                          groupDragSrc.current = null;
+                          setGroupDragOver(null);
+                        }}
                       />
                     ))}
                   </div>
