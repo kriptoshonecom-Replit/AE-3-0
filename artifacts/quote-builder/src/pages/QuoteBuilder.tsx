@@ -739,12 +739,18 @@ export default function QuoteBuilder() {
   const handleConfigAlertAutoAdjust = () => {
     if (!configAlertState) return;
     if (configAlertState.infoOnly) { handleConfigAlertKeep(); return; }
-    const { subjectCount, groupIdx, itemIdx } = configAlertState;
+    const { subjectCount, configId } = configAlertState;
     const baseGroups = preflightAction ? preflightGroupsRef.current : quote.groups;
+    // Re-resolve subject position at apply-time so drag reordering can't
+    // leave us with stale groupIdx/itemIdx pointing at the wrong group.
+    const cfg = alertConfigs.find((c) => c.id === configId);
+    const freshSubject = cfg ? findSubjectItem(baseGroups, cfg.subjectProductId) : null;
+    const resolvedGroupIdx = freshSubject?.groupIdx ?? configAlertState.groupIdx;
+    const resolvedItemIdx = freshSubject?.itemIdx ?? configAlertState.itemIdx;
     const groups = baseGroups.map((g, gi) => {
-      if (gi !== groupIdx) return g;
+      if (gi !== resolvedGroupIdx) return g;
       const lineItems = g.lineItems.map((item, li) =>
-        li === itemIdx ? { ...item, quantity: subjectCount } : item,
+        li === resolvedItemIdx ? { ...item, quantity: subjectCount } : item,
       );
       return { ...g, lineItems };
     });
@@ -1223,6 +1229,7 @@ export default function QuoteBuilder() {
                           const [moved] = groups.splice(from, 1);
                           groups.splice(idx, 0, moved);
                           setQuote({ ...quote, groups });
+                          latestGroupsRef.current = groups;
                           groupDragSrc.current = null;
                           setGroupDragOver(null);
                         }}
