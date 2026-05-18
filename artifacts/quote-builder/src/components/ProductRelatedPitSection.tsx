@@ -337,6 +337,23 @@ export default function ProductRelatedPitSection({ groups, yesNoToggles, optiona
   const excludedItemIds = buildExcludedItemIds(optionalProgramToggles);
   const hasContent = hasAnyProducts || forcedItemIds.length > 0;
 
+  const { grandHours, grandTotal } = (() => {
+    let h = 0;
+    let d = 0;
+    for (const cat of PIT_CATEGORIES) {
+      for (const item of cat.lineItems) {
+        if (excludedItemIds.has(item.id)) continue;
+        const forced = forcedItemIds.includes(item.id);
+        const hrs = forced
+          ? (TOGGLE_DURATIONS[item.id] ?? 0)
+          : computeHours(item.id, cat.id, groups, pitType, map);
+        h += hrs;
+        d += hrs * rate;
+      }
+    }
+    return { grandHours: h, grandTotal: d };
+  })();
+
   return (
     <div className="prpit-card">
       {!hasContent ? (
@@ -344,20 +361,38 @@ export default function ProductRelatedPitSection({ groups, yesNoToggles, optiona
           Add products to the Line Items section to see related PIT services.
         </div>
       ) : (
-        <div className="prpit-grid">
-          {PIT_CATEGORIES.map((cat) => (
-            <CategoryTable
-              key={cat.id}
-              category={cat}
-              groups={groups}
-              forcedItemIds={forcedItemIds}
-              excludedItemIds={excludedItemIds}
-              pitType={pitType}
-              catalogMap={map}
-              pitHourlyRate={rate}
-            />
-          ))}
-        </div>
+        <>
+          <div className="prpit-grid">
+            {PIT_CATEGORIES.map((cat) => (
+              <CategoryTable
+                key={cat.id}
+                category={cat}
+                groups={groups}
+                forcedItemIds={forcedItemIds}
+                excludedItemIds={excludedItemIds}
+                pitType={pitType}
+                catalogMap={map}
+                pitHourlyRate={rate}
+              />
+            ))}
+          </div>
+          {grandHours > 0 && (
+            <div className="prpit-grand-total">
+              <span className="prpit-grand-label">Grand Total</span>
+              <div className="prpit-grand-stats">
+                <div className="prpit-grand-stat">
+                  <span className="prpit-grand-stat-value">{grandHours} hr{grandHours !== 1 ? "s" : ""}</span>
+                  <span className="prpit-grand-stat-label">Total Hours</span>
+                </div>
+                <div className="prpit-grand-divider" />
+                <div className="prpit-grand-stat">
+                  <span className="prpit-grand-stat-value">${grandTotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span className="prpit-grand-stat-label">Total Amount</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
