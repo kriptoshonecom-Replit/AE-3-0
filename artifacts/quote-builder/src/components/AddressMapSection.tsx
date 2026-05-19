@@ -44,41 +44,6 @@ interface NominatimReverseResult {
   address: NominatimAddress;
 }
 
-interface OverpassElement {
-  lat: number;
-  lon: number;
-  tags: Record<string, string>;
-}
-
-const POI_COLORS: Record<string, string> = {
-  restaurant: "#f97316",
-  bar:        "#3b82f6",
-  nightclub:  "#8b5cf6",
-  cafe:       "#92400e",
-  bakery:     "#d97706",
-  fuel:       "#16a34a",
-};
-
-const POI_EMOJI: Record<string, string> = {
-  restaurant: "🍽",
-  bar:        "🍺",
-  nightclub:  "🎵",
-  cafe:       "☕",
-  bakery:     "🥐",
-  fuel:       "⛽",
-};
-
-const POI_LABELS: Record<string, string> = {
-  restaurant: "Restaurant",
-  bar:        "Bar",
-  nightclub:  "Nightclub",
-  cafe:       "Coffee Shop",
-  bakery:     "Bakery / Pastry",
-  fuel:       "Gas Station",
-};
-
-const POI_ZOOM_THRESHOLD = 13;
-
 function buildQuery(f: AddressFields): string {
   return [f.addressNumber, f.addressName, f.addressCity, f.addressState, f.zipCode, f.addressCountry]
     .filter(Boolean)
@@ -91,12 +56,10 @@ function matchCountry(raw: string | undefined): string {
 }
 
 export default function AddressMapSection({ values, onChange }: Props) {
-  const mapContainerRef    = useRef<HTMLDivElement>(null);
-  const mapRef             = useRef<LeafletMap | null>(null);
-  const markerRef          = useRef<import("leaflet").Marker | null>(null);
-  const poiLayerGroupRef   = useRef<import("leaflet").LayerGroup | null>(null);
-  const geocodeTimer       = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const poiTimer           = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef          = useRef<LeafletMap | null>(null);
+  const markerRef       = useRef<import("leaflet").Marker | null>(null);
+  const geocodeTimer    = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const onChangeRef = useRef(onChange);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
@@ -107,7 +70,6 @@ export default function AddressMapSection({ values, onChange }: Props) {
   const [geocoding, setGeocoding] = useState(false);
   const [reversing, setReversing] = useState(false);
   const [geoError,  setGeoError]  = useState<string | null>(null);
-  const [mapZoom,   setMapZoom]   = useState(4);
 
   const reverseGeocode = useCallback(async (lat: number, lon: number) => {
     setReversing(true);
@@ -158,108 +120,26 @@ export default function AddressMapSection({ values, onChange }: Props) {
         scrollWheelZoom: false,
       });
 
+      // Esri World Imagery — satellite tiles, no API key required
       L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         {
           attribution:
-            '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ' +
-            '© <a href="https://carto.com/attributions">CARTO</a>',
-          subdomains: "abcd",
+            "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
           maxZoom: 19,
         }
       ).addTo(map);
 
-      // ── POI layer ───────────────────────────────────────────────────────
-      const poiGroup = L.layerGroup().addTo(map);
-      poiLayerGroupRef.current = poiGroup;
-
-      async function loadPOIs() {
-        const zoom = map.getZoom();
-        setMapZoom(zoom);
-
-        if (zoom < POI_ZOOM_THRESHOLD) {
-          poiGroup.clearLayers();
-          return;
-        }
-
-        const b    = map.getBounds();
-        const bbox = [
-          b.getSouth().toFixed(4), b.getWest().toFixed(4),
-          b.getNorth().toFixed(4), b.getEast().toFixed(4),
-        ].join(",");
-
-        const query =
-          `[out:json][timeout:10];` +
-          `node["amenity"~"^(restaurant|bar|nightclub|cafe|bakery|fuel)$"](${bbox});` +
-          `out body;`;
-
-        try {
-          const res  = await fetch("https://overpass-api.de/api/interpreter", { method: "POST", body: query });
-          if (!res.ok) return;
-          const data = await res.json() as { elements: OverpassElement[] };
-
-          poiGroup.clearLayers();
-
-          for (const el of data.elements) {
-            const amenity = el.tags?.amenity ?? "";
-            const name    = el.tags?.name ?? (POI_LABELS[amenity] ?? amenity);
-            const color   = POI_COLORS[amenity]  ?? "#64748b";
-            const emoji   = POI_EMOJI[amenity]   ?? "📍";
-
-            const icon = L.divIcon({
-              className: "",
-              html: `<div class="bm-marker-dot" style="background:${color};"><span class="bm-marker-emoji">${emoji}</span></div>`,
-              iconSize:   [28, 28],
-              iconAnchor: [14, 14],
-            });
-
-            const marker = L.marker([el.lat, el.lon], { icon }).addTo(poiGroup);
-
-            marker.bindTooltip(name, {
-              permanent:  false,
-              direction:  "top",
-              className:  "poi-tooltip",
-            });
-
-            marker.on("click", (e: import("leaflet").LeafletMouseEvent) => {
-              L.DomEvent.stopPropagation(e);
-
-              if (markerRef.current) {
-                markerRef.current.setLatLng([el.lat, el.lon]);
-              } else {
-                markerRef.current = L.marker([el.lat, el.lon]).addTo(map);
-              }
-
-              /* Populate business name from POI name when clicked */
-              if (el.tags?.name) {
-                onChangeRef.current({ businessName: el.tags.name });
-              }
-
-              void reverseGeocodeStable(el.lat, el.lon);
-            });
-          }
-        } catch {
-          // Silently ignore POI errors — map still works without them
-        }
-      }
-
-      function schedulePOILoad() {
-        if (poiTimer.current) clearTimeout(poiTimer.current);
-        poiTimer.current = setTimeout(() => { void loadPOIs(); }, 600);
-      }
-
-      map.on("moveend", schedulePOILoad);
-      map.on("zoomend", schedulePOILoad);
-      map.on("zoom",    () => { setMapZoom(map.getZoom()); });
-
-      // ── Click on map (no POI) → pin + reverse geocode ──────────────────
+      // ── Click on map → drop pin + reverse geocode ───────────────────────
       map.on("click", (e: import("leaflet").LeafletMouseEvent) => {
         const { lat, lng } = e.latlng;
+
         if (markerRef.current) {
           markerRef.current.setLatLng([lat, lng]);
         } else {
           markerRef.current = L.marker([lat, lng]).addTo(map);
         }
+
         void reverseGeocodeStable(lat, lng);
       });
 
@@ -271,16 +151,15 @@ export default function AddressMapSection({ values, onChange }: Props) {
     });
 
     return () => {
-      if (poiTimer.current) clearTimeout(poiTimer.current);
-      poiLayerGroupRef.current = null;
+      if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
       mapRef.current?.remove();
-      mapRef.current   = null;
+      mapRef.current  = null;
       markerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Forward geocode (fields → pin on map) ──────────────────────────────
+  // ── Forward geocode (address fields → pin on map) ─────────────────────
   const geocode = useCallback(async (fields: AddressFields) => {
     const query = buildQuery(fields);
     if (!query || !mapRef.current) return;
@@ -341,8 +220,7 @@ export default function AddressMapSection({ values, onChange }: Props) {
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       onChange({ [key]: e.target.value });
 
-  const busy          = geocoding || reversing;
-  const showPOILegend = mapZoom >= POI_ZOOM_THRESHOLD;
+  const busy = geocoding || reversing;
 
   return (
     <div className="address-section">
@@ -437,7 +315,7 @@ export default function AddressMapSection({ values, onChange }: Props) {
           ref={mapContainerRef}
           className="address-map"
           style={{
-            cursor: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='28' viewBox='0 0 20 28'%3E%3Cpath d='M10 2 L10 22 M4 16 L10 24 L16 16' stroke='%23333333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E") 10 24, crosshair`,
+            cursor: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='28' viewBox='0 0 20 28'%3E%3Cpath d='M10 2 L10 22 M4 16 L10 24 L16 16' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E") 10 24, crosshair`,
           }}
         />
         <div className="address-map-hint">
@@ -445,22 +323,9 @@ export default function AddressMapSection({ values, onChange }: Props) {
             <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4" />
             <path d="M8 7v5M8 5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
-          {showPOILegend
-            ? "Click a marker to auto-fill the address and business name — or click anywhere to pin a location"
-            : "Click anywhere on the map — or zoom in closer to see restaurant, bar & nightclub markers"}
+          Click anywhere on the satellite view to pin a location and auto-fill the address fields
         </div>
       </div>
-
-      {showPOILegend && (
-        <div className="poi-legend">
-          {Object.entries(POI_LABELS).map(([key, label]) => (
-            <span key={key} className="poi-legend-item">
-              <span className="poi-dot" style={{ background: POI_COLORS[key] }} />
-              {label}
-            </span>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
