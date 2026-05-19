@@ -210,8 +210,36 @@ export async function exportQuoteToPDF(
   };
   const crUpfront = parseCrAmt(quote.meta.requestedUpfrontAmount);
   const crMonthly = parseCrAmt(quote.meta.requestedSubscriptionAmount);
-  if (crUpfront) rightRow("Requested One-Time Payment:", crUpfront);
-  if (crMonthly) rightRow("Requested Monthly/Site:", crMonthly);
+
+  // Styled highlight boxes — same bg as group headers, text matches pass/fail (darker)
+  const hlColor: [number, number, number] =
+    stampStatus === "pass" ? [21, 128, 61] :
+    stampStatus === "fail" ? [185, 28, 28] :
+    [30, 41, 59];
+
+  const crBoxW = rightColX - rightLabelStart;
+  const crBoxH = 7.5;
+
+  const drawCrBox = (label: string, value: string) => {
+    rightY += 1.5;
+    doc.setFillColor(241, 245, 249);
+    doc.roundedRect(rightLabelStart, rightY, crBoxW, crBoxH, 1, 1, "F");
+    doc.setDrawColor(200, 210, 225);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(rightLabelStart, rightY, crBoxW, crBoxH, 1, 1, "S");
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(80, 100, 120);
+    doc.text(label, rightLabelStart + 3, rightY + crBoxH / 2 + 1.2);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...hlColor);
+    doc.text(value, rightColX - 3, rightY + crBoxH / 2 + 1.2, { align: "right" });
+    rightY += crBoxH + 2;
+  };
+
+  if (crUpfront) drawCrBox("Requested One-Time Payment", crUpfront);
+  if (crMonthly) drawCrBox("Requested Monthly/Site", crMonthly);
 
   y = Math.max(leftY, rightY) + 4;
 
