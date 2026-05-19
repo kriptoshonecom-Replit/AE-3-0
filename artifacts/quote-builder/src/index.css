@@ -5702,9 +5702,93 @@ tr:hover .drag-handle { opacity: 1; }
 }
 
 /* ── Business Market Page ───────────────────────────────── */
+/* ── Business Market page shell ── */
 .bm-page {
-  position: fixed;
-  inset: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Topbar — extends admin-topbar with extra items */
+.bm-topbar {
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+/* Name search input inside topbar */
+.bm-name-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 280px;
+  min-width: 140px;
+}
+
+.bm-name-search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--text-muted, #aaa);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.bm-name-search-input {
+  width: 100%;
+  padding: 7px 32px 7px 32px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.bm-name-search-input:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+.bm-name-search-input::placeholder {
+  color: var(--text-muted, #bbb);
+}
+
+.bm-name-search-clear {
+  position: absolute;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface-subtle, #eee);
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.bm-name-search-clear:hover {
+  background: var(--border);
+}
+
+/* Status area (right of topbar) */
+.bm-topbar-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Map wrapper — fills remaining height */
+.bm-map-wrap {
+  flex: 1;
+  position: relative;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -5714,18 +5798,18 @@ tr:hover .drag-handle { opacity: 1; }
   z-index: 0;
 }
 
-/* Top control bar */
-.bm-top-bar {
+/* Category chips floating over the map */
+.bm-filters-overlay {
   position: absolute;
-  top: 14px;
+  top: 12px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 500;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  pointer-events: none;
+  gap: 6px;
+  flex-wrap: nowrap;
+  pointer-events: all;
+  white-space: nowrap;
 }
 
 .bm-filters {
@@ -5768,13 +5852,6 @@ tr:hover .drag-handle { opacity: 1; }
 .bm-chip-icon {
   font-size: 13px;
   line-height: 1;
-}
-
-.bm-search-area {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  pointer-events: all;
 }
 
 .bm-search-btn {
@@ -5820,18 +5897,6 @@ tr:hover .drag-handle { opacity: 1; }
   background: #fff3cd;
   color: #7a5800;
   box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-}
-
-/* Custom marker dot */
-/* Nav trigger overlay (top-left, same style as other pages) */
-.bm-nav-trigger {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  z-index: 700;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 /* Custom marker dot */
@@ -6066,18 +6131,16 @@ tr:hover .drag-handle { opacity: 1; }
     z-index: 590;
   }
 
-  .bm-top-bar {
-    top: 10px;
+  .bm-filters-overlay {
     left: 10px;
     right: 10px;
     transform: none;
-    align-items: stretch;
-  }
-
-  .bm-filters {
-    justify-content: flex-start;
     flex-wrap: nowrap;
     overflow-x: auto;
     padding-bottom: 2px;
+  }
+
+  .bm-name-search {
+    max-width: 100%;
   }
 }

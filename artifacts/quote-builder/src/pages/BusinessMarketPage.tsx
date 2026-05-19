@@ -59,29 +59,60 @@ function formatAddress(tags: Record<string, string>): string | null {
 const MIN_ZOOM = 12;
 
 export default function BusinessMarketPage() {
-  const mapDivRef    = useRef<HTMLDivElement>(null);
-  const mapRef       = useRef<import("leaflet").Map | null>(null);
-  const layerRef     = useRef<import("leaflet").LayerGroup | null>(null);
+  const mapDivRef  = useRef<HTMLDivElement>(null);
+  const mapRef     = useRef<import("leaflet").Map | null>(null);
+  const layerRef   = useRef<import("leaflet").LayerGroup | null>(null);
 
-  /* Keep a ref to active categories so Leaflet event handlers always see the latest value */
+  /* All loaded POI + their marker instances — for client-side name filtering */
+  const poisRef      = useRef<POI[]>([]);
+  const markerMapRef = useRef<Map<number, import("leaflet").Marker>>(new Map());
+
+  /* Keep active categories accessible inside Leaflet callbacks */
   const [activeCategories, setActiveCategories] = useState<Set<CategoryId>>(
     new Set(["restaurant", "bar", "nightclub", "bakery", "pastry"]),
   );
   const activeCatsRef = useRef(activeCategories);
   useEffect(() => { activeCatsRef.current = activeCategories; }, [activeCategories]);
 
-  const [selectedPoi, setSelectedPoi] = useState<POI | null>(null);
-  const [loading,     setLoading]     = useState(false);
-  const [zoomWarning, setZoomWarning] = useState(false);
+  const [selectedPoi,   setSelectedPoi]   = useState<POI | null>(null);
+  const [loading,       setLoading]       = useState(false);
+  const [zoomWarning,   setZoomWarning]   = useState(false);
   const [searchPending, setSearchPending] = useState(false);
-  const [count,       setCount]       = useState<number | null>(null);
+  const [totalCount,    setTotalCount]    = useState<number | null>(null);
 
-  /* Ref so Leaflet handlers always see latest React state setters (stable, but safer) */
-  const setSelectedPoiRef = useRef(setSelectedPoi);
+  /* Name filter — typed in the topbar */
+  const [nameFilter, setNameFilter] = useState("");
+  const nameFilterRef = useRef("");
+  useEffect(() => {
+    nameFilterRef.current = nameFilter;
+    applyNameFilter(nameFilter);
+  }, [nameFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Core search function, called by button or auto-triggers ── */
+  function applyNameFilter(filter: string) {
+    const q = filter.trim().toLowerCase();
+    const layer = layerRef.current;
+    if (!layer) return;
+
+    markerMapRef.current.forEach((marker, id) => {
+      const poi = poisRef.current.find((p) => p.id === id);
+      if (!poi) return;
+      const matches = !q || poi.name.toLowerCase().includes(q);
+      if (matches) {
+        if (!layer.hasLayer(marker)) layer.addLayer(marker);
+      } else {
+        layer.removeLayer(marker);
+      }
+    });
+  }
+
+  /* Visible count after applying the name filter */
+  const visibleCount = nameFilter.trim()
+    ? poisRef.current.filter((p) => p.name.toLowerCase().includes(nameFilter.trim().toLowerCase())).length
+    : totalCount;
+
+  /* ── Core search: query Overpass, build markers ── */
   async function runSearch(cats: Set<CategoryId>) {
-    const map = mapRef.current;
+    const map   = mapRef.current;
     const layer = layerRef.current;
     if (!map || !layer) return;
 
@@ -95,18 +126,16 @@ export default function BusinessMarketPage() {
     setZoomWarning(false);
     setSearchPending(false);
     setLoading(true);
-    setCount(null);
+    setTotalCount(null);
 
-    const bounds = map.getBounds();
-    const s = bounds.getSouth().toFixed(6);
-    const w = bounds.getWest().toFixed(6);
-    const n = bounds.getNorth().toFixed(6);
-    const e = bounds.getEast().toFixed(6);
-    const bbox = `(${s},${w},${n},${e})`;
+    const b = map.getBounds();
+    const bbox = `(${b.getSouth().toFixed(6)},${b.getWest().toFixed(6)},${b.getNorth().toFixed(6)},${b.getEast().toFixed(6)})`;
 
     const activeCats = CATEGORIES.filter((c) => cats.has(c.id));
     if (!activeCats.length) {
       layer.clearLayers();
+      poisRef.current = [];
+      markerMapRef.current.clear();
       setLoading(false);
       return;
     }
@@ -122,6 +151,8 @@ export default function BusinessMarketPage() {
       const data = (await resp.json()) as { elements: OverpassNode[] };
 
       layer.clearLayers();
+      poisRef.current = [];
+      markerMapRef.current.clear();
 
       const L = (await import("leaflet")).default;
 
@@ -129,17 +160,18 @@ export default function BusinessMarketPage() {
         .filter((el) => el.tags?.name)
         .map((el) => {
           let category: CategoryId = "restaurant";
-          if (el.tags.amenity === "bar")         category = "bar";
+          if (el.tags.amenity === "bar")            category = "bar";
           else if (el.tags.amenity === "nightclub") category = "nightclub";
-          else if (el.tags.shop === "bakery")    category = "bakery";
-          else if (el.tags.shop === "pastry")    category = "pastry";
+          else if (el.tags.shop === "bakery")       category = "bakery";
+          else if (el.tags.shop === "pastry")       category = "pastry";
           return { id: el.id, lat: el.lat, lon: el.lon, name: el.tags.name, category, tags: el.tags };
         });
 
-      setCount(pois.length);
+      poisRef.current = pois;
+      setTotalCount(pois.length);
 
       pois.forEach((poi) => {
-        const cat = catById(poi.category);
+        const cat  = catById(poi.category);
         const icon = L.divIcon({
           className: "",
           html: `<div class="bm-marker-dot" style="background:${cat.color};"><span class="bm-marker-emoji">${cat.icon}</span></div>`,
@@ -148,30 +180,30 @@ export default function BusinessMarketPage() {
         });
 
         const marker = L.marker([poi.lat, poi.lon], { icon }).addTo(layer);
-        marker.on("click", () => {
-          setSelectedPoiRef.current(poi);
-        });
+        marker.on("click", () => setSelectedPoi(poi));
+        markerMapRef.current.set(poi.id, marker);
       });
+
+      /* Re-apply any active name filter after fresh markers are added */
+      applyNameFilter(nameFilterRef.current);
     } catch {
-      /* silently ignore network errors */
+      /* silently ignore */
     } finally {
       setLoading(false);
     }
   }
 
-  /* ── Map initialisation — runs exactly once ── */
+  /* ── Map initialisation — once ── */
   useEffect(() => {
     if (!mapDivRef.current || mapRef.current) return;
 
-    let cancelled = false;
-    /* Flag: suppress moveend → searchPending during the initial load */
-    let initialSearchDone = false;
+    let cancelled          = false;
+    let initialSearchDone  = false;
 
     void import("leaflet").then(async (mod) => {
       if (cancelled || !mapDivRef.current) return;
       const L = mod.default;
 
-      /* Fix Leaflet default marker icons */
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
@@ -187,39 +219,34 @@ export default function BusinessMarketPage() {
       });
 
       L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
         subdomains: "abcd",
         maxZoom: 19,
       }).addTo(map);
 
       L.control.zoom({ position: "bottomright" }).addTo(map);
 
-      const layer = L.layerGroup().addTo(map);
+      const layer      = L.layerGroup().addTo(map);
       layerRef.current = layer;
       mapRef.current   = map;
 
-      /* Only flag "search pending" on user-initiated moves, not the initial setView */
       map.on("moveend", () => {
         if (!initialSearchDone) return;
         setSearchPending(true);
         setZoomWarning(map.getZoom() < MIN_ZOOM);
       });
 
-      /* ── Initial search: try geolocation first, fall back to default view ── */
-      const doInitialSearch = (targetLat?: number, targetLon?: number) => {
+      const doInitialSearch = (lat?: number, lon?: number) => {
         if (cancelled) return;
-        if (targetLat !== undefined && targetLon !== undefined) {
-          map.setView([targetLat, targetLon], 14);
-        }
+        if (lat !== undefined && lon !== undefined) map.setView([lat, lon], 14);
         initialSearchDone = true;
         void runSearch(activeCatsRef.current);
       };
 
       try {
         navigator.geolocation.getCurrentPosition(
-          (pos) => doInitialSearch(pos.coords.latitude, pos.coords.longitude),
-          ()    => doInitialSearch(),
+          (p) => doInitialSearch(p.coords.latitude, p.coords.longitude),
+          ()  => doInitialSearch(),
           { timeout: 4000 },
         );
       } catch {
@@ -231,10 +258,12 @@ export default function BusinessMarketPage() {
     });
 
     return () => {
-      cancelled = true;
+      cancelled        = true;
       mapRef.current?.remove();
       mapRef.current   = null;
       layerRef.current = null;
+      poisRef.current  = [];
+      markerMapRef.current.clear();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -244,41 +273,93 @@ export default function BusinessMarketPage() {
     setActiveCategories((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
-        if (next.size === 1) return prev; /* keep at least one */
+        if (next.size === 1) return prev;
         next.delete(id);
       } else {
         next.add(id);
       }
-      /* Trigger search with updated set right away */
       void runSearch(next);
       return next;
     });
   }
 
-  function handleSearch() {
-    void runSearch(activeCatsRef.current);
-  }
-
-  const poi     = selectedPoi;
-  const poiCat  = poi ? catById(poi.category) : null;
-  const phone   = poi ? formatPhone(poi.tags.phone ?? poi.tags["contact:phone"]) : null;
-  const address = poi ? formatAddress(poi.tags) : null;
-  const website = poi ? (poi.tags.website ?? poi.tags["contact:website"] ?? null) : null;
-  const hours   = poi ? (poi.tags.opening_hours ?? null) : null;
+  const poi    = selectedPoi;
+  const poiCat = poi ? catById(poi.category) : null;
 
   return (
     <div className="bm-page">
-      {/* ── Map ── */}
-      <div ref={mapDivRef} className="bm-map" />
 
-      {/* ── Hamburger nav trigger (top-left, matching other pages) ── */}
-      <div className="bm-nav-trigger">
+      {/* ── Top bar — same style as all other pages ── */}
+      <div className="admin-topbar bm-topbar">
         <GlobalNavTrigger />
+        <h1 className="admin-page-title">Business Market</h1>
+
+        {/* Name search input */}
+        <div className="bm-name-search">
+          <svg className="bm-name-search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.4" />
+            <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+          <input
+            type="text"
+            className="bm-name-search-input"
+            placeholder="Search by name…"
+            value={nameFilter}
+            onChange={(e) => setNameFilter(e.target.value)}
+          />
+          {nameFilter && (
+            <button
+              type="button"
+              className="bm-name-search-clear"
+              onClick={() => setNameFilter("")}
+              title="Clear search"
+            >
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* Search area / status */}
+        <div className="bm-topbar-status">
+          {zoomWarning && (
+            <span className="bm-zoom-warning">Zoom in to search</span>
+          )}
+          {searchPending && !zoomWarning && !loading && (
+            <button
+              type="button"
+              className="bm-search-btn"
+              onClick={() => void runSearch(activeCatsRef.current)}
+            >
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              Search this area
+            </button>
+          )}
+          {loading && (
+            <div className="bm-loading-pill">
+              <span className="spinner" style={{ width: 12, height: 12 }} />
+              Searching…
+            </div>
+          )}
+          {!loading && visibleCount !== null && !searchPending && (
+            <div className="bm-count-pill">
+              {visibleCount} place{visibleCount !== 1 ? "s" : ""}
+              {nameFilter.trim() ? ` match` : " found"}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* ── Category filters + status bar (top-center) ── */}
-      <div className="bm-top-bar">
-        <div className="bm-filters">
+      {/* ── Map area ── */}
+      <div className="bm-map-wrap">
+        <div ref={mapDivRef} className="bm-map" />
+
+        {/* Category filter chips floating over map */}
+        <div className="bm-filters-overlay">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
@@ -295,153 +376,118 @@ export default function BusinessMarketPage() {
           ))}
         </div>
 
-        <div className="bm-search-area">
-          {zoomWarning && (
-            <span className="bm-zoom-warning">Zoom in to search</span>
-          )}
-          {searchPending && !zoomWarning && !loading && (
-            <button type="button" className="bm-search-btn" onClick={handleSearch}>
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-              Search this area
-            </button>
-          )}
-          {loading && (
-            <div className="bm-loading-pill">
-              <span className="spinner" style={{ width: 12, height: 12 }} />
-              Searching…
-            </div>
-          )}
-          {!loading && count !== null && !searchPending && (
-            <div className="bm-count-pill">
-              {count} place{count !== 1 ? "s" : ""} found
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Detail panel (slides in from left) ── */}
-      <div className={`bm-panel${poi ? " open" : ""}`}>
-        {poi && poiCat && (
-          <>
-            <div className="bm-panel-header" style={{ borderLeftColor: poiCat.color }}>
-              <div>
-                <div className="bm-panel-cat-badge" style={{ background: poiCat.color }}>
-                  {poiCat.icon} {poiCat.label.replace(/s$/, "")}
+        {/* Detail panel — slides in from left */}
+        <div className={`bm-panel${poi ? " open" : ""}`}>
+          {poi && poiCat && (
+            <>
+              <div className="bm-panel-header" style={{ borderLeftColor: poiCat.color }}>
+                <div>
+                  <div className="bm-panel-cat-badge" style={{ background: poiCat.color }}>
+                    {poiCat.icon} {poiCat.label.replace(/s$/, "")}
+                  </div>
+                  <h2 className="bm-panel-name">{poi.name}</h2>
                 </div>
-                <h2 className="bm-panel-name">{poi.name}</h2>
+                <button type="button" className="bm-panel-close" onClick={() => setSelectedPoi(null)}>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </button>
               </div>
-              <button
-                type="button"
-                className="bm-panel-close"
-                onClick={() => setSelectedPoi(null)}
-              >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
 
-            <div className="bm-panel-body">
-              {address && (
-                <div className="bm-detail-row">
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <div className="bm-panel-body">
+                {(() => {
+                  const address = formatAddress(poi.tags);
+                  const phone   = formatPhone(poi.tags.phone ?? poi.tags["contact:phone"]);
+                  const website = poi.tags.website ?? poi.tags["contact:website"] ?? null;
+                  const hours   = poi.tags.opening_hours ?? null;
+                  return (
+                    <>
+                      {address && (
+                        <div className="bm-detail-row">
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                            <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6c0 3.5 4.5 8.5 4.5 8.5s4.5-5 4.5-8.5c0-2.5-2-4.5-4.5-4.5z" stroke="currentColor" strokeWidth="1.3" />
+                            <circle cx="8" cy="6" r="1.5" stroke="currentColor" strokeWidth="1.3" />
+                          </svg>
+                          <span>{address}</span>
+                        </div>
+                      )}
+                      {phone && (
+                        <div className="bm-detail-row">
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                            <path d="M3 2h3l1.5 3.5-1.5 1a9 9 0 004 4l1-1.5L14.5 10.5V14a1 1 0 01-1 1C5.5 15 1 10.5 1 3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <a href={`tel:${phone}`} className="bm-link">{phone}</a>
+                        </div>
+                      )}
+                      {website && (
+                        <div className="bm-detail-row">
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3" />
+                            <path d="M8 2c-1.5 2-2.5 3.5-2.5 6s1 4 2.5 6M8 2c1.5 2 2.5 3.5 2.5 6S9.5 14 8 14M2 8h12" stroke="currentColor" strokeWidth="1.1" />
+                          </svg>
+                          <a href={website} target="_blank" rel="noopener noreferrer" className="bm-link bm-link-ext">
+                            {website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}
+                          </a>
+                        </div>
+                      )}
+                      {hours && (
+                        <div className="bm-detail-row bm-detail-row--top">
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3" />
+                            <path d="M8 5v3.5l2 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <span className="bm-hours">{hours}</span>
+                        </div>
+                      )}
+                      {poi.tags.cuisine && (
+                        <div className="bm-detail-row">
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                            <path d="M5 2v5c0 1.7 1.3 3 3 3s3-1.3 3-3V2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                            <path d="M8 10v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                          </svg>
+                          <span style={{ textTransform: "capitalize" }}>{poi.tags.cuisine.replace(/_/g, " ")}</span>
+                        </div>
+                      )}
+                      <div className="bm-tag-row">
+                        {poi.tags.outdoor_seating === "yes"    && <span className="bm-feature-tag">🌿 Outdoor Seating</span>}
+                        {poi.tags.wheelchair === "yes"          && <span className="bm-feature-tag">♿ Accessible</span>}
+                        {poi.tags["diet:vegetarian"] === "yes" && <span className="bm-feature-tag">🥗 Vegetarian</span>}
+                        {poi.tags["diet:vegan"] === "yes"      && <span className="bm-feature-tag">🌱 Vegan</span>}
+                      </div>
+                      {!address && !phone && !website && !hours && !poi.tags.cuisine && (
+                        <p className="bm-no-details">No additional details available in OpenStreetMap for this location.</p>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+
+              <div className="bm-panel-footer">
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${poi.lat},${poi.lon}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="bm-osm-link"
+                >
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
                     <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6c0 3.5 4.5 8.5 4.5 8.5s4.5-5 4.5-8.5c0-2.5-2-4.5-4.5-4.5z" stroke="currentColor" strokeWidth="1.3" />
                     <circle cx="8" cy="6" r="1.5" stroke="currentColor" strokeWidth="1.3" />
                   </svg>
-                  <span>{address}</span>
-                </div>
-              )}
-
-              {phone && (
-                <div className="bm-detail-row">
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                    <path d="M3 2h3l1.5 3.5-1.5 1a9 9 0 004 4l1-1.5L14.5 10.5V14a1 1 0 01-1 1C5.5 15 1 10.5 1 3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <a href={`tel:${phone}`} className="bm-link">{phone}</a>
-                </div>
-              )}
-
-              {website && (
-                <div className="bm-detail-row">
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                    <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3" />
-                    <path d="M8 2c-1.5 2-2.5 3.5-2.5 6s1 4 2.5 6M8 2c1.5 2 2.5 3.5 2.5 6S9.5 14 8 14M2 8h12" stroke="currentColor" strokeWidth="1.1" />
-                  </svg>
-                  <a href={website} target="_blank" rel="noopener noreferrer" className="bm-link bm-link-ext">
-                    {website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}
-                  </a>
-                </div>
-              )}
-
-              {hours && (
-                <div className="bm-detail-row bm-detail-row--top">
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                    <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3" />
-                    <path d="M8 5v3.5l2 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <span className="bm-hours">{hours}</span>
-                </div>
-              )}
-
-              {poi.tags.cuisine && (
-                <div className="bm-detail-row">
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                    <path d="M5 2v5c0 1.7 1.3 3 3 3s3-1.3 3-3V2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                    <path d="M8 10v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                  </svg>
-                  <span style={{ textTransform: "capitalize" }}>
-                    {poi.tags.cuisine.replace(/_/g, " ")}
-                  </span>
-                </div>
-              )}
-
-              <div className="bm-tag-row">
-                {poi.tags.outdoor_seating === "yes"     && <span className="bm-feature-tag">🌿 Outdoor Seating</span>}
-                {poi.tags.wheelchair === "yes"           && <span className="bm-feature-tag">♿ Accessible</span>}
-                {poi.tags["diet:vegetarian"] === "yes"  && <span className="bm-feature-tag">🥗 Vegetarian</span>}
-                {poi.tags["diet:vegan"] === "yes"       && <span className="bm-feature-tag">🌱 Vegan</span>}
+                  Open in Google Maps
+                </a>
+                <a
+                  href={`https://www.openstreetmap.org/node/${poi.id}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="bm-osm-link bm-osm-link--secondary"
+                >
+                  View on OpenStreetMap
+                </a>
               </div>
+            </>
+          )}
+        </div>
 
-              {!address && !phone && !website && !hours && !poi.tags.cuisine && (
-                <p className="bm-no-details">
-                  No additional details available in OpenStreetMap for this location.
-                </p>
-              )}
-            </div>
-
-            <div className="bm-panel-footer">
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${poi.lat},${poi.lon}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bm-osm-link"
-              >
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6c0 3.5 4.5 8.5 4.5 8.5s4.5-5 4.5-8.5c0-2.5-2-4.5-4.5-4.5z" stroke="currentColor" strokeWidth="1.3" />
-                  <circle cx="8" cy="6" r="1.5" stroke="currentColor" strokeWidth="1.3" />
-                </svg>
-                Open in Google Maps
-              </a>
-              <a
-                href={`https://www.openstreetmap.org/node/${poi.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bm-osm-link bm-osm-link--secondary"
-              >
-                View on OpenStreetMap
-              </a>
-            </div>
-          </>
-        )}
+        {poi && <div className="bm-panel-backdrop" onClick={() => setSelectedPoi(null)} />}
       </div>
-
-      {/* Backdrop closes panel on mobile */}
-      {poi && (
-        <div className="bm-panel-backdrop" onClick={() => setSelectedPoi(null)} />
-      )}
     </div>
   );
 }
