@@ -19,6 +19,7 @@ import MyQuoteLibraryPage from "@/pages/MyQuoteLibraryPage";
 import DashboardPage from "@/pages/DashboardPage";
 import LogJournalPage from "@/pages/LogJournalPage";
 import AppReleasePage from "@/pages/AppReleasePage";
+import BusinessMarketPage from "@/pages/BusinessMarketPage";
 
 const queryClient = new QueryClient();
 
@@ -105,6 +106,7 @@ function AppRoutes() {
           <Route path="/admin/app-release">
             <AdminRoute><AppReleasePage /></AdminRoute>
           </Route>
+          <Route path="/business-market" component={BusinessMarketPage} />
         </Switch>
       </QueryClientProvider>
     </AuthProvider>
