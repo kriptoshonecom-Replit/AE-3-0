@@ -1441,6 +1441,40 @@ button {
   color: var(--text);
 }
 
+.ql-view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.ql-toggle-btn {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  letter-spacing: 0.02em;
+}
+
+.ql-toggle-btn.active {
+  background: var(--accent, #6c47ff);
+  color: #fff;
+}
+
+.ql-toggle-btn:not(.active):hover {
+  background: var(--surface-subtle);
+  color: var(--text);
+}
+
+.ql-meta-creator {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .ql-empty {
   font-size: 12.5px;
   color: var(--text-3);
