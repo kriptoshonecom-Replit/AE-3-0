@@ -3,6 +3,7 @@ import "leaflet/dist/leaflet.css";
 import type { Map as LeafletMap } from "leaflet";
 
 interface AddressFields {
+  businessName: string;
   addressName: string;
   addressNumber: string;
   addressCity: string;
@@ -51,20 +52,29 @@ interface OverpassElement {
 
 const POI_COLORS: Record<string, string> = {
   restaurant: "#f97316",
-  bar: "#3b82f6",
-  nightclub: "#a855f7",
-  cafe: "#92400e",
-  bakery: "#d97706",
-  fuel: "#16a34a",
+  bar:        "#3b82f6",
+  nightclub:  "#8b5cf6",
+  cafe:       "#92400e",
+  bakery:     "#d97706",
+  fuel:       "#16a34a",
+};
+
+const POI_EMOJI: Record<string, string> = {
+  restaurant: "🍽",
+  bar:        "🍺",
+  nightclub:  "🎵",
+  cafe:       "☕",
+  bakery:     "🥐",
+  fuel:       "⛽",
 };
 
 const POI_LABELS: Record<string, string> = {
   restaurant: "Restaurant",
-  bar: "Bar",
-  nightclub: "Nightclub",
-  cafe: "Coffee Shop",
-  bakery: "Bakery / Pastry",
-  fuel: "Gas Station",
+  bar:        "Bar",
+  nightclub:  "Nightclub",
+  cafe:       "Coffee Shop",
+  bakery:     "Bakery / Pastry",
+  fuel:       "Gas Station",
 };
 
 const POI_ZOOM_THRESHOLD = 13;
@@ -81,23 +91,23 @@ function matchCountry(raw: string | undefined): string {
 }
 
 export default function AddressMapSection({ values, onChange }: Props) {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<LeafletMap | null>(null);
-  const markerRef = useRef<import("leaflet").Marker | null>(null);
-  const poiLayerGroupRef = useRef<import("leaflet").LayerGroup | null>(null);
-  const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const poiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mapContainerRef    = useRef<HTMLDivElement>(null);
+  const mapRef             = useRef<LeafletMap | null>(null);
+  const markerRef          = useRef<import("leaflet").Marker | null>(null);
+  const poiLayerGroupRef   = useRef<import("leaflet").LayerGroup | null>(null);
+  const geocodeTimer       = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const poiTimer           = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const onChangeRef = useRef(onChange);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
 
   const skipForwardRef = useRef(0);
 
-  const [mapReady, setMapReady] = useState(false);
+  const [mapReady,  setMapReady]  = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [reversing, setReversing] = useState(false);
-  const [geoError, setGeoError] = useState<string | null>(null);
-  const [mapZoom, setMapZoom] = useState(4);
+  const [geoError,  setGeoError]  = useState<string | null>(null);
+  const [mapZoom,   setMapZoom]   = useState(4);
 
   const reverseGeocode = useCallback(async (lat: number, lon: number) => {
     setReversing(true);
@@ -105,18 +115,18 @@ export default function AddressMapSection({ values, onChange }: Props) {
     try {
       const url =
         `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`;
-      const res = await fetch(url, { headers: { "Accept-Language": "en" } });
+      const res  = await fetch(url, { headers: { "Accept-Language": "en" } });
       const data = await res.json() as NominatimReverseResult;
       const addr = data.address ?? {};
 
       skipForwardRef.current += 1;
 
       onChangeRef.current({
-        addressNumber: addr.house_number ?? "",
-        addressName: addr.road ?? "",
-        addressCity: addr.city ?? addr.town ?? addr.village ?? addr.suburb ?? "",
-        addressState: addr.state ?? addr.county ?? "",
-        zipCode: addr.postcode ?? "",
+        addressNumber:  addr.house_number ?? "",
+        addressName:    addr.road ?? "",
+        addressCity:    addr.city ?? addr.town ?? addr.village ?? addr.suburb ?? "",
+        addressState:   addr.state ?? addr.county ?? "",
+        zipCode:        addr.postcode ?? "",
         addressCountry: matchCountry(addr.country),
       });
     } catch {
@@ -126,20 +136,19 @@ export default function AddressMapSection({ values, onChange }: Props) {
     }
   }, []);
 
-  // ── Map initialisation — runs exactly once ────────────────────────────
+  // ── Map initialisation — runs exactly once ─────────────────────────────
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
     const reverseGeocodeStable = reverseGeocode;
-    const setMapZoomStable = setMapZoom;
 
     import("leaflet").then((L) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+        iconUrl:       "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        shadowUrl:     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
       });
 
       const map = L.map(mapContainerRef.current!, {
@@ -160,25 +169,23 @@ export default function AddressMapSection({ values, onChange }: Props) {
         }
       ).addTo(map);
 
-      // ── POI layer setup ────────────────────────────────────────────────
+      // ── POI layer ───────────────────────────────────────────────────────
       const poiGroup = L.layerGroup().addTo(map);
       poiLayerGroupRef.current = poiGroup;
 
       async function loadPOIs() {
         const zoom = map.getZoom();
-        setMapZoomStable(zoom);
+        setMapZoom(zoom);
 
         if (zoom < POI_ZOOM_THRESHOLD) {
           poiGroup.clearLayers();
           return;
         }
 
-        const b = map.getBounds();
+        const b    = map.getBounds();
         const bbox = [
-          b.getSouth().toFixed(4),
-          b.getWest().toFixed(4),
-          b.getNorth().toFixed(4),
-          b.getEast().toFixed(4),
+          b.getSouth().toFixed(4), b.getWest().toFixed(4),
+          b.getNorth().toFixed(4), b.getEast().toFixed(4),
         ].join(",");
 
         const query =
@@ -187,10 +194,7 @@ export default function AddressMapSection({ values, onChange }: Props) {
           `out body;`;
 
         try {
-          const res = await fetch("https://overpass-api.de/api/interpreter", {
-            method: "POST",
-            body: query,
-          });
+          const res  = await fetch("https://overpass-api.de/api/interpreter", { method: "POST", body: query });
           if (!res.ok) return;
           const data = await res.json() as { elements: OverpassElement[] };
 
@@ -198,41 +202,47 @@ export default function AddressMapSection({ values, onChange }: Props) {
 
           for (const el of data.elements) {
             const amenity = el.tags?.amenity ?? "";
-            const rawName = el.tags?.name;
-            const name = rawName ?? (POI_LABELS[amenity] ?? amenity);
-            const color = POI_COLORS[amenity] ?? "#64748b";
+            const name    = el.tags?.name ?? (POI_LABELS[amenity] ?? amenity);
+            const color   = POI_COLORS[amenity]  ?? "#64748b";
+            const emoji   = POI_EMOJI[amenity]   ?? "📍";
 
-            const cm = L.circleMarker([el.lat, el.lon], {
-              radius: 6,
-              fillColor: color,
-              color: "#fff",
-              weight: 1.5,
-              fillOpacity: 0.9,
-              interactive: true,
-            }).addTo(poiGroup);
-
-            cm.bindTooltip(name, {
-              permanent: false,
-              direction: "top",
-              className: "poi-tooltip",
+            const icon = L.divIcon({
+              className: "",
+              html: `<div class="bm-marker-dot" style="background:${color};"><span class="bm-marker-emoji">${emoji}</span></div>`,
+              iconSize:   [28, 28],
+              iconAnchor: [14, 14],
             });
 
-            cm.on("click", (e: import("leaflet").LeafletMouseEvent) => {
+            const marker = L.marker([el.lat, el.lon], { icon }).addTo(poiGroup);
+
+            marker.bindTooltip(name, {
+              permanent:  false,
+              direction:  "top",
+              className:  "poi-tooltip",
+            });
+
+            marker.on("click", (e: import("leaflet").LeafletMouseEvent) => {
               L.DomEvent.stopPropagation(e);
+
               if (markerRef.current) {
                 markerRef.current.setLatLng([el.lat, el.lon]);
               } else {
                 markerRef.current = L.marker([el.lat, el.lon]).addTo(map);
               }
+
+              /* Populate business name from POI name when clicked */
+              if (el.tags?.name) {
+                onChangeRef.current({ businessName: el.tags.name });
+              }
+
               void reverseGeocodeStable(el.lat, el.lon);
             });
           }
         } catch {
-          // Silently ignore POI loading errors — map still works without them
+          // Silently ignore POI errors — map still works without them
         }
       }
 
-      // Debounced POI loader so rapid panning doesn't spam Overpass
       function schedulePOILoad() {
         if (poiTimer.current) clearTimeout(poiTimer.current);
         poiTimer.current = setTimeout(() => { void loadPOIs(); }, 600);
@@ -240,18 +250,16 @@ export default function AddressMapSection({ values, onChange }: Props) {
 
       map.on("moveend", schedulePOILoad);
       map.on("zoomend", schedulePOILoad);
-      map.on("zoom", () => { setMapZoomStable(map.getZoom()); });
+      map.on("zoom",    () => { setMapZoom(map.getZoom()); });
 
-      // ── Click / POI tap → place pin + reverse geocode ─────────────────
+      // ── Click on map (no POI) → pin + reverse geocode ──────────────────
       map.on("click", (e: import("leaflet").LeafletMouseEvent) => {
         const { lat, lng } = e.latlng;
-
         if (markerRef.current) {
           markerRef.current.setLatLng([lat, lng]);
         } else {
           markerRef.current = L.marker([lat, lng]).addTo(map);
         }
-
         void reverseGeocodeStable(lat, lng);
       });
 
@@ -266,12 +274,13 @@ export default function AddressMapSection({ values, onChange }: Props) {
       if (poiTimer.current) clearTimeout(poiTimer.current);
       poiLayerGroupRef.current = null;
       mapRef.current?.remove();
-      mapRef.current = null;
+      mapRef.current   = null;
+      markerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Forward geocode (fields → pin) ───────────────────────────────────
+  // ── Forward geocode (fields → pin on map) ──────────────────────────────
   const geocode = useCallback(async (fields: AddressFields) => {
     const query = buildQuery(fields);
     if (!query || !mapRef.current) return;
@@ -282,7 +291,7 @@ export default function AddressMapSection({ values, onChange }: Props) {
     try {
       const url =
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
-      const res = await fetch(url, { headers: { "Accept-Language": "en" } });
+      const res  = await fetch(url, { headers: { "Accept-Language": "en" } });
       const data = await res.json() as Array<{ lat: string; lon: string }>;
 
       if (!data || data.length === 0) {
@@ -332,47 +341,74 @@ export default function AddressMapSection({ values, onChange }: Props) {
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       onChange({ [key]: e.target.value });
 
-  const busy = geocoding || reversing;
+  const busy          = geocoding || reversing;
   const showPOILegend = mapZoom >= POI_ZOOM_THRESHOLD;
 
   return (
     <div className="address-section">
       <div className="address-fields-grid">
+
+        {/* Row 1: Business Name — full width */}
+        <div className="field-group span-2">
+          <label>Business Name</label>
+          <input
+            type="text"
+            value={values.businessName}
+            onChange={set("businessName")}
+            placeholder="e.g. The Blue Lagoon"
+          />
+        </div>
+
+        {/* Row 2: Street Name | Street Number */}
         <div className="field-group">
           <label>Street Name</label>
           <input
-            type="text" value={values.addressName}
-            onChange={set("addressName")} placeholder="e.g. Main Street"
+            type="text"
+            value={values.addressName}
+            onChange={set("addressName")}
+            placeholder="e.g. Main Street"
           />
         </div>
         <div className="field-group">
           <label>Street Number</label>
           <input
-            type="text" value={values.addressNumber}
-            onChange={set("addressNumber")} placeholder="e.g. 123"
+            type="text"
+            value={values.addressNumber}
+            onChange={set("addressNumber")}
+            placeholder="e.g. 123"
           />
         </div>
+
+        {/* Row 3: State / Province | ZIP / Postal Code */}
         <div className="field-group">
           <label>State / Province</label>
           <input
-            type="text" value={values.addressState}
-            onChange={set("addressState")} placeholder="e.g. California"
+            type="text"
+            value={values.addressState}
+            onChange={set("addressState")}
+            placeholder="e.g. California"
           />
         </div>
         <div className="field-group">
           <label>ZIP / Postal Code</label>
           <input
-            type="text" value={values.zipCode}
-            onChange={set("zipCode")} placeholder="e.g. 90210"
+            type="text"
+            value={values.zipCode}
+            onChange={set("zipCode")}
+            placeholder="e.g. 90210"
           />
         </div>
+
+        {/* Row 4: City | Country */}
         <div className="field-group span-2">
           <div className="address-city-country-row">
             <div className="field-group address-city-field">
               <label>City</label>
               <input
-                type="text" value={values.addressCity}
-                onChange={set("addressCity")} placeholder="e.g. Los Angeles"
+                type="text"
+                value={values.addressCity}
+                onChange={set("addressCity")}
+                placeholder="e.g. Los Angeles"
               />
             </div>
             <div className="field-group address-country-field">
@@ -383,8 +419,10 @@ export default function AddressMapSection({ values, onChange }: Props) {
             </div>
           </div>
         </div>
+
       </div>
 
+      {/* Row 5: Map */}
       <div className="address-map-wrap">
         {busy && (
           <div className="address-map-overlay">
@@ -408,7 +446,7 @@ export default function AddressMapSection({ values, onChange }: Props) {
             <path d="M8 7v5M8 5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           {showPOILegend
-            ? "Click a coloured dot or anywhere on the map to auto-fill the address fields"
+            ? "Click a marker to auto-fill the address and business name — or click anywhere to pin a location"
             : "Click anywhere on the map — or zoom in closer to see restaurant, bar & nightclub markers"}
         </div>
       </div>
