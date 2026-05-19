@@ -42,6 +42,7 @@ function computeQuoteValues(data: Record<string, unknown>): { mrr: number; arr: 
 
 /* ── GET /api/quotes/stats — per-user summary stats ── */
 router.get("/quotes/stats", requireAuth, async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
   const { userId } = req.auth!;
   try {
     const rows = await db

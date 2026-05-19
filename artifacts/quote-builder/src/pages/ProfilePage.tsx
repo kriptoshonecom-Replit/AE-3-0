@@ -269,7 +269,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!isLoaded) return;
     setStatsLoading(true);
-    fetch(`${API_BASE}/api/quotes/stats`, { credentials: "include" })
+    fetch(`${API_BASE}/api/quotes/stats`, { credentials: "include", cache: "no-store" })
       .then((r) => r.ok ? r.json() as Promise<QuoteStats> : Promise.reject())
       .then((data) => setStats(data))
       .catch(() => setStats(null))
