@@ -1156,7 +1156,6 @@ export default function QuoteBuilder() {
                   <div className="quote-meta-form">
                     <AddressMapSection
                       values={{
-                        businessName: quote.meta.businessName ?? "",
                         addressName: quote.meta.addressName ?? "",
                         addressNumber: quote.meta.addressNumber ?? "",
                         addressCity: quote.meta.addressCity ?? "",

@@ -87,7 +87,6 @@ export interface QuoteMeta {
   creatorName?: string;
   updatedByName?: string;
   passStatus?: "pass" | "fail";
-  businessName?: string;
   addressName?: string;
   addressNumber?: string;
   addressCity?: string;

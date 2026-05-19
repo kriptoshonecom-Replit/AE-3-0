@@ -3,7 +3,6 @@ import "leaflet/dist/leaflet.css";
 import type { Map as LeafletMap } from "leaflet";
 
 interface AddressFields {
-  businessName: string;
   addressName: string;
   addressNumber: string;
   addressCity: string;
@@ -226,18 +225,7 @@ export default function AddressMapSection({ values, onChange }: Props) {
     <div className="address-section">
       <div className="address-fields-grid">
 
-        {/* Row 1: Business Name — full width */}
-        <div className="field-group span-2">
-          <label>Business Name</label>
-          <input
-            type="text"
-            value={values.businessName}
-            onChange={set("businessName")}
-            placeholder="e.g. The Blue Lagoon"
-          />
-        </div>
-
-        {/* Row 2: Street Name | Street Number */}
+        {/* Row 1: Street Name | Street Number */}
         <div className="field-group">
           <label>Street Name</label>
           <input
