@@ -5823,22 +5823,40 @@ tr:hover .drag-handle { opacity: 1; }
 }
 
 /* Custom marker dot */
+/* Nav trigger overlay (top-left, same style as other pages) */
+.bm-nav-trigger {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 700;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Custom marker dot */
 .bm-marker-dot {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   border: 2.5px solid #fff;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.35);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
   cursor: pointer;
-  transition: transform 0.1s;
+  transition: transform 0.12s;
 }
 
 .bm-marker-dot:hover {
-  transform: scale(1.15);
+  transform: scale(1.2);
+}
+
+.bm-marker-emoji {
+  font-size: 13px;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
 }
 
 /* Left slide-in panel */
@@ -5856,10 +5874,13 @@ tr:hover .drag-handle { opacity: 1; }
   transform: translateX(-100%);
   transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   overflow: hidden;
+  /* CRITICAL: don't intercept clicks on the map when panel is hidden */
+  pointer-events: none;
 }
 
 .bm-panel.open {
   transform: translateX(0);
+  pointer-events: all;
 }
 
 .bm-panel-backdrop {

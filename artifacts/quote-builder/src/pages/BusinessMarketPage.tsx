@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-import type { Map as LMap, LayerGroup, Marker } from "leaflet";
+import { useEffect, useRef, useState } from "react";
+import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 
 interface OverpassNode {
   type: "node";
@@ -29,41 +29,11 @@ interface Category {
 }
 
 const CATEGORIES: Category[] = [
-  {
-    id: "restaurant",
-    label: "Restaurants",
-    color: "#f97316",
-    icon: "🍽",
-    overpassTag: 'node["amenity"="restaurant"]',
-  },
-  {
-    id: "bar",
-    label: "Bars",
-    color: "#3b82f6",
-    icon: "🍺",
-    overpassTag: 'node["amenity"="bar"]',
-  },
-  {
-    id: "nightclub",
-    label: "Night Clubs",
-    color: "#8b5cf6",
-    icon: "🎵",
-    overpassTag: 'node["amenity"="nightclub"]',
-  },
-  {
-    id: "bakery",
-    label: "Bakeries",
-    color: "#b45309",
-    icon: "🍞",
-    overpassTag: 'node["shop"="bakery"]',
-  },
-  {
-    id: "pastry",
-    label: "Pastry",
-    color: "#ec4899",
-    icon: "🥐",
-    overpassTag: 'node["shop"="pastry"]',
-  },
+  { id: "restaurant", label: "Restaurants", color: "#f97316", icon: "🍽", overpassTag: 'node["amenity"="restaurant"]' },
+  { id: "bar",        label: "Bars",        color: "#3b82f6", icon: "🍺", overpassTag: 'node["amenity"="bar"]' },
+  { id: "nightclub",  label: "Night Clubs", color: "#8b5cf6", icon: "🎵", overpassTag: 'node["amenity"="nightclub"]' },
+  { id: "bakery",     label: "Bakeries",    color: "#b45309", icon: "🍞", overpassTag: 'node["shop"="bakery"]' },
+  { id: "pastry",     label: "Pastry",      color: "#ec4899", icon: "🥐", overpassTag: 'node["shop"="pastry"]' },
 ];
 
 function catById(id: CategoryId): Category {
@@ -89,108 +59,128 @@ function formatAddress(tags: Record<string, string>): string | null {
 const MIN_ZOOM = 12;
 
 export default function BusinessMarketPage() {
-  const mapDivRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<LMap | null>(null);
-  const layerRef = useRef<LayerGroup | null>(null);
-  const markerMapRef = useRef<Map<number, Marker>>(new Map());
+  const mapDivRef    = useRef<HTMLDivElement>(null);
+  const mapRef       = useRef<import("leaflet").Map | null>(null);
+  const layerRef     = useRef<import("leaflet").LayerGroup | null>(null);
 
+  /* Keep a ref to active categories so Leaflet event handlers always see the latest value */
   const [activeCategories, setActiveCategories] = useState<Set<CategoryId>>(
     new Set(["restaurant", "bar", "nightclub", "bakery", "pastry"]),
   );
+  const activeCatsRef = useRef(activeCategories);
+  useEffect(() => { activeCatsRef.current = activeCategories; }, [activeCategories]);
+
   const [selectedPoi, setSelectedPoi] = useState<POI | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading,     setLoading]     = useState(false);
   const [zoomWarning, setZoomWarning] = useState(false);
   const [searchPending, setSearchPending] = useState(false);
-  const [count, setCount] = useState<number | null>(null);
+  const [count,       setCount]       = useState<number | null>(null);
 
-  const fetchPOI = useCallback(
-    async (map: LMap, cats: Set<CategoryId>) => {
-      const zoom = map.getZoom();
-      if (zoom < MIN_ZOOM) {
-        setZoomWarning(true);
-        return;
-      }
-      setZoomWarning(false);
+  /* Ref so Leaflet handlers always see latest React state setters (stable, but safer) */
+  const setSelectedPoiRef = useRef(setSelectedPoi);
+
+  /* ── Core search function, called by button or auto-triggers ── */
+  async function runSearch(cats: Set<CategoryId>) {
+    const map = mapRef.current;
+    const layer = layerRef.current;
+    if (!map || !layer) return;
+
+    const zoom = map.getZoom();
+    if (zoom < MIN_ZOOM) {
+      setZoomWarning(true);
       setSearchPending(false);
-      setLoading(true);
-      setCount(null);
+      return;
+    }
 
-      const bounds = map.getBounds();
-      const s = bounds.getSouth().toFixed(6);
-      const w = bounds.getWest().toFixed(6);
-      const n = bounds.getNorth().toFixed(6);
-      const e = bounds.getEast().toFixed(6);
-      const bbox = `(${s},${w},${n},${e})`;
+    setZoomWarning(false);
+    setSearchPending(false);
+    setLoading(true);
+    setCount(null);
 
-      const activeCats = CATEGORIES.filter((c) => cats.has(c.id));
-      if (!activeCats.length) {
-        layerRef.current?.clearLayers();
-        markerMapRef.current.clear();
-        setLoading(false);
-        return;
-      }
+    const bounds = map.getBounds();
+    const s = bounds.getSouth().toFixed(6);
+    const w = bounds.getWest().toFixed(6);
+    const n = bounds.getNorth().toFixed(6);
+    const e = bounds.getEast().toFixed(6);
+    const bbox = `(${s},${w},${n},${e})`;
 
-      const query = `[out:json][timeout:25];(${activeCats.map((c) => `${c.overpassTag}${bbox};`).join("")});out body;`;
+    const activeCats = CATEGORIES.filter((c) => cats.has(c.id));
+    if (!activeCats.length) {
+      layer.clearLayers();
+      setLoading(false);
+      return;
+    }
 
-      try {
-        const resp = await fetch("https://overpass-api.de/api/interpreter", {
-          method: "POST",
-          body: query,
+    const query = `[out:json][timeout:25];(${activeCats.map((c) => `${c.overpassTag}${bbox};`).join("")});out body;`;
+
+    try {
+      const resp = await fetch("https://overpass-api.de/api/interpreter", {
+        method: "POST",
+        body: query,
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = (await resp.json()) as { elements: OverpassNode[] };
+
+      layer.clearLayers();
+
+      const L = (await import("leaflet")).default;
+
+      const pois: POI[] = data.elements
+        .filter((el) => el.tags?.name)
+        .map((el) => {
+          let category: CategoryId = "restaurant";
+          if (el.tags.amenity === "bar")         category = "bar";
+          else if (el.tags.amenity === "nightclub") category = "nightclub";
+          else if (el.tags.shop === "bakery")    category = "bakery";
+          else if (el.tags.shop === "pastry")    category = "pastry";
+          return { id: el.id, lat: el.lat, lon: el.lon, name: el.tags.name, category, tags: el.tags };
         });
-        const data = (await resp.json()) as { elements: OverpassNode[] };
 
-        layerRef.current?.clearLayers();
-        markerMapRef.current.clear();
+      setCount(pois.length);
 
-        const L = (await import("leaflet")).default;
-
-        const pois: POI[] = data.elements
-          .filter((el) => el.tags?.name)
-          .map((el) => {
-            let category: CategoryId = "restaurant";
-            if (el.tags.amenity === "bar") category = "bar";
-            else if (el.tags.amenity === "nightclub") category = "nightclub";
-            else if (el.tags.shop === "bakery") category = "bakery";
-            else if (el.tags.shop === "pastry") category = "pastry";
-            return { id: el.id, lat: el.lat, lon: el.lon, name: el.tags.name, category, tags: el.tags };
-          });
-
-        setCount(pois.length);
-
-        pois.forEach((poi) => {
-          const cat = catById(poi.category);
-          const icon = L.divIcon({
-            className: "",
-            html: `<div class="bm-marker-dot" style="background:${cat.color}"><span>${cat.icon}</span></div>`,
-            iconSize: [28, 28],
-            iconAnchor: [14, 14],
-          });
-
-          const marker = L.marker([poi.lat, poi.lon], { icon }).addTo(layerRef.current!);
-          marker.on("click", () => setSelectedPoi(poi));
-          markerMapRef.current.set(poi.id, marker);
+      pois.forEach((poi) => {
+        const cat = catById(poi.category);
+        const icon = L.divIcon({
+          className: "",
+          html: `<div class="bm-marker-dot" style="background:${cat.color};"><span class="bm-marker-emoji">${cat.icon}</span></div>`,
+          iconSize: [30, 30],
+          iconAnchor: [15, 15],
         });
-      } catch {
-        /* silently skip on network error */
-      } finally {
-        setLoading(false);
-      }
-    },
-    [],
-  );
 
+        const marker = L.marker([poi.lat, poi.lon], { icon }).addTo(layer);
+        marker.on("click", () => {
+          setSelectedPoiRef.current(poi);
+        });
+      });
+    } catch {
+      /* silently ignore network errors */
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /* ── Map initialisation — runs exactly once ── */
   useEffect(() => {
     if (!mapDivRef.current || mapRef.current) return;
 
     let cancelled = false;
+    /* Flag: suppress moveend → searchPending during the initial load */
+    let initialSearchDone = false;
 
     void import("leaflet").then(async (mod) => {
       if (cancelled || !mapDivRef.current) return;
       const L = mod.default;
 
-      await import("leaflet/dist/leaflet.css");
+      /* Fix Leaflet default marker icons */
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (L.Icon.Default.prototype as any)._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+        iconUrl:       "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        shadowUrl:     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      });
 
-      const map = L.map(mapDivRef.current, {
+      const map = L.map(mapDivRef.current!, {
         center: [40.7128, -74.006],
         zoom: 14,
         zoomControl: false,
@@ -199,6 +189,7 @@ export default function BusinessMarketPage() {
       L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
         attribution:
           '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+        subdomains: "abcd",
         maxZoom: 19,
       }).addTo(map);
 
@@ -206,67 +197,86 @@ export default function BusinessMarketPage() {
 
       const layer = L.layerGroup().addTo(map);
       layerRef.current = layer;
-      mapRef.current = map;
+      mapRef.current   = map;
 
-      map.on("moveend", () => setSearchPending(true));
+      /* Only flag "search pending" on user-initiated moves, not the initial setView */
+      map.on("moveend", () => {
+        if (!initialSearchDone) return;
+        setSearchPending(true);
+        setZoomWarning(map.getZoom() < MIN_ZOOM);
+      });
+
+      /* ── Initial search: try geolocation first, fall back to default view ── */
+      const doInitialSearch = (targetLat?: number, targetLon?: number) => {
+        if (cancelled) return;
+        if (targetLat !== undefined && targetLon !== undefined) {
+          map.setView([targetLat, targetLon], 14);
+        }
+        initialSearchDone = true;
+        void runSearch(activeCatsRef.current);
+      };
 
       try {
         navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            if (cancelled) return;
-            map.setView([pos.coords.latitude, pos.coords.longitude], 14);
-            void fetchPOI(map, new Set(["restaurant", "bar", "nightclub", "bakery", "pastry"]));
-          },
-          () => {
-            if (cancelled) return;
-            void fetchPOI(map, new Set(["restaurant", "bar", "nightclub", "bakery", "pastry"]));
-          },
+          (pos) => doInitialSearch(pos.coords.latitude, pos.coords.longitude),
+          ()    => doInitialSearch(),
+          { timeout: 4000 },
         );
       } catch {
-        void fetchPOI(map, new Set(["restaurant", "bar", "nightclub", "bakery", "pastry"]));
+        doInitialSearch();
       }
+
+      requestAnimationFrame(() => map.invalidateSize());
+      setTimeout(() => { if (mapRef.current) mapRef.current.invalidateSize(); }, 300);
     });
 
     return () => {
       cancelled = true;
       mapRef.current?.remove();
-      mapRef.current = null;
+      mapRef.current   = null;
       layerRef.current = null;
-      markerMapRef.current.clear();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /* ── Category toggle: immediately re-search ── */
   function toggleCategory(id: CategoryId) {
     setActiveCategories((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
-        if (next.size === 1) return prev;
+        if (next.size === 1) return prev; /* keep at least one */
         next.delete(id);
       } else {
         next.add(id);
       }
-      setSearchPending(true);
+      /* Trigger search with updated set right away */
+      void runSearch(next);
       return next;
     });
   }
 
   function handleSearch() {
-    if (mapRef.current) void fetchPOI(mapRef.current, activeCategories);
+    void runSearch(activeCatsRef.current);
   }
 
-  const poi = selectedPoi;
-  const poiCat = poi ? catById(poi.category) : null;
-  const phone = poi ? formatPhone(poi.tags.phone ?? poi.tags["contact:phone"]) : null;
+  const poi     = selectedPoi;
+  const poiCat  = poi ? catById(poi.category) : null;
+  const phone   = poi ? formatPhone(poi.tags.phone ?? poi.tags["contact:phone"]) : null;
   const address = poi ? formatAddress(poi.tags) : null;
   const website = poi ? (poi.tags.website ?? poi.tags["contact:website"] ?? null) : null;
-  const hours = poi ? (poi.tags.opening_hours ?? null) : null;
-  const osmUrl = poi ? `https://www.openstreetmap.org/node/${poi.id}` : null;
+  const hours   = poi ? (poi.tags.opening_hours ?? null) : null;
 
   return (
     <div className="bm-page">
+      {/* ── Map ── */}
       <div ref={mapDivRef} className="bm-map" />
 
+      {/* ── Hamburger nav trigger (top-left, matching other pages) ── */}
+      <div className="bm-nav-trigger">
+        <GlobalNavTrigger />
+      </div>
+
+      {/* ── Category filters + status bar (top-center) ── */}
       <div className="bm-top-bar">
         <div className="bm-filters">
           {CATEGORIES.map((cat) => (
@@ -274,7 +284,9 @@ export default function BusinessMarketPage() {
               key={cat.id}
               type="button"
               className={`bm-filter-chip${activeCategories.has(cat.id) ? " active" : ""}`}
-              style={activeCategories.has(cat.id) ? { "--chip-color": cat.color } as React.CSSProperties : undefined}
+              style={activeCategories.has(cat.id)
+                ? { "--chip-color": cat.color } as React.CSSProperties
+                : undefined}
               onClick={() => toggleCategory(cat.id)}
             >
               <span className="bm-chip-icon">{cat.icon}</span>
@@ -287,7 +299,7 @@ export default function BusinessMarketPage() {
           {zoomWarning && (
             <span className="bm-zoom-warning">Zoom in to search</span>
           )}
-          {searchPending && !zoomWarning && (
+          {searchPending && !zoomWarning && !loading && (
             <button type="button" className="bm-search-btn" onClick={handleSearch}>
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                 <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.5" />
@@ -303,11 +315,14 @@ export default function BusinessMarketPage() {
             </div>
           )}
           {!loading && count !== null && !searchPending && (
-            <div className="bm-count-pill">{count} place{count !== 1 ? "s" : ""} found</div>
+            <div className="bm-count-pill">
+              {count} place{count !== 1 ? "s" : ""} found
+            </div>
           )}
         </div>
       </div>
 
+      {/* ── Detail panel (slides in from left) ── */}
       <div className={`bm-panel${poi ? " open" : ""}`}>
         {poi && poiCat && (
           <>
@@ -377,33 +392,23 @@ export default function BusinessMarketPage() {
                     <path d="M5 2v5c0 1.7 1.3 3 3 3s3-1.3 3-3V2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                     <path d="M8 10v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                   </svg>
-                  <span style={{ textTransform: "capitalize" }}>{poi.tags.cuisine.replace(/_/g, " ")}</span>
+                  <span style={{ textTransform: "capitalize" }}>
+                    {poi.tags.cuisine.replace(/_/g, " ")}
+                  </span>
                 </div>
               )}
 
-              {poi.tags.outdoor_seating === "yes" && (
-                <div className="bm-tag-row">
-                  <span className="bm-feature-tag">🌿 Outdoor Seating</span>
-                </div>
-              )}
-              {poi.tags.wheelchair === "yes" && (
-                <div className="bm-tag-row">
-                  <span className="bm-feature-tag">♿ Accessible</span>
-                </div>
-              )}
-              {poi.tags["diet:vegetarian"] === "yes" && (
-                <div className="bm-tag-row">
-                  <span className="bm-feature-tag">🥗 Vegetarian</span>
-                </div>
-              )}
-              {poi.tags["diet:vegan"] === "yes" && (
-                <div className="bm-tag-row">
-                  <span className="bm-feature-tag">🌱 Vegan</span>
-                </div>
-              )}
+              <div className="bm-tag-row">
+                {poi.tags.outdoor_seating === "yes"     && <span className="bm-feature-tag">🌿 Outdoor Seating</span>}
+                {poi.tags.wheelchair === "yes"           && <span className="bm-feature-tag">♿ Accessible</span>}
+                {poi.tags["diet:vegetarian"] === "yes"  && <span className="bm-feature-tag">🥗 Vegetarian</span>}
+                {poi.tags["diet:vegan"] === "yes"       && <span className="bm-feature-tag">🌱 Vegan</span>}
+              </div>
 
               {!address && !phone && !website && !hours && !poi.tags.cuisine && (
-                <p className="bm-no-details">No additional details available in OpenStreetMap for this location.</p>
+                <p className="bm-no-details">
+                  No additional details available in OpenStreetMap for this location.
+                </p>
               )}
             </div>
 
@@ -415,13 +420,13 @@ export default function BusinessMarketPage() {
                 className="bm-osm-link"
               >
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3" />
-                  <path d="M8 2c-1.5 2-2.5 3.5-2.5 6s1 4 2.5 6M8 2c1.5 2 2.5 3.5 2.5 6S9.5 14 8 14M2 8h12" stroke="currentColor" strokeWidth="1.1" />
+                  <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6c0 3.5 4.5 8.5 4.5 8.5s4.5-5 4.5-8.5c0-2.5-2-4.5-4.5-4.5z" stroke="currentColor" strokeWidth="1.3" />
+                  <circle cx="8" cy="6" r="1.5" stroke="currentColor" strokeWidth="1.3" />
                 </svg>
                 Open in Google Maps
               </a>
               <a
-                href={osmUrl!}
+                href={`https://www.openstreetmap.org/node/${poi.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bm-osm-link bm-osm-link--secondary"
@@ -433,6 +438,7 @@ export default function BusinessMarketPage() {
         )}
       </div>
 
+      {/* Backdrop closes panel on mobile */}
       {poi && (
         <div className="bm-panel-backdrop" onClick={() => setSelectedPoi(null)} />
       )}
