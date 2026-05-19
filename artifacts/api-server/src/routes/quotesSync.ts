@@ -12,18 +12,33 @@ function parseDate(s: string | undefined | null): Date {
   return isNaN(d.getTime()) ? new Date() : d;
 }
 
+// Mirrors the frontend tiered pricing logic in quoteLogic.ts
+const TIERED_ITEM_IDS = new Set(["co-001", "co-002"]);
+const TIERED_ADDITIONAL_UNIT_PRICE = 30;
+
+function computeLineItemTotal(productId: string, unitPrice: number, quantity: number): number {
+  if (TIERED_ITEM_IDS.has(productId) && quantity > 0) {
+    return unitPrice + Math.max(0, quantity - 1) * TIERED_ADDITIONAL_UNIT_PRICE;
+  }
+  return unitPrice * quantity;
+}
+
 function computeQuoteValues(data: Record<string, unknown>): { mrr: number; arr: number } {
   const meta = (data.meta ?? {}) as Record<string, unknown>;
   const groups = (data.groups ?? []) as Array<Record<string, unknown>>;
   const discount = Number(meta.discount ?? 0);
   const tax = Number(meta.tax ?? 0);
 
-  // Primary: actual line-item total — this is the real monthly recurring value
+  // Primary: actual line-item total using the same tiered pricing as the frontend
   let subtotal = 0;
   for (const group of groups) {
     const lineItems = (group.lineItems ?? []) as Array<Record<string, unknown>>;
     for (const item of lineItems) {
-      subtotal += Number(item.quantity ?? 0) * Number(item.unitPrice ?? 0);
+      subtotal += computeLineItemTotal(
+        String(item.productId ?? ""),
+        Number(item.unitPrice ?? 0),
+        Number(item.quantity ?? 0),
+      );
     }
   }
   if (subtotal > 0) {
