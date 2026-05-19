@@ -73,15 +73,6 @@ export default function GlobalNav() {
                 </svg>
                 My Quote Library
               </button>
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/business-market")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.4" />
-                  <path d="M3 13l10-10" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
-                  <path d="M8 1.5C6.5 3.5 5.5 5 5.5 7s1 3.5 2.5 5.5M8 1.5C9.5 3.5 10.5 5 10.5 7S9.5 10.5 8 12.5" stroke="currentColor" strokeWidth="1.1" />
-                  <path d="M2.5 7h11" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
-                </svg>
-                Business Market
-              </button>
             </div>
           )}
 
@@ -170,14 +161,6 @@ export default function GlobalNav() {
                   <path d="M8 2L13 8M13 8L8 14M13 8H3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 App Release
-              </button>
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/business-market")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.4" />
-                  <path d="M8 1.5C6.5 3.5 5.5 5 5.5 7s1 3.5 2.5 5.5M8 1.5C9.5 3.5 10.5 5 10.5 7S9.5 10.5 8 12.5" stroke="currentColor" strokeWidth="1.1" />
-                  <path d="M2.5 7h11" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
-                </svg>
-                Business Market
               </button>
             </div>
           )}
