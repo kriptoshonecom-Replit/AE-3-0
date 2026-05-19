@@ -5,6 +5,7 @@ import type { Map as LeafletMap } from "leaflet";
 interface AddressFields {
   addressName: string;
   addressNumber: string;
+  addressCity: string;
   addressState: string;
   zipCode: string;
   addressCountry: string;
@@ -28,6 +29,10 @@ const COUNTRIES = [
 interface NominatimAddress {
   house_number?: string;
   road?: string;
+  city?: string;
+  town?: string;
+  village?: string;
+  suburb?: string;
   state?: string;
   county?: string;
   postcode?: string;
@@ -65,7 +70,7 @@ const POI_LABELS: Record<string, string> = {
 const POI_ZOOM_THRESHOLD = 13;
 
 function buildQuery(f: AddressFields): string {
-  return [f.addressNumber, f.addressName, f.addressState, f.zipCode, f.addressCountry]
+  return [f.addressNumber, f.addressName, f.addressCity, f.addressState, f.zipCode, f.addressCountry]
     .filter(Boolean)
     .join(", ");
 }
@@ -109,6 +114,7 @@ export default function AddressMapSection({ values, onChange }: Props) {
       onChangeRef.current({
         addressNumber: addr.house_number ?? "",
         addressName: addr.road ?? "",
+        addressCity: addr.city ?? addr.town ?? addr.village ?? addr.suburb ?? "",
         addressState: addr.state ?? addr.county ?? "",
         zipCode: addr.postcode ?? "",
         addressCountry: matchCountry(addr.country),
@@ -320,7 +326,7 @@ export default function AddressMapSection({ values, onChange }: Props) {
       if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [values.addressName, values.addressNumber, values.addressState, values.zipCode, values.addressCountry, mapReady, geocode]);
+  }, [values.addressName, values.addressNumber, values.addressCity, values.addressState, values.zipCode, values.addressCountry, mapReady, geocode]);
 
   const set = (key: keyof AddressFields) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
@@ -361,10 +367,21 @@ export default function AddressMapSection({ values, onChange }: Props) {
           />
         </div>
         <div className="field-group span-2">
-          <label>Country</label>
-          <select value={values.addressCountry} onChange={set("addressCountry")}>
-            {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <div className="address-city-country-row">
+            <div className="field-group address-city-field">
+              <label>City</label>
+              <input
+                type="text" value={values.addressCity}
+                onChange={set("addressCity")} placeholder="e.g. Los Angeles"
+              />
+            </div>
+            <div className="field-group address-country-field">
+              <label>Country</label>
+              <select value={values.addressCountry} onChange={set("addressCountry")}>
+                {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 

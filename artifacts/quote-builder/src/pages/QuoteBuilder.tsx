@@ -1158,6 +1158,7 @@ export default function QuoteBuilder() {
                       values={{
                         addressName: quote.meta.addressName ?? "",
                         addressNumber: quote.meta.addressNumber ?? "",
+                        addressCity: quote.meta.addressCity ?? "",
                         addressState: quote.meta.addressState ?? "",
                         zipCode: quote.meta.zipCode ?? "",
                         addressCountry: quote.meta.addressCountry ?? "United States",

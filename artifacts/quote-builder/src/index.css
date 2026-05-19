@@ -680,6 +680,22 @@ button {
   background: var(--surface);
 }
 
+.address-city-country-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.address-city-field {
+  flex: 3;
+  min-width: 0;
+}
+
+.address-country-field {
+  flex: 2;
+  min-width: 0;
+}
+
 .address-map-wrap {
   position: relative;
   border-radius: 8px;
