@@ -14,16 +14,11 @@ function parseDate(s: string | undefined | null): Date {
 
 function computeQuoteValues(data: Record<string, unknown>): { mrr: number; arr: number } {
   const meta = (data.meta ?? {}) as Record<string, unknown>;
-
-  // Primary: Requested Subscription Amount is a monthly (MRR) figure → ARR = ×12
-  const reqSubRaw = String(meta.requestedSubscriptionAmount ?? "");
-  const reqSub = parseFloat(reqSubRaw.replace(/[^0-9.]/g, ""));
-  if (!isNaN(reqSub) && reqSub > 0) return { mrr: reqSub, arr: reqSub * 12 };
-
-  // Fallback: line-item total with discount/tax (not a recurring value)
   const groups = (data.groups ?? []) as Array<Record<string, unknown>>;
   const discount = Number(meta.discount ?? 0);
   const tax = Number(meta.tax ?? 0);
+
+  // Primary: actual line-item total — this is the real monthly recurring value
   let subtotal = 0;
   for (const group of groups) {
     const lineItems = (group.lineItems ?? []) as Array<Record<string, unknown>>;
@@ -31,8 +26,18 @@ function computeQuoteValues(data: Record<string, unknown>): { mrr: number; arr: 
       subtotal += Number(item.quantity ?? 0) * Number(item.unitPrice ?? 0);
     }
   }
-  const afterDiscount = subtotal * (1 - discount / 100);
-  return { mrr: 0, arr: afterDiscount * (1 + tax / 100) };
+  if (subtotal > 0) {
+    const afterDiscount = subtotal * (1 - discount / 100);
+    const mrr = afterDiscount * (1 + tax / 100);
+    return { mrr, arr: mrr * 12 };
+  }
+
+  // Fallback: use requestedSubscriptionAmount if quote has no line items yet
+  const reqSubRaw = String(meta.requestedSubscriptionAmount ?? "");
+  const reqSub = parseFloat(reqSubRaw.replace(/[^0-9.]/g, ""));
+  if (!isNaN(reqSub) && reqSub > 0) return { mrr: reqSub, arr: reqSub * 12 };
+
+  return { mrr: 0, arr: 0 };
 }
 
 /* ── GET /api/quotes/stats — per-user summary stats ── */
