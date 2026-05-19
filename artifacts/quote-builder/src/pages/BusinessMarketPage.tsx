@@ -59,15 +59,10 @@ function formatAddress(tags: Record<string, string>): string | null {
 const MIN_ZOOM = 12;
 
 export default function BusinessMarketPage() {
-  const mapDivRef  = useRef<HTMLDivElement>(null);
-  const mapRef     = useRef<import("leaflet").Map | null>(null);
-  const layerRef   = useRef<import("leaflet").LayerGroup | null>(null);
+  const mapDivRef = useRef<HTMLDivElement>(null);
+  const mapRef    = useRef<import("leaflet").Map | null>(null);
+  const layerRef  = useRef<import("leaflet").LayerGroup | null>(null);
 
-  /* All loaded POI + their marker instances — for client-side name filtering */
-  const poisRef      = useRef<POI[]>([]);
-  const markerMapRef = useRef<Map<number, import("leaflet").Marker>>(new Map());
-
-  /* Keep active categories accessible inside Leaflet callbacks */
   const [activeCategories, setActiveCategories] = useState<Set<CategoryId>>(
     new Set(["restaurant", "bar", "nightclub", "bakery", "pastry"]),
   );
@@ -79,36 +74,6 @@ export default function BusinessMarketPage() {
   const [zoomWarning,   setZoomWarning]   = useState(false);
   const [searchPending, setSearchPending] = useState(false);
   const [totalCount,    setTotalCount]    = useState<number | null>(null);
-
-  /* Name filter — typed in the topbar */
-  const [nameFilter, setNameFilter] = useState("");
-  const nameFilterRef = useRef("");
-  useEffect(() => {
-    nameFilterRef.current = nameFilter;
-    applyNameFilter(nameFilter);
-  }, [nameFilter]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  function applyNameFilter(filter: string) {
-    const q = filter.trim().toLowerCase();
-    const layer = layerRef.current;
-    if (!layer) return;
-
-    markerMapRef.current.forEach((marker, id) => {
-      const poi = poisRef.current.find((p) => p.id === id);
-      if (!poi) return;
-      const matches = !q || poi.name.toLowerCase().includes(q);
-      if (matches) {
-        if (!layer.hasLayer(marker)) layer.addLayer(marker);
-      } else {
-        layer.removeLayer(marker);
-      }
-    });
-  }
-
-  /* Visible count after applying the name filter */
-  const visibleCount = nameFilter.trim()
-    ? poisRef.current.filter((p) => p.name.toLowerCase().includes(nameFilter.trim().toLowerCase())).length
-    : totalCount;
 
   /* ── Core search: query Overpass, build markers ── */
   async function runSearch(cats: Set<CategoryId>) {
@@ -128,14 +93,12 @@ export default function BusinessMarketPage() {
     setLoading(true);
     setTotalCount(null);
 
-    const b = map.getBounds();
+    const b    = map.getBounds();
     const bbox = `(${b.getSouth().toFixed(6)},${b.getWest().toFixed(6)},${b.getNorth().toFixed(6)},${b.getEast().toFixed(6)})`;
 
     const activeCats = CATEGORIES.filter((c) => cats.has(c.id));
     if (!activeCats.length) {
       layer.clearLayers();
-      poisRef.current = [];
-      markerMapRef.current.clear();
       setLoading(false);
       return;
     }
@@ -151,8 +114,6 @@ export default function BusinessMarketPage() {
       const data = (await resp.json()) as { elements: OverpassNode[] };
 
       layer.clearLayers();
-      poisRef.current = [];
-      markerMapRef.current.clear();
 
       const L = (await import("leaflet")).default;
 
@@ -167,7 +128,6 @@ export default function BusinessMarketPage() {
           return { id: el.id, lat: el.lat, lon: el.lon, name: el.tags.name, category, tags: el.tags };
         });
 
-      poisRef.current = pois;
       setTotalCount(pois.length);
 
       pois.forEach((poi) => {
@@ -175,17 +135,13 @@ export default function BusinessMarketPage() {
         const icon = L.divIcon({
           className: "",
           html: `<div class="bm-marker-dot" style="background:${cat.color};"><span class="bm-marker-emoji">${cat.icon}</span></div>`,
-          iconSize: [30, 30],
+          iconSize:   [30, 30],
           iconAnchor: [15, 15],
         });
 
         const marker = L.marker([poi.lat, poi.lon], { icon }).addTo(layer);
         marker.on("click", () => setSelectedPoi(poi));
-        markerMapRef.current.set(poi.id, marker);
       });
-
-      /* Re-apply any active name filter after fresh markers are added */
-      applyNameFilter(nameFilterRef.current);
     } catch {
       /* silently ignore */
     } finally {
@@ -197,8 +153,8 @@ export default function BusinessMarketPage() {
   useEffect(() => {
     if (!mapDivRef.current || mapRef.current) return;
 
-    let cancelled          = false;
-    let initialSearchDone  = false;
+    let cancelled         = false;
+    let initialSearchDone = false;
 
     void import("leaflet").then(async (mod) => {
       if (cancelled || !mapDivRef.current) return;
@@ -262,8 +218,6 @@ export default function BusinessMarketPage() {
       mapRef.current?.remove();
       mapRef.current   = null;
       layerRef.current = null;
-      poisRef.current  = [];
-      markerMapRef.current.clear();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -289,39 +243,11 @@ export default function BusinessMarketPage() {
   return (
     <div className="bm-page">
 
-      {/* ── Top bar — same style as all other pages ── */}
+      {/* ── Top bar ── */}
       <div className="admin-topbar bm-topbar">
         <GlobalNavTrigger />
         <h1 className="admin-page-title">Business Market</h1>
 
-        {/* Name search input */}
-        <div className="bm-name-search">
-          <svg className="bm-name-search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.4" />
-            <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-          </svg>
-          <input
-            type="text"
-            className="bm-name-search-input"
-            placeholder="Search by name…"
-            value={nameFilter}
-            onChange={(e) => setNameFilter(e.target.value)}
-          />
-          {nameFilter && (
-            <button
-              type="button"
-              className="bm-name-search-clear"
-              onClick={() => setNameFilter("")}
-              title="Clear search"
-            >
-              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-                <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-              </svg>
-            </button>
-          )}
-        </div>
-
-        {/* Search area / status */}
         <div className="bm-topbar-status">
           {zoomWarning && (
             <span className="bm-zoom-warning">Zoom in to search</span>
@@ -345,10 +271,9 @@ export default function BusinessMarketPage() {
               Searching…
             </div>
           )}
-          {!loading && visibleCount !== null && !searchPending && (
+          {!loading && totalCount !== null && !searchPending && (
             <div className="bm-count-pill">
-              {visibleCount} place{visibleCount !== 1 ? "s" : ""}
-              {nameFilter.trim() ? ` match` : " found"}
+              {totalCount} place{totalCount !== 1 ? "s" : ""} found
             </div>
           )}
         </div>
