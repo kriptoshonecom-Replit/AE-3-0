@@ -526,6 +526,7 @@ export default function ProductsConfigPage() {
   const [tieredInput, setTieredInput] = useState("30");
   const [tieredSaving, setTieredSaving] = useState(false);
   const [tieredSaved, setTieredSaved] = useState(false);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
 
   const allIds = (data?.categories ?? []).flatMap((c) => c.items.map((i) => i.id.toLowerCase()));
 
@@ -637,6 +638,20 @@ export default function ProductsConfigPage() {
       const d = await res.json() as ProductsData;
       setData(d);
     } catch { alert("Network error"); }
+  }
+
+  async function handleDuplicateItem(catId: string, itemId: string) {
+    setDuplicatingId(itemId);
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/admin/products/categories/${catId}/items/${itemId}/duplicate`,
+        { method: "POST", credentials: "include" },
+      );
+      const d = await res.json() as ProductsData & { error?: string };
+      if (!res.ok) { alert(d.error ?? "Duplicate failed"); return; }
+      setData(d);
+    } catch { alert("Network error"); }
+    finally { setDuplicatingId(null); }
   }
 
   const currentCat = data?.categories.find((c) => c.id === activeCat);
@@ -875,6 +890,22 @@ export default function ProductsConfigPage() {
                                 <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                               Edit
+                            </button>
+                            <button
+                              className="admin-btn-edit"
+                              disabled={duplicatingId === item.id}
+                              title="Duplicate product (copy inserted below)"
+                              onClick={() => void handleDuplicateItem(currentCat.id, item.id)}
+                            >
+                              {duplicatingId === item.id ? (
+                                <span className="spinner" style={{ width: 11, height: 11 }} />
+                              ) : (
+                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                  <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                                  <path d="M3 11V2h9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              )}
+                              {duplicatingId === item.id ? "Copying…" : "Duplicate"}
                             </button>
                             <button className="admin-btn-delete" onClick={() => handleDeleteItem(currentCat.id, item.id, item.name)}>
                               <svg width="12" height="12" viewBox="0 0 16 16" fill="none">

@@ -439,6 +439,29 @@ router.delete("/products/categories/:catId", async (req, res) => {
   }
 });
 
+router.post("/products/categories/:catId/items/:itemId/duplicate", async (req, res) => {
+  try {
+    const { catId, itemId } = req.params;
+    const data = await readProducts();
+    const cat = data.categories.find((c) => c.id === catId);
+    if (!cat) { res.status(404).json({ error: "Category not found" }); return; }
+    const srcIdx = cat.items.findIndex((i) => i.id === itemId);
+    if (srcIdx === -1) { res.status(404).json({ error: "Product not found" }); return; }
+    const src = cat.items[srcIdx];
+    const allIds = new Set(data.categories.flatMap((c) => c.items.map((i) => i.id)));
+    let newId = `${src.id}-copy`;
+    let n = 2;
+    while (allIds.has(newId)) { newId = `${src.id}-copy-${n++}`; }
+    const copy: ProductItem = { ...src, id: newId, name: `${src.name} (Copy)` };
+    cat.items.splice(srcIdx + 1, 0, copy);
+    await writeProducts(data);
+    res.json(data);
+  } catch (err) {
+    logger.error(err, "admin duplicate product error");
+    res.status(500).json({ error: "Failed to duplicate product" });
+  }
+});
+
 router.delete("/products/categories/:catId/items/:itemId", async (req, res) => {
   try {
     const { catId, itemId } = req.params;
