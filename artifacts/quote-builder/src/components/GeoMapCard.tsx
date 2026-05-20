@@ -234,16 +234,16 @@ export default function GeoMapCard({ byState, byCountry }: Props) {
             )}
           </div>
 
-          {/* Colour legend */}
+        </div>
+
+        {/* RIGHT — region cards */}
+        <div className="geo-cards-col">
+          {/* Legend lives here */}
           <div className="geo-legend">
             <span className="geo-legend-label">Low ARR</span>
             <div className="geo-legend-bar" />
             <span className="geo-legend-label">High ARR</span>
           </div>
-        </div>
-
-        {/* RIGHT — region cards */}
-        <div className="geo-cards-col">
           <div className="geo-cards-heading">
             {sorted.length === 0 ? (view === "us" ? "States" : "Countries") : `${sorted.length} ${view === "us" ? "State" : "Countr"}${sorted.length === 1 ? (view === "us" ? "" : "y") : (view === "us" ? "s" : "ies")} with quotes`}
           </div>
