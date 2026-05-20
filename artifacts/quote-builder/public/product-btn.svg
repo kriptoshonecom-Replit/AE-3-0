@@ -1,24 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- Right face (darkest) -->
-  <polygon points="16,17 28,10 28,24 16,31" fill="#047857"/>
-  <!-- Left face (medium) -->
-  <polygon points="4,10 16,17 16,31 4,24" fill="#059669"/>
-  <!-- Top face (lightest) -->
-  <polygon points="16,3 28,10 16,17 4,10" fill="#10b981"/>
+  <!-- Right face -->
+  <polygon points="16,17 28,10 28,24 16,31" fill="#059669"/>
+  <!-- Left face -->
+  <polygon points="4,10 16,17 16,31 4,24" fill="#10b981"/>
+  <!-- Top face -->
+  <polygon points="16,3 28,10 16,17 4,10" fill="#34d399"/>
 
-  <!-- Tape strips on top face (semi-transparent white, left and right of seam) -->
-  <polygon points="10,6.5 16,3 16,8.5 10,12" fill="rgba(255,255,255,0.38)"/>
-  <polygon points="16,3 22,6.5 22,12 16,8.5" fill="rgba(255,255,255,0.38)"/>
-
-  <!-- Tape strip outlines -->
-  <polygon points="10,6.5 16,3 16,8.5 10,12" fill="none" stroke="#065f46" stroke-width="1.1" stroke-linejoin="round"/>
-  <polygon points="16,3 22,6.5 22,12 16,8.5" fill="none" stroke="#065f46" stroke-width="1.1" stroke-linejoin="round"/>
-
-  <!-- Box face outlines (thick) -->
-  <polygon points="16,3 28,10 16,17 4,10" fill="none" stroke="#065f46" stroke-width="2" stroke-linejoin="round"/>
-  <polygon points="4,10 16,17 16,31 4,24" fill="none" stroke="#065f46" stroke-width="2" stroke-linejoin="round"/>
-  <polygon points="16,17 28,10 28,24 16,31" fill="none" stroke="#065f46" stroke-width="2" stroke-linejoin="round"/>
-
-  <!-- Center seam on top face -->
-  <line x1="16" y1="3" x2="16" y2="17" stroke="#065f46" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Outlines -->
+  <polygon points="16,3 28,10 16,17 4,10" fill="none" stroke="#065f46" stroke-width="1.8" stroke-linejoin="round"/>
+  <polygon points="4,10 16,17 16,31 4,24" fill="none" stroke="#065f46" stroke-width="1.8" stroke-linejoin="round"/>
+  <polygon points="16,17 28,10 28,24 16,31" fill="none" stroke="#065f46" stroke-width="1.8" stroke-linejoin="round"/>
 </svg>
