@@ -91,6 +91,9 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
     const customerMap = new Map<string, { value: number; sites: number }>();
     const monthlyMap = new Map<string, number>();
     const pitMap = new Map<string, number>();
+    type GeoEntry = { quoteCount: number; totalArr: number; passCount: number; failCount: number };
+    const stateMap = new Map<string, GeoEntry>();
+    const countryMap = new Map<string, GeoEntry>();
     const recentActivity: Array<{ action: string; rep: string; time: Date; dot: string }> = [];
 
     for (const row of rows) {
@@ -141,6 +144,25 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
 
       const pitType = (meta.pitType as string) || "None";
       pitMap.set(pitType, (pitMap.get(pitType) ?? 0) + 1);
+
+      const isPass = normalizedStatus?.toLowerCase() === "pass";
+      const isFail = normalizedStatus?.toLowerCase() === "fail";
+
+      const stateRaw = String(meta.addressState ?? "").trim();
+      if (stateRaw) {
+        const e = stateMap.get(stateRaw) ?? { quoteCount: 0, totalArr: 0, passCount: 0, failCount: 0 };
+        e.quoteCount++; e.totalArr += arr;
+        if (isPass) e.passCount++; else if (isFail) e.failCount++;
+        stateMap.set(stateRaw, e);
+      }
+
+      const countryRaw = String(meta.addressCountry ?? "").trim();
+      if (countryRaw) {
+        const e = countryMap.get(countryRaw) ?? { quoteCount: 0, totalArr: 0, passCount: 0, failCount: 0 };
+        e.quoteCount++; e.totalArr += arr;
+        if (isPass) e.passCount++; else if (isFail) e.failCount++;
+        countryMap.set(countryRaw, e);
+      }
 
       const actor = row.updatedByName || row.creatorName || "Unknown";
       const updatedAt = row.updatedAt ?? row.createdAt ?? now;
@@ -210,6 +232,10 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
       topCustomers,
       monthlyData,
       pitDistribution,
+      geoDistribution: {
+        byState: Array.from(stateMap.entries()).map(([location, e]) => ({ location, ...e })),
+        byCountry: Array.from(countryMap.entries()).map(([location, e]) => ({ location, ...e })),
+      },
       recentActivity: sortedActivity,
       recentQuotes: rows
         .slice(-10)

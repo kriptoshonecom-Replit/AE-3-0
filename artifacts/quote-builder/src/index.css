@@ -5590,6 +5590,130 @@ tr:hover .drag-handle { opacity: 1; }
   .db-bottom-row { grid-template-columns: 1fr; }
 }
 
+/* ── Geo Map Card ─────────────────────────────────── */
+.db-geo-card {
+  margin-top: 0;
+}
+
+.geo-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px;
+}
+.geo-toggle-btn {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.geo-toggle-btn:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+.geo-toggle-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.geo-tooltip {
+  position: absolute;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+  pointer-events: none;
+  z-index: 10;
+  min-width: 150px;
+}
+.geo-tooltip-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 5px;
+}
+.geo-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: 3px;
+}
+.geo-tooltip-row strong {
+  font-weight: 600;
+  color: var(--text);
+}
+.geo-tooltip-empty {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+
+.geo-legend {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.geo-legend-label {
+  font-size: 10px;
+  color: var(--text-3);
+}
+.geo-legend-bar {
+  width: 72px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #f5f3ff, #7c3aed);
+  border: 1px solid var(--border);
+}
+
+.geo-summary-strip {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.geo-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 12px;
+  min-width: 110px;
+}
+.geo-summary-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+}
+.geo-summary-arr {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.geo-summary-count {
+  font-size: 10px;
+  color: var(--text-3);
+}
+
 .db-bar-chart {
   display: flex;
   align-items: flex-end;

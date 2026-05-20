@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
+import GeoMapCard, { type GeoPoint } from "@/components/GeoMapCard";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -70,6 +71,7 @@ interface DashboardData {
   pitDistribution: PitStat[];
   recentActivity: ActivityItem[];
   recentQuotes: RecentQuote[];
+  geoDistribution: { byState: GeoPoint[]; byCountry: GeoPoint[] };
 }
 
 function fmt(n: number) {
@@ -143,7 +145,7 @@ export default function DashboardPage() {
     );
   }
 
-  const { kpis, topReps, topCustomers, monthlyData, pitDistribution, recentActivity, recentQuotes } = data;
+  const { kpis, topReps, topCustomers, monthlyData, pitDistribution, recentActivity, recentQuotes, geoDistribution } = data;
   const maxBar = Math.max(...monthlyData.map((d) => d.value), 1);
   const pitTotal = pitDistribution.reduce((s, p) => s + p.count, 0) || 1;
 
@@ -488,6 +490,12 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
+
+        {/* Row 4: Geo Map */}
+        <GeoMapCard
+          byState={geoDistribution?.byState ?? []}
+          byCountry={geoDistribution?.byCountry ?? []}
+        />
 
       </div>
     </div>
