@@ -373,7 +373,9 @@ export async function exportQuoteToPDF(
   const upfrontDisplayValue = recurringPit
     ? (pitHours + productPitHours) * 4
     : pitTotal + productPitTotal;
-  const upfrontLabel = recurringPit ? "Monthly Upfront Total" : "Upfront Total";
+  const totalPitHours = pitHours + productPitHours;
+  const upfrontBaseLabel = recurringPit ? "Monthly Upfront Total" : "Upfront Total";
+  const upfrontLabel = totalPitHours > 0 ? `${upfrontBaseLabel} (${totalPitHours} hrs)` : upfrontBaseLabel;
   const heatmapItems =
     (
       pitCategories as Array<{
