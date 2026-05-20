@@ -6033,6 +6033,23 @@ tr:hover .drag-handle { opacity: 1; }
     display: flex;
     justify-content: center;
   }
+  .amend-btn-mobile-wrap .btn-amend {
+    background: var(--accent);
+    color: var(--accent-fg);
+    border: none;
+    border-radius: var(--radius);
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .amend-btn-mobile-wrap .btn-amend:hover {
+    background: var(--accent-hover);
+    border: none;
+    color: var(--accent-fg);
+  }
+  .amend-btn-mobile-wrap .btn-amend svg {
+    color: var(--accent-fg);
+  }
 }
 
 /* ── Amend Modal ── */
