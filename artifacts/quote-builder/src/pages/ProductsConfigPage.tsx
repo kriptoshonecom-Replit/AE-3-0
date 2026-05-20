@@ -186,12 +186,15 @@ interface EditProductModalProps {
   item: ProductItem | null;
   onClose: () => void;
   onSaved: (data: ProductsData) => void;
-  mode: "edit" | "add";
+  mode: "edit" | "add" | "duplicate";
   allIds: string[];
 }
 
 function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditProductModalProps) {
-  const [id, setId] = useState(mode === "edit" ? item?.id ?? "" : "");
+  const [id, setId] = useState(
+    mode === "edit" ? item?.id ?? "" :
+    mode === "duplicate" ? `${item?.id ?? ""}-copy` : ""
+  );
   const [name, setName] = useState(item?.name ?? "");
   const [type, setType] = useState(item?.type ?? "info");
   const [text, setText] = useState(item?.text ?? "");
@@ -210,7 +213,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
   const [loading, setLoading] = useState(false);
 
   const idTrimmed = id.trim().toLowerCase();
-  const idTaken = mode === "add" && idTrimmed.length > 0 && allIds.includes(idTrimmed);
+  const idTaken = (mode === "add" || mode === "duplicate") && idTrimmed.length > 0 && allIds.includes(idTrimmed);
 
   async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
     setImageError("");
@@ -248,11 +251,11 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
     e.preventDefault();
     setError("");
     if (!name.trim()) { setError("Name is required"); return; }
-    if (mode === "add" && !id.trim()) { setError("ID is required"); return; }
+    if ((mode === "add" || mode === "duplicate") && !id.trim()) { setError("ID is required"); return; }
     if (idTaken) { setError("This Product ID is already in use — please choose a different one"); return; }
 
     const body: Record<string, unknown> = {
-      ...(mode === "add" ? { id: id.trim() } : {}),
+      ...(mode !== "edit" ? { id: id.trim() } : {}),
       name: name.trim(), type, text,
       price: Number(price) || 0,
       pci: Number(pci) || 0,
@@ -264,10 +267,10 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
       image: imageUrl ?? null,
     };
 
-    const url = mode === "add"
-      ? `${API_BASE}/api/admin/products/categories/${catId}/items`
-      : `${API_BASE}/api/admin/products/categories/${catId}/items/${item!.id}`;
-    const method = mode === "add" ? "POST" : "PATCH";
+    const url = mode === "edit"
+      ? `${API_BASE}/api/admin/products/categories/${catId}/items/${item!.id}`
+      : `${API_BASE}/api/admin/products/categories/${catId}/items`;
+    const method = mode === "edit" ? "PATCH" : "POST";
 
     setLoading(true);
     try {
@@ -289,7 +292,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
     <div className="admin-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="admin-modal admin-modal-wide">
         <div className="admin-modal-header">
-          <h3>{mode === "add" ? "Add Product" : "Edit Product"}</h3>
+          <h3>{mode === "add" ? "Add Product" : mode === "duplicate" ? "Duplicate Product" : "Edit Product"}</h3>
           <button className="edit-modal-close" onClick={onClose} aria-label="Close">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -300,7 +303,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
           {error && <div className="edit-modal-error">{error}</div>}
 
           <div className="admin-form-row">
-            {mode === "add" && (
+            {(mode === "add" || mode === "duplicate") && (
               <div className="edit-field-group">
                 <label>Product ID</label>
                 <input
@@ -439,7 +442,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
           <div className="edit-modal-footer">
             <button type="button" className="edit-modal-cancel" onClick={onClose}>Cancel</button>
             <button type="submit" className="edit-modal-save" disabled={loading}>
-              {loading ? "Saving…" : mode === "add" ? "Add product" : "Save changes"}
+              {loading ? "Saving…" : mode === "add" ? "Add product" : mode === "duplicate" ? "Create copy" : "Save changes"}
             </button>
           </div>
         </form>
@@ -526,7 +529,7 @@ export default function ProductsConfigPage() {
   const [tieredInput, setTieredInput] = useState("30");
   const [tieredSaving, setTieredSaving] = useState(false);
   const [tieredSaved, setTieredSaved] = useState(false);
-  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+  const [duplicateFrom, setDuplicateFrom] = useState<ProductItem | null>(null);
 
   const allIds = (data?.categories ?? []).flatMap((c) => c.items.map((i) => i.id.toLowerCase()));
 
@@ -640,19 +643,6 @@ export default function ProductsConfigPage() {
     } catch { alert("Network error"); }
   }
 
-  async function handleDuplicateItem(catId: string, itemId: string) {
-    setDuplicatingId(itemId);
-    try {
-      const res = await fetch(
-        `${API_BASE}/api/admin/products/categories/${catId}/items/${itemId}/duplicate`,
-        { method: "POST", credentials: "include" },
-      );
-      const d = await res.json() as ProductsData & { error?: string };
-      if (!res.ok) { alert(d.error ?? "Duplicate failed"); return; }
-      setData(d);
-    } catch { alert("Network error"); }
-    finally { setDuplicatingId(null); }
-  }
 
   const currentCat = data?.categories.find((c) => c.id === activeCat);
 
@@ -893,19 +883,14 @@ export default function ProductsConfigPage() {
                             </button>
                             <button
                               className="admin-btn-edit"
-                              disabled={duplicatingId === item.id}
-                              title="Duplicate product (copy inserted below)"
-                              onClick={() => void handleDuplicateItem(currentCat.id, item.id)}
+                              title="Duplicate product"
+                              onClick={() => setDuplicateFrom(item)}
                             >
-                              {duplicatingId === item.id ? (
-                                <span className="spinner" style={{ width: 11, height: 11 }} />
-                              ) : (
-                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                                  <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                                  <path d="M3 11V2h9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                              )}
-                              {duplicatingId === item.id ? "Copying…" : "Duplicate"}
+                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                                <path d="M3 11V2h9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                              Duplicate
                             </button>
                             <button className="admin-btn-delete" onClick={() => handleDeleteItem(currentCat.id, item.id, item.name)}>
                               <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
@@ -954,6 +939,17 @@ export default function ProductsConfigPage() {
           allIds={allIds}
           onClose={() => setAddingItem(false)}
           onSaved={(d) => setData(d)}
+        />
+      )}
+
+      {duplicateFrom && currentCat && (
+        <EditProductModal
+          catId={currentCat.id}
+          item={duplicateFrom}
+          mode="duplicate"
+          allIds={allIds}
+          onClose={() => setDuplicateFrom(null)}
+          onSaved={(d) => { setData(d); setDuplicateFrom(null); }}
         />
       )}
 
