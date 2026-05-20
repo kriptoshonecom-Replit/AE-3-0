@@ -1383,6 +1383,11 @@ button {
   color: var(--text);
   padding-top: 2px;
 }
+.summary-hrs {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-3);
+}
 
 /* ── Discount Analysis (below Summary) ─────────────── */
 .discount-analysis-section {
@@ -5413,6 +5418,27 @@ tr:hover .drag-handle { opacity: 1; }
 .db-kpi-sub {
   font-size: 12px;
   color: var(--text-3);
+}
+.db-kpi-breakdown {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.db-kpi-pass {
+  font-size: 11px;
+  font-weight: 600;
+  color: #15803d;
+  background: #dcfce7;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.db-kpi-fail {
+  font-size: 11px;
+  font-weight: 600;
+  color: #b91c1c;
+  background: #fee2e2;
+  border-radius: 4px;
+  padding: 2px 6px;
 }
 
 .db-main-row {

@@ -82,6 +82,10 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
     let quotesThisMonth = 0;
     let passCount = 0;
     let failCount = 0;
+    let passRequestedMonthly = 0;
+    let failRequestedMonthly = 0;
+    let passRequestedUpfront = 0;
+    let failRequestedUpfront = 0;
 
     const repMap = new Map<string, { quotes: number; value: number; pass: number }>();
     const customerMap = new Map<string, { value: number; sites: number }>();
@@ -104,6 +108,16 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
 
       if (normalizedStatus?.toLowerCase() === "pass") passCount++;
       else if (normalizedStatus?.toLowerCase() === "fail") failCount++;
+
+      const reqMonthly = parseFloat(String(meta.requestedSubscriptionAmount ?? "").replace(/[^0-9.]/g, "")) || 0;
+      const reqUpfront = parseFloat(String(meta.requestedUpfrontAmount ?? "").replace(/[^0-9.]/g, "")) || 0;
+      if (normalizedStatus?.toLowerCase() === "pass") {
+        passRequestedMonthly += reqMonthly;
+        passRequestedUpfront += reqUpfront;
+      } else if (normalizedStatus?.toLowerCase() === "fail") {
+        failRequestedMonthly += reqMonthly;
+        failRequestedUpfront += reqUpfront;
+      }
 
       if (row.createdAt && row.createdAt >= thisMonthStart) quotesThisMonth++;
 
@@ -187,6 +201,10 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
         passCount,
         failCount,
         avgQuoteValue,
+        passRequestedMonthly,
+        failRequestedMonthly,
+        passRequestedUpfront,
+        failRequestedUpfront,
       },
       topReps,
       topCustomers,

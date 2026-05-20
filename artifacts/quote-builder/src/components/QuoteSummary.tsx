@@ -19,6 +19,8 @@ interface Props {
   gatewayTxnRate?: number;
   recurringPit?: boolean;
   upfrontOverride?: number;
+  pitHours?: number;
+  productPitHours?: number;
 }
 
 export default function QuoteSummary({
@@ -33,6 +35,8 @@ export default function QuoteSummary({
   gatewayTxnRate,
   recurringPit = false,
   upfrontOverride,
+  pitHours = 0,
+  productPitHours = 0,
 }: Props) {
   const subtotal = quoteSubtotal(quote);
   const discount = quoteDiscount(quote);
@@ -90,7 +94,12 @@ export default function QuoteSummary({
         <div className="summary-divider" />
 
         <div className="summary-row total">
-          <span>{recurringPit ? "Monthly Upfront Total" : "Upfront Total"}</span>
+          <span>
+            {recurringPit ? "Monthly Upfront Total" : "Upfront Total"}
+            {(pitHours + productPitHours) > 0 && (
+              <span className="summary-hrs">&nbsp;({pitHours + productPitHours} hrs)</span>
+            )}
+          </span>
           <span>{formatCurrency(recurringPit && upfrontOverride !== undefined ? upfrontOverride : pitTotal + productPitTotal)}</span>
         </div>
 

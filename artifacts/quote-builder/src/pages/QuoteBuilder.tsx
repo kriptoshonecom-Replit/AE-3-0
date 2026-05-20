@@ -1277,6 +1277,8 @@ export default function QuoteBuilder() {
                         gatewayTxnRate={gatewayTxnRate}
                         recurringPit={_recurringPit}
                         upfrontOverride={_upfrontOverride}
+                        pitHours={_pitHours}
+                        productPitHours={_productPitHours}
                       />
                       {stampStatus && (
                         <div className="summary-stamp-overlay">
