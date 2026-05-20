@@ -153,7 +153,7 @@ export default function GeoMapCard({ byState, byCountry }: Props) {
                       key={geo.rsmKey}
                       geography={geo}
                       fill={fill}
-                      stroke="#fff"
+                      stroke="#c4c4c4"
                       strokeWidth={0.5}
                       style={{
                         default: { outline: "none" },
