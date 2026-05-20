@@ -10,17 +10,36 @@ interface AmendModalProps {
   tieredAdditionalPrice: number;
   onClose: () => void;
   onSaved: () => void;
+  /** Edit-mode: if set, PATCHes this amendment id instead of POSTing a new one */
+  editAmendmentId?: string;
+  editAmendmentNumber?: number;
+  initialAmendedQty?: Record<string, number>;
+  initialQuoteNumber?: string;
+  initialNotes?: string;
 }
 
-export default function AmendModal({ quote, tieredAdditionalPrice, onClose, onSaved }: AmendModalProps) {
-  const [quoteNumber, setQuoteNumber] = useState("");
-  const [notes, setNotes] = useState("");
-  const [loadingCount, setLoadingCount] = useState(true);
+export default function AmendModal({
+  quote,
+  tieredAdditionalPrice,
+  onClose,
+  onSaved,
+  editAmendmentId,
+  editAmendmentNumber,
+  initialAmendedQty,
+  initialQuoteNumber,
+  initialNotes,
+}: AmendModalProps) {
+  const isEditMode = Boolean(editAmendmentId);
+
+  const [quoteNumber, setQuoteNumber] = useState(initialQuoteNumber ?? "");
+  const [notes, setNotes] = useState(initialNotes ?? "");
+  const [loadingCount, setLoadingCount] = useState(!isEditMode);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // amendedQty keyed by line item id — starts equal to original qty
+  // amendedQty keyed by line item id
   const [amendedQty, setAmendedQty] = useState<Record<string, number>>(() => {
+    if (initialAmendedQty) return { ...initialAmendedQty };
     const map: Record<string, number> = {};
     for (const g of quote.groups) {
       for (const li of g.lineItems) {
@@ -30,8 +49,9 @@ export default function AmendModal({ quote, tieredAdditionalPrice, onClose, onSa
     return map;
   });
 
-  // Fetch existing amendment count to build the suggested quote number
+  // Fetch existing count only in create mode to build the suggested quote number
   useEffect(() => {
+    if (isEditMode) return;
     fetch(`${API_BASE}/api/amendments?originalQuoteId=${encodeURIComponent(quote.meta.id)}`, {
       credentials: "include",
     })
@@ -47,7 +67,7 @@ export default function AmendModal({ quote, tieredAdditionalPrice, onClose, onSa
         setQuoteNumber(`${origNum}_Amend_001`);
       })
       .finally(() => setLoadingCount(false));
-  }, [quote.meta.id, quote.meta.quoteNumber]);
+  }, [isEditMode, quote.meta.id, quote.meta.quoteNumber]);
 
   // Delta calculations — recomputed whenever amendedQty changes
   const deltaSummary = useMemo(() => {
@@ -92,25 +112,45 @@ export default function AmendModal({ quote, tieredAdditionalPrice, onClose, onSa
     setSaving(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/api/amendments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          id: generateId(),
-          originalQuoteId: quote.meta.id,
-          originalQuoteNumber: quote.meta.quoteNumber ?? "",
-          quoteNumber: quoteNumber.trim(),
-          companyName: quote.meta.companyName ?? "",
-          customerName: quote.meta.customerName ?? "",
-          deltaGroups: deltaSummary.deltaGroups,
-          subtotalDelta: deltaSummary.subtotalDelta,
-          mrrDelta: deltaSummary.mrrDelta,
-          discount: quote.meta.discount ?? 0,
-          tax: quote.meta.tax ?? 0,
-          notes,
-        }),
-      });
+      let res: Response;
+
+      if (isEditMode && editAmendmentId) {
+        res = await fetch(`${API_BASE}/api/amendments/${editAmendmentId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            quoteNumber: quoteNumber.trim(),
+            notes,
+            deltaGroups: deltaSummary.deltaGroups,
+            subtotalDelta: deltaSummary.subtotalDelta,
+            mrrDelta: deltaSummary.mrrDelta,
+            discount: quote.meta.discount ?? 0,
+            tax: quote.meta.tax ?? 0,
+          }),
+        });
+      } else {
+        res = await fetch(`${API_BASE}/api/amendments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            id: generateId(),
+            originalQuoteId: quote.meta.id,
+            originalQuoteNumber: quote.meta.quoteNumber ?? "",
+            quoteNumber: quoteNumber.trim(),
+            companyName: quote.meta.companyName ?? "",
+            customerName: quote.meta.customerName ?? "",
+            deltaGroups: deltaSummary.deltaGroups,
+            subtotalDelta: deltaSummary.subtotalDelta,
+            mrrDelta: deltaSummary.mrrDelta,
+            discount: quote.meta.discount ?? 0,
+            tax: quote.meta.tax ?? 0,
+            notes,
+          }),
+        });
+      }
+
       const d = (await res.json()) as { error?: string };
       if (!res.ok) throw new Error(d.error ?? "Save failed");
       onSaved();
@@ -126,15 +166,17 @@ export default function AmendModal({ quote, tieredAdditionalPrice, onClose, onSa
   return (
     <div
       className="admin-modal-backdrop"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="amend-modal" onClick={(e) => e.stopPropagation()}>
         {/* ── Header ── */}
         <div className="amend-modal-header">
           <div>
-            <h2 className="amend-modal-title">Create Amendment</h2>
+            <h2 className="amend-modal-title">
+              {isEditMode
+                ? `Edit Amendment ${editAmendmentNumber !== undefined ? String(editAmendmentNumber).padStart(3, "0") : ""}`
+                : "Create Amendment"}
+            </h2>
             <p className="amend-modal-sub">
               Original: <strong>{quote.meta.quoteNumber || "Untitled"}</strong>
               {quote.meta.companyName ? ` · ${quote.meta.companyName}` : ""}
@@ -149,7 +191,6 @@ export default function AmendModal({ quote, tieredAdditionalPrice, onClose, onSa
 
         {/* ── Body ── */}
         <div className="amend-modal-body">
-          {/* Quote number */}
           <div className="amend-field-row">
             <label className="lib-label" style={{ flex: 1 }}>
               Amendment Quote Number
@@ -163,7 +204,6 @@ export default function AmendModal({ quote, tieredAdditionalPrice, onClose, onSa
             </label>
           </div>
 
-          {/* Per-group delta tables — iterated directly from quote.groups */}
           {visibleGroups.map((group) => (
             <div key={group.id} className="amend-group">
               <div className="amend-group-title">{group.categoryName}</div>
@@ -187,7 +227,6 @@ export default function AmendModal({ quote, tieredAdditionalPrice, onClose, onSa
                       const origVal = computeLineItemTotal(li.productId, li.unitPrice, oQty, tieredAdditionalPrice);
                       const amendVal = computeLineItemTotal(li.productId, li.unitPrice, aQty, tieredAdditionalPrice);
                       const deltaValue = amendVal - origVal;
-
                       return (
                         <tr key={li.id} className={delta !== 0 ? "amend-row-changed" : ""}>
                           <td className="amend-td-name">{li.productName}</td>
@@ -234,7 +273,6 @@ export default function AmendModal({ quote, tieredAdditionalPrice, onClose, onSa
             </div>
           ))}
 
-          {/* Notes */}
           <div className="amend-field-row" style={{ marginTop: 4 }}>
             <label className="lib-label" style={{ flex: 1 }}>
               Notes
@@ -253,60 +291,34 @@ export default function AmendModal({ quote, tieredAdditionalPrice, onClose, onSa
         <div className="amend-summary-bar">
           <div className="amend-summary-item">
             <span className="amend-summary-label">Subtotal Delta</span>
-            <span
-              className={`amend-summary-value ${
-                deltaSummary.subtotalDelta > 0
-                  ? "amend-delta-pos"
-                  : deltaSummary.subtotalDelta < 0
-                  ? "amend-delta-neg"
-                  : "amend-delta-neutral"
-              }`}
-            >
-              {deltaSummary.subtotalDelta === 0
-                ? "—"
-                : `${deltaSummary.subtotalDelta > 0 ? "+" : ""}${formatCurrency(deltaSummary.subtotalDelta)}`}
+            <span className={`amend-summary-value ${deltaSummary.subtotalDelta > 0 ? "amend-delta-pos" : deltaSummary.subtotalDelta < 0 ? "amend-delta-neg" : "amend-delta-neutral"}`}>
+              {deltaSummary.subtotalDelta === 0 ? "—" : `${deltaSummary.subtotalDelta > 0 ? "+" : ""}${formatCurrency(deltaSummary.subtotalDelta)}`}
             </span>
           </div>
           <div className="amend-summary-sep" />
           <div className="amend-summary-item">
             <span className="amend-summary-label">MRR Delta</span>
-            <span
-              className={`amend-summary-value amend-summary-mrr ${
-                deltaSummary.mrrDelta > 0
-                  ? "amend-delta-pos"
-                  : deltaSummary.mrrDelta < 0
-                  ? "amend-delta-neg"
-                  : "amend-delta-neutral"
-              }`}
-            >
-              {deltaSummary.mrrDelta === 0
-                ? "—"
-                : `${deltaSummary.mrrDelta > 0 ? "+" : ""}${formatCurrency(deltaSummary.mrrDelta)}`}
+            <span className={`amend-summary-value amend-summary-mrr ${deltaSummary.mrrDelta > 0 ? "amend-delta-pos" : deltaSummary.mrrDelta < 0 ? "amend-delta-neg" : "amend-delta-neutral"}`}>
+              {deltaSummary.mrrDelta === 0 ? "—" : `${deltaSummary.mrrDelta > 0 ? "+" : ""}${formatCurrency(deltaSummary.mrrDelta)}`}
             </span>
           </div>
         </div>
 
         {/* ── Footer ── */}
         <div className="amend-modal-footer">
-          {error && (
-            <div className="edit-modal-error" style={{ marginBottom: 8 }}>
-              {error}
-            </div>
-          )}
+          {error && <div className="edit-modal-error" style={{ marginBottom: 8 }}>{error}</div>}
           {!hasAnyDelta && !error && (
-            <p className="amend-no-delta-hint">Adjust at least one quantity to create an amendment.</p>
+            <p className="amend-no-delta-hint">Adjust at least one quantity to {isEditMode ? "save changes" : "create an amendment"}.</p>
           )}
           <div className="amend-footer-actions">
-            <button type="button" className="edit-modal-cancel" onClick={onClose}>
-              Cancel
-            </button>
+            <button type="button" className="edit-modal-cancel" onClick={onClose}>Cancel</button>
             <button
               type="button"
               className="edit-modal-save"
               onClick={handleSave}
               disabled={saving || !hasAnyDelta || loadingCount}
             >
-              {saving ? "Saving…" : "Create Amendment"}
+              {saving ? "Saving…" : isEditMode ? "Save Changes" : "Create Amendment"}
             </button>
           </div>
         </div>

@@ -1,11 +1,31 @@
 import { useState, useEffect, useCallback } from "react";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 import { formatCurrency } from "../utils/calculations";
+import AmendModal from "../components/AmendModal";
+import AmendViewModal from "../components/AmendViewModal";
+import type { Quote } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+const TIERED_ADDITIONAL_PRICE = 30;
+
+interface DeltaLineItem {
+  productId: string;
+  productName: string;
+  unitPrice: number;
+  originalQty: number;
+  amendedQty: number;
+  delta: number;
+  deltaValue: number;
+}
+
+interface DeltaGroup {
+  categoryId: string;
+  categoryName: string;
+  lineItems: DeltaLineItem[];
+}
 
 interface AmendmentData {
-  deltaGroups?: unknown[];
+  deltaGroups?: DeltaGroup[];
   subtotalDelta?: number;
   mrrDelta?: number;
   discount?: number;
@@ -27,6 +47,12 @@ interface AmendmentRow {
   userId: string;
 }
 
+interface EditModeState {
+  row: AmendmentRow;
+  quote: Quote;
+  initialAmendedQty: Record<string, number>;
+}
+
 function fmtDate(s: string | null | undefined) {
   if (!s) return "—";
   const d = new Date(s);
@@ -45,150 +71,55 @@ function MrrDeltaBadge({ value }: { value: number | undefined }) {
   const cls = value > 0 ? "amend-delta-pos" : "amend-delta-neg";
   return (
     <span className={cls} style={{ fontWeight: 600 }}>
-      {value > 0 ? "+" : ""}
-      {formatCurrency(value)}
+      {value > 0 ? "+" : ""}{formatCurrency(value)}
     </span>
   );
 }
 
-/* ── Edit Drawer ──────────────────────────────────────────── */
-interface EditDrawerProps {
-  row: AmendmentRow;
-  onClose: () => void;
-  onSaved: (updated: AmendmentRow) => void;
-}
+/** Reconstruct a Quote-like object from amendment data so AmendModal can operate on it */
+function buildEditState(row: AmendmentRow): EditModeState {
+  const deltaGroups = row.data?.deltaGroups ?? [];
+  const initialAmendedQty: Record<string, number> = {};
 
-function EditDrawer({ row, onClose, onSaved }: EditDrawerProps) {
-  const [quoteNumber, setQuoteNumber] = useState(row.quoteNumber ?? "");
-  const [notes, setNotes] = useState((row.data?.notes as string) ?? "");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const groups = deltaGroups.map((dg, gi) => ({
+    id: `edit-g-${gi}`,
+    categoryId: dg.categoryId,
+    categoryName: dg.categoryName,
+    isOpen: true,
+    lineItems: dg.lineItems.map((li, lii) => {
+      const id = `edit-li-${gi}-${lii}`;
+      initialAmendedQty[id] = li.amendedQty;
+      return {
+        id,
+        productId: li.productId,
+        productName: li.productName,
+        unitPrice: li.unitPrice,
+        quantity: li.originalQty,
+      };
+    }),
+  }));
 
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    setError("");
-    try {
-      const res = await fetch(`${API_BASE}/api/amendments/${row.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ quoteNumber, notes }),
-      });
-      if (!res.ok) {
-        const d = (await res.json()) as { error?: string };
-        throw new Error(d.error ?? "Save failed");
-      }
-      onSaved({
-        ...row,
-        quoteNumber: quoteNumber || null,
-        data: { ...row.data, notes },
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed");
-    } finally {
-      setSaving(false);
-    }
-  }
+  const quote: Quote = {
+    meta: {
+      id: row.originalQuoteId,
+      quoteNumber: row.originalQuoteNumber ?? "",
+      oppNumber: "",
+      salesRep: "",
+      companyName: row.companyName ?? "",
+      customerName: row.customerName ?? "",
+      customerEmail: "",
+      validUntil: "",
+      notes: "",
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      discount: (row.data?.discount as number) ?? 0,
+      tax: (row.data?.tax as number) ?? 0,
+      passStatus: "pass",
+    },
+    groups,
+  };
 
-  const deltaGroups = (row.data?.deltaGroups ?? []) as Array<{
-    categoryName: string;
-    lineItems: Array<{
-      productName: string;
-      originalQty: number;
-      amendedQty: number;
-      delta: number;
-      deltaValue: number;
-    }>;
-  }>;
-
-  const changedLines = deltaGroups.flatMap((g) =>
-    g.lineItems
-      .filter((li) => li.delta !== 0)
-      .map((li) => ({ ...li, categoryName: g.categoryName }))
-  );
-
-  return (
-    <div className="lib-drawer-backdrop" onClick={onClose}>
-      <div className="lib-drawer" onClick={(e) => e.stopPropagation()}>
-        <div className="lib-drawer-header">
-          <div>
-            <h2 className="lib-drawer-title">Edit Amendment</h2>
-            <p className="lib-drawer-sub">
-              {fmtAmendNum(row.amendmentNumber)} · Original: {row.originalQuoteNumber || "Untitled"}
-            </p>
-          </div>
-          <button type="button" className="lib-drawer-close" onClick={onClose} title="Close">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-
-        {error && (
-          <div className="edit-modal-error" style={{ margin: "10px 24px 0" }}>
-            {error}
-          </div>
-        )}
-
-        {/* Delta summary */}
-        {changedLines.length > 0 && (
-          <div style={{ padding: "12px 24px 0" }}>
-            <p style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-3)", marginBottom: 8 }}>
-              Changed Line Items
-            </p>
-            <div className="amend-drawer-delta-list">
-              {changedLines.map((li, i) => (
-                <div key={i} className="amend-drawer-delta-row">
-                  <span className="amend-drawer-delta-name">{li.productName}</span>
-                  <span className="amend-drawer-delta-qty">
-                    {li.originalQty} →{" "}
-                    <strong className={li.delta > 0 ? "amend-delta-pos" : "amend-delta-neg"}>
-                      {li.amendedQty}
-                    </strong>
-                  </span>
-                  <span className={li.delta > 0 ? "amend-delta-pos" : "amend-delta-neg"} style={{ marginLeft: "auto", fontSize: 12, fontWeight: 600 }}>
-                    {li.delta > 0 ? "+" : ""}
-                    {formatCurrency(li.deltaValue)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <form className="lib-drawer-form" onSubmit={handleSave}>
-          <label className="lib-label">
-            Amendment Quote Number
-            <input
-              className="lib-input"
-              value={quoteNumber}
-              onChange={(e) => setQuoteNumber(e.target.value)}
-              placeholder="Q-1234_Amend_001"
-            />
-          </label>
-          <label className="lib-label">
-            Notes
-            <textarea
-              className="lib-input lib-textarea"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={4}
-              placeholder="Reason for amendment, additional context…"
-            />
-          </label>
-          <div className="lib-drawer-footer">
-            <button type="button" className="edit-modal-cancel" onClick={onClose}>
-              Cancel
-            </button>
-            <button type="submit" className="edit-modal-save" disabled={saving}>
-              {saving ? "Saving…" : "Save Changes"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+  return { row, quote, initialAmendedQty };
 }
 
 /* ── Main Page ────────────────────────────────────────────── */
@@ -197,7 +128,8 @@ export default function AmendmentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [editRow, setEditRow] = useState<AmendmentRow | null>(null);
+  const [editState, setEditState] = useState<EditModeState | null>(null);
+  const [viewRow, setViewRow] = useState<AmendmentRow | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -217,9 +149,7 @@ export default function AmendmentsPage() {
     }
   }, []);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
   async function handleDelete(id: string) {
     if (!window.confirm("Permanently delete this amendment?")) return;
@@ -262,13 +192,7 @@ export default function AmendmentsPage() {
             title="Reload amendments"
           >
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ marginRight: 4 }}>
-              <path
-                d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.8 0 3.4.87 4.4 2.2M13.5 2v3.5H10"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+              <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.8 0 3.4.87 4.4 2.2M13.5 2v3.5H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             Refresh
           </button>
@@ -299,11 +223,7 @@ export default function AmendmentsPage() {
           </div>
         </div>
 
-        {loading && (
-          <div className="admin-loading">
-            <div className="spinner" />
-          </div>
-        )}
+        {loading && <div className="admin-loading"><div className="spinner" /></div>}
         {!loading && error && <div className="edit-modal-error">{error}</div>}
 
         {!loading && !error && (
@@ -354,18 +274,24 @@ export default function AmendmentsPage() {
                       <div className="admin-actions">
                         <button
                           type="button"
+                          className="admin-btn-view"
+                          onClick={() => setViewRow(row)}
+                          title="Preview amendment"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                            <ellipse cx="8" cy="8" rx="6.5" ry="4.5" stroke="currentColor" strokeWidth="1.4" />
+                            <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3" />
+                          </svg>
+                          View
+                        </button>
+                        <button
+                          type="button"
                           className="admin-btn-edit"
-                          onClick={() => setEditRow(row)}
+                          onClick={() => setEditState(buildEditState(row))}
                           title="Edit amendment"
                         >
                           <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                            <path
-                              d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
+                            <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                           Edit
                         </button>
@@ -376,13 +302,7 @@ export default function AmendmentsPage() {
                           title="Delete amendment"
                         >
                           <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                            <path
-                              d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M13 4l-1 9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L3 4"
-                              stroke="currentColor"
-                              strokeWidth="1.4"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
+                            <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M13 4l-1 9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L3 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                           Delete
                         </button>
@@ -396,14 +316,29 @@ export default function AmendmentsPage() {
         )}
       </div>
 
-      {editRow && (
-        <EditDrawer
-          row={editRow}
-          onClose={() => setEditRow(null)}
-          onSaved={(updated) => {
-            setAmendments((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
-            setEditRow(null);
+      {/* Edit modal — full AmendModal in edit mode */}
+      {editState && (
+        <AmendModal
+          quote={editState.quote}
+          tieredAdditionalPrice={TIERED_ADDITIONAL_PRICE}
+          editAmendmentId={editState.row.id}
+          editAmendmentNumber={editState.row.amendmentNumber}
+          initialAmendedQty={editState.initialAmendedQty}
+          initialQuoteNumber={editState.row.quoteNumber ?? ""}
+          initialNotes={(editState.row.data?.notes as string) ?? ""}
+          onClose={() => setEditState(null)}
+          onSaved={() => {
+            setEditState(null);
+            void load();
           }}
+        />
+      )}
+
+      {/* View modal — read-only preview */}
+      {viewRow && (
+        <AmendViewModal
+          row={viewRow}
+          onClose={() => setViewRow(null)}
         />
       )}
     </div>

@@ -100,7 +100,15 @@ router.post("/amendments", requireAuth, async (req, res) => {
 router.patch("/amendments/:id", requireAuth, async (req, res) => {
   const { userId } = req.auth!;
   const id = String(req.params.id);
-  const body = req.body as { quoteNumber?: string; notes?: string };
+  const body = req.body as {
+    quoteNumber?: string;
+    notes?: string;
+    deltaGroups?: unknown;
+    subtotalDelta?: number;
+    mrrDelta?: number;
+    discount?: number;
+    tax?: number;
+  };
 
   try {
     const [existing] = await db
@@ -115,7 +123,17 @@ router.patch("/amendments/:id", requireAuth, async (req, res) => {
     }
 
     const existingData = (existing.data ?? {}) as Record<string, unknown>;
-    const updatedData = { ...existingData, notes: body.notes ?? existingData["notes"] ?? "" };
+    const updatedData: Record<string, unknown> = {
+      ...existingData,
+      notes: body.notes ?? existingData["notes"] ?? "",
+    };
+    if (body.deltaGroups !== undefined) {
+      updatedData["deltaGroups"] = body.deltaGroups;
+      updatedData["subtotalDelta"] = body.subtotalDelta ?? existingData["subtotalDelta"] ?? 0;
+      updatedData["mrrDelta"] = body.mrrDelta ?? existingData["mrrDelta"] ?? 0;
+    }
+    if (body.discount !== undefined) updatedData["discount"] = body.discount;
+    if (body.tax !== undefined) updatedData["tax"] = body.tax;
 
     const [updated] = await db
       .update(amendmentsTable)
