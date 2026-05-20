@@ -718,19 +718,65 @@ export async function exportQuoteToPDF(
   drawItemsTable("Heatmap & Cabling", activeHeatmapRows, false);
 
   // ── Footer ──────────────────────────────────────────
+  const sameForBilling = quote.meta.sameForBilling !== false; // default true
+  const hasBillingAddr = !sameForBilling && (
+    quote.meta.billingAddressName ||
+    quote.meta.billingAddressNumber ||
+    quote.meta.billingAddressCity ||
+    quote.meta.billingAddressState
+  );
+
+  const billingStreet = hasBillingAddr
+    ? [quote.meta.billingAddressNumber, quote.meta.billingAddressName]
+        .filter(Boolean).join(" ")
+    : "";
+  const billingCityLine = hasBillingAddr
+    ? [
+        quote.meta.billingAddressCity,
+        [quote.meta.billingAddressState, quote.meta.billingZipCode]
+          .filter(Boolean).join(" "),
+        quote.meta.billingAddressCountry,
+      ].filter(Boolean).join(", ")
+    : "";
+  const billingOneLiner = [billingStreet, billingCityLine]
+    .filter(Boolean).join("  ·  ");
+
   const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
+
+    // Billing address footer strip
+    if (hasBillingAddr && billingOneLiner) {
+      // Thin separator line
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.2);
+      doc.line(margin, 279, pageWidth - margin, 279);
+
+      // Label
+      doc.setFontSize(6);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(160, 160, 160);
+      doc.text("BILLING ADDRESS", margin, 283.5);
+
+      // Address text
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100);
+      doc.text(billingOneLiner, margin + 28, 283.5);
+    }
+
+    // Page number (centred) + version (right)
+    const pageNumY = hasBillingAddr ? 289 : 292;
     doc.setFontSize(7);
     doc.setTextColor(148, 163, 184);
     doc.setFont("helvetica", "normal");
-    doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, 292, {
+    doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, pageNumY, {
       align: "center",
     });
     if (appVersion) {
       doc.setFontSize(6.5);
       doc.setTextColor(200, 200, 200);
-      doc.text(`Version Build ${appVersion}`, pageWidth - margin, 292, {
+      doc.text(`Version Build ${appVersion}`, pageWidth - margin, pageNumY, {
         align: "right",
       });
     }
