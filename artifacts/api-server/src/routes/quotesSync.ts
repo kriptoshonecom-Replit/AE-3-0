@@ -71,6 +71,10 @@ router.get("/quotes/stats", requireAuth, async (req, res) => {
     let passArr = 0;
     let totalMrr = 0;
     let totalArr = 0;
+    let passRequestedMonthly = 0;
+    let failRequestedMonthly = 0;
+    let passRequestedUpfront = 0;
+    let failRequestedUpfront = 0;
 
     for (const row of rows) {
       const data = row.data as Record<string, unknown>;
@@ -79,13 +83,25 @@ router.get("/quotes/stats", requireAuth, async (req, res) => {
       totalMrr += mrr;
       totalArr += arr;
       const status = (row.passStatus ?? (meta.passStatus as string | undefined) ?? "").toLowerCase();
-      if (status === "pass") { passCount++; passMrr += mrr; passArr += arr; }
-      else if (status === "fail") failCount++;
+      const reqMonthly = parseFloat(String(meta.requestedSubscriptionAmount ?? "").replace(/[^0-9.]/g, "")) || 0;
+      const reqUpfront = parseFloat(String(meta.requestedUpfrontAmount ?? "").replace(/[^0-9.]/g, "")) || 0;
+      if (status === "pass") {
+        passCount++; passMrr += mrr; passArr += arr;
+        passRequestedMonthly += reqMonthly;
+        passRequestedUpfront += reqUpfront;
+      } else if (status === "fail") {
+        failCount++;
+        failRequestedMonthly += reqMonthly;
+        failRequestedUpfront += reqUpfront;
+      }
     }
 
     const total = rows.length;
     const successRate = total > 0 ? Math.round((passCount / total) * 100) : 0;
-    res.json({ total, passCount, failCount, passMrr, passArr, totalMrr, totalArr, successRate });
+    res.json({
+      total, passCount, failCount, passMrr, passArr, totalMrr, totalArr, successRate,
+      passRequestedMonthly, failRequestedMonthly, passRequestedUpfront, failRequestedUpfront,
+    });
   } catch (err) {
     req.log.error(err, "GET /quotes/stats error");
     res.status(500).json({ error: "Failed to load stats" });

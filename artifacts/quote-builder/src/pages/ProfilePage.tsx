@@ -209,6 +209,10 @@ interface QuoteStats {
   totalMrr: number;
   totalArr: number;
   successRate: number;
+  passRequestedMonthly: number;
+  failRequestedMonthly: number;
+  passRequestedUpfront: number;
+  failRequestedUpfront: number;
 }
 
 function fmtMoney(n: number) {
@@ -229,6 +233,9 @@ function ProfileStats({ stats, loading }: { stats: QuoteStats | null; loading: b
   if (!stats) return null;
 
   const unset = stats.total - stats.passCount - stats.failCount;
+
+  const totalReqMonthly = stats.passRequestedMonthly + stats.failRequestedMonthly;
+  const totalReqUpfront = stats.passRequestedUpfront + stats.failRequestedUpfront;
 
   return (
     <div className="profile-stats">
@@ -253,6 +260,26 @@ function ProfileStats({ stats, loading }: { stats: QuoteStats | null; loading: b
           <span className="profile-stat-label">Won Value (ARR)</span>
           <span className="profile-stat-value psc-money">{fmtMoney(stats.passArr)}</span>
           <span className="profile-stat-sub">MRR {fmtMoney(stats.passMrr)} · pipeline {fmtMoney(stats.totalArr)}</span>
+        </div>
+        <div className="profile-stat-card">
+          <span className="profile-stat-label">Customer Requested Amount</span>
+          <span className="profile-stat-value psc-money">
+            {fmtMoney(totalReqMonthly)}<span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-3)" }}>/mo</span>
+          </span>
+          <span className="profile-stat-sub">{fmtMoney(totalReqMonthly * 12)} ARR</span>
+          <div className="db-kpi-breakdown" style={{ marginTop: 4 }}>
+            <span className="db-kpi-pass">Pass {fmtMoney(stats.passRequestedMonthly)}</span>
+            <span className="db-kpi-fail">Fail {fmtMoney(stats.failRequestedMonthly)}</span>
+          </div>
+        </div>
+        <div className="profile-stat-card">
+          <span className="profile-stat-label">Requested Upfront Amount</span>
+          <span className="profile-stat-value psc-money">{fmtMoney(totalReqUpfront)}</span>
+          <span className="profile-stat-sub">total one-time requested</span>
+          <div className="db-kpi-breakdown" style={{ marginTop: 4 }}>
+            <span className="db-kpi-pass">Pass {fmtMoney(stats.passRequestedUpfront)}</span>
+            <span className="db-kpi-fail">Fail {fmtMoney(stats.failRequestedUpfront)}</span>
+          </div>
         </div>
       </div>
     </div>
