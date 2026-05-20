@@ -1276,7 +1276,6 @@ export default function QuoteBuilder() {
                 {quote.groups.some((g) => g.lineItems.length > 0) && (
                   <section className="section summary-section">
                     <div className="section-header">
-                      <h2 className="section-title">Summary</h2>
                       {stampStatus === "pass" && (
                         <button
                           type="button"
@@ -1289,6 +1288,7 @@ export default function QuoteBuilder() {
                           Amend
                         </button>
                       )}
+                      <h2 className="section-title">Summary</h2>
                     </div>
                     <div className="summary-stamp-wrap">
                       <QuoteSummary
