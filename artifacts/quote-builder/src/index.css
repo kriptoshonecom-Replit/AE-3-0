@@ -1351,6 +1351,10 @@ button {
   position: relative;
 }
 
+.summary-section .section-header {
+  align-self: stretch;
+}
+
 .summary-stamp-wrap {
   position: relative;
   display: inline-block;
