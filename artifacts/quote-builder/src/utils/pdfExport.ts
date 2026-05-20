@@ -448,7 +448,7 @@ export async function exportQuoteToPDF(
   doc.line(totalsX - 5, y - 1, margin + contentWidth, y - 1);
   y += 3;
 
-  doc.setFontSize(11);
+  doc.setFontSize(9);
   row(upfrontLabel, formatCurrency(upfrontDisplayValue), true);
 
   if (heatmapTotal > 0) {
