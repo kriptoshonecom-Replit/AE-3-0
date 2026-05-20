@@ -73,7 +73,7 @@ export default function GeoMapCard({ byState, byCountry }: Props) {
   const [view, setView] = useState<"us" | "world">("us");
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const [highlighted, setHighlighted] = useState<string | null>(null);
-  const mapRef = useRef<HTMLDivElement>(null);
+  const mapFrameRef = useRef<HTMLDivElement>(null);
 
   const data = view === "us" ? byState : byCountry;
 
@@ -89,206 +89,165 @@ export default function GeoMapCard({ byState, byCountry }: Props) {
   const maxArr = Math.max(...data.map((d) => d.totalArr), 1);
   const getPoint = (name: string) => lookup.get(name.toLowerCase());
 
-  const handleGeoMouseEnter = (name: string) =>
+  const handleGeoEnter = (name: string) =>
     (evt: React.MouseEvent<SVGPathElement>) => {
-      if (!mapRef.current) return;
-      const rect = mapRef.current.getBoundingClientRect();
-      const point = getPoint(name) ?? {
-        location: name, quoteCount: 0, totalArr: 0, passCount: 0, failCount: 0,
-      };
+      if (!mapFrameRef.current) return;
+      const rect = mapFrameRef.current.getBoundingClientRect();
+      const point = getPoint(name) ?? { location: name, quoteCount: 0, totalArr: 0, passCount: 0, failCount: 0 };
       setTooltip({ x: evt.clientX - rect.left, y: evt.clientY - rect.top, name, point });
       setHighlighted(name.toLowerCase());
     };
 
-  const handleGeoMouseMove = (evt: React.MouseEvent<SVGPathElement>) => {
-    if (!mapRef.current) return;
-    const rect = mapRef.current.getBoundingClientRect();
-    setTooltip((prev) =>
-      prev ? { ...prev, x: evt.clientX - rect.left, y: evt.clientY - rect.top } : null
-    );
+  const handleGeoMove = (evt: React.MouseEvent<SVGPathElement>) => {
+    if (!mapFrameRef.current) return;
+    const rect = mapFrameRef.current.getBoundingClientRect();
+    setTooltip((p) => p ? { ...p, x: evt.clientX - rect.left, y: evt.clientY - rect.top } : null);
   };
 
-  const handleGeoMouseLeave = () => {
-    setTooltip(null);
-    setHighlighted(null);
-  };
+  const handleGeoLeave = () => { setTooltip(null); setHighlighted(null); };
 
   const geoUrl = view === "us" ? US_GEO_URL : WORLD_GEO_URL;
-
   const projectionConfig = view === "us"
     ? undefined
     : { scale: 120, center: [0, 20] as [number, number] };
 
   return (
     <div className="db-card db-geo-card">
+
       {/* Header */}
       <div className="db-card-header">
         <span className="db-card-title">Quote Distribution by Territory</span>
         <div className="geo-toggle">
-          <button
-            type="button"
-            className={`geo-toggle-btn${view === "us" ? " active" : ""}`}
-            onClick={() => { setView("us"); setTooltip(null); setHighlighted(null); }}
-          >
+          <button type="button" className={`geo-toggle-btn${view === "us" ? " active" : ""}`}
+            onClick={() => { setView("us"); setTooltip(null); setHighlighted(null); }}>
             US States
           </button>
-          <button
-            type="button"
-            className={`geo-toggle-btn${view === "world" ? " active" : ""}`}
-            onClick={() => { setView("world"); setTooltip(null); setHighlighted(null); }}
-          >
+          <button type="button" className={`geo-toggle-btn${view === "world" ? " active" : ""}`}
+            onClick={() => { setView("world"); setTooltip(null); setHighlighted(null); }}>
             World
           </button>
         </div>
       </div>
 
-      {/* Two-column body */}
-      <div className="geo-body">
+      {/* Map — full width, draggable */}
+      <div className="geo-map-frame" ref={mapFrameRef}>
+        <div className="geo-drag-hint">Drag to pan · scroll to zoom</div>
+        <ComposableMap
+          projection={view === "us" ? "geoAlbersUsa" : "geoMercator"}
+          projectionConfig={projectionConfig}
+          width={760}
+          height={view === "us" ? 400 : 380}
+          style={{ width: "100%", height: "auto", display: "block" }}
+        >
+          <ZoomableGroup zoom={1}>
+            <Geographies geography={geoUrl}>
+              {({ geographies }) =>
+                geographies.map((geo) => {
+                  const name = String(geo.properties.name ?? "");
+                  const point = getPoint(name);
+                  const isHl = highlighted === name.toLowerCase();
+                  const fill = isHl ? "#a855f7" : point ? getColor(point.totalArr, maxArr) : "#f1f5f9";
+                  const hoverFill = point ? getHoverColor(point.totalArr, maxArr) : "#e2e8f0";
+                  return (
+                    <Geography
+                      key={geo.rsmKey}
+                      geography={geo}
+                      fill={fill}
+                      stroke="#fff"
+                      strokeWidth={0.5}
+                      style={{
+                        default: { outline: "none" },
+                        hover: { outline: "none", fill: hoverFill, cursor: "grab" },
+                        pressed: { outline: "none", cursor: "grabbing" },
+                      }}
+                      onMouseEnter={handleGeoEnter(name)}
+                      onMouseMove={handleGeoMove}
+                      onMouseLeave={handleGeoLeave}
+                    />
+                  );
+                })
+              }
+            </Geographies>
+          </ZoomableGroup>
+        </ComposableMap>
 
-        {/* LEFT — draggable map */}
-        <div className="geo-map-col" ref={mapRef}>
-          <div className="geo-drag-hint">Drag to pan · scroll to zoom</div>
-          <div className="geo-map-frame">
-            <ComposableMap
-              projection={view === "us" ? "geoAlbersUsa" : "geoMercator"}
-              projectionConfig={projectionConfig}
-              width={760}
-              height={view === "us" ? 440 : 420}
-              style={{ width: "100%", height: "100%", display: "block" }}
-            >
-              <ZoomableGroup zoom={1}>
-                <Geographies geography={geoUrl}>
-                  {({ geographies }) =>
-                    geographies.map((geo) => {
-                      const name = String(geo.properties.name ?? "");
-                      const point = getPoint(name);
-                      const isHighlighted = highlighted === name.toLowerCase();
-                      const fill = isHighlighted
-                        ? "#a855f7"
-                        : point
-                          ? getColor(point.totalArr, maxArr)
-                          : "#f1f5f9";
-                      const hoverFill = point
-                        ? getHoverColor(point.totalArr, maxArr)
-                        : "#e2e8f0";
-                      return (
-                        <Geography
-                          key={geo.rsmKey}
-                          geography={geo}
-                          fill={fill}
-                          stroke="#fff"
-                          strokeWidth={0.6}
-                          style={{
-                            default: { outline: "none" },
-                            hover: { outline: "none", fill: hoverFill, cursor: "grab" },
-                            pressed: { outline: "none", cursor: "grabbing" },
-                          }}
-                          onMouseEnter={handleGeoMouseEnter(name)}
-                          onMouseMove={handleGeoMouseMove}
-                          onMouseLeave={handleGeoMouseLeave}
-                        />
-                      );
-                    })
-                  }
-                </Geographies>
-              </ZoomableGroup>
-            </ComposableMap>
-
-            {/* Tooltip inside map frame */}
-            {tooltip && (
-              <div
-                className="geo-tooltip"
-                style={{
-                  left: Math.min(tooltip.x + 12, (mapRef.current?.offsetWidth ?? 400) - 168),
-                  top: Math.max(tooltip.y - 10, 4),
-                }}
-              >
-                <div className="geo-tooltip-name">{tooltip.name}</div>
-                {tooltip.point.quoteCount > 0 ? (
-                  <>
-                    <div className="geo-tooltip-row">
-                      <span>Quotes</span>
-                      <strong>{tooltip.point.quoteCount}</strong>
-                    </div>
-                    <div className="geo-tooltip-row">
-                      <span>ARR</span>
-                      <strong>{fmt(tooltip.point.totalArr)}</strong>
-                    </div>
-                    <div className="geo-tooltip-row">
-                      <span>Pass rate</span>
-                      <strong>{passRate(tooltip.point)}%</strong>
-                    </div>
-                    <div className="geo-tooltip-row">
-                      <span>Pass / Fail</span>
-                      <strong>
-                        <span style={{ color: "#15803d" }}>{tooltip.point.passCount}</span>
-                        {" / "}
-                        <span style={{ color: "#b91c1c" }}>{tooltip.point.failCount}</span>
-                      </strong>
-                    </div>
-                  </>
-                ) : (
-                  <div className="geo-tooltip-empty">No quotes yet</div>
-                )}
-              </div>
-            )}
-          </div>
-
-        </div>
-
-        {/* RIGHT — region cards */}
-        <div className="geo-cards-col">
-          {/* Legend lives here */}
-          <div className="geo-legend">
-            <span className="geo-legend-label">Low ARR</span>
-            <div className="geo-legend-bar" />
-            <span className="geo-legend-label">High ARR</span>
-          </div>
-          <div className="geo-cards-heading">
-            {sorted.length === 0 ? (view === "us" ? "States" : "Countries") : `${sorted.length} ${view === "us" ? "State" : "Countr"}${sorted.length === 1 ? (view === "us" ? "" : "y") : (view === "us" ? "s" : "ies")} with quotes`}
-          </div>
-          <div className="geo-cards-list">
-            {sorted.length === 0 ? (
-              <div className="geo-cards-empty">No quote data yet</div>
+        {tooltip && (
+          <div
+            className="geo-tooltip"
+            style={{
+              left: Math.min(tooltip.x + 12, (mapFrameRef.current?.offsetWidth ?? 400) - 168),
+              top: Math.max(tooltip.y - 10, 30),
+            }}
+          >
+            <div className="geo-tooltip-name">{tooltip.name}</div>
+            {tooltip.point.quoteCount > 0 ? (
+              <>
+                <div className="geo-tooltip-row"><span>Quotes</span><strong>{tooltip.point.quoteCount}</strong></div>
+                <div className="geo-tooltip-row"><span>ARR</span><strong>{fmt(tooltip.point.totalArr)}</strong></div>
+                <div className="geo-tooltip-row"><span>Pass rate</span><strong>{passRate(tooltip.point)}%</strong></div>
+                <div className="geo-tooltip-row">
+                  <span>Pass / Fail</span>
+                  <strong>
+                    <span style={{ color: "#15803d" }}>{tooltip.point.passCount}</span>
+                    {" / "}
+                    <span style={{ color: "#b91c1c" }}>{tooltip.point.failCount}</span>
+                  </strong>
+                </div>
+              </>
             ) : (
-              sorted.map((p, i) => {
-                const rate = passRate(p);
-                const barW = Math.round((p.totalArr / maxArr) * 100);
-                return (
-                  <div
-                    key={p.location}
-                    className={`geo-region-card${highlighted === p.location.toLowerCase() ? " hovered" : ""}`}
-                    onMouseEnter={() => setHighlighted(p.location.toLowerCase())}
-                    onMouseLeave={() => setHighlighted(null)}
-                  >
-                    <div className="geo-region-rank">#{i + 1}</div>
-                    <div className="geo-region-body">
-                      <div className="geo-region-top">
-                        <span className="geo-region-name">{p.location}</span>
-                        <span className="geo-region-arr">{fmt(p.totalArr)}</span>
-                      </div>
-                      <div className="geo-region-bar-track">
-                        <div
-                          className="geo-region-bar-fill"
-                          style={{ width: `${barW}%` }}
-                        />
-                      </div>
-                      <div className="geo-region-meta">
-                        <span>{p.quoteCount} quote{p.quoteCount !== 1 ? "s" : ""}</span>
-                        <span
-                          className={`geo-region-rate ${rate >= 50 ? "pass" : "fail"}`}
-                        >
-                          {rate}% pass
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
+              <div className="geo-tooltip-empty">No quotes yet</div>
             )}
           </div>
-        </div>
+        )}
       </div>
+
+      {/* Legend row */}
+      <div className="geo-legend-row">
+        <span className="geo-legend-label">Low ARR</span>
+        <div className="geo-legend-bar" />
+        <span className="geo-legend-label">High ARR</span>
+        {sorted.length > 0 && (
+          <span className="geo-legend-count">
+            {sorted.length} {view === "us" ? "state" : "countr"}{sorted.length === 1 ? (view === "us" ? "" : "y") : (view === "us" ? "s" : "ies")}
+          </span>
+        )}
+      </div>
+
+      {/* Region cards — 2-col grid */}
+      {sorted.length === 0 ? (
+        <div className="geo-cards-empty">No quote data yet</div>
+      ) : (
+        <div className="geo-cards-grid">
+          {sorted.map((p, i) => {
+            const rate = passRate(p);
+            const barW = Math.round((p.totalArr / maxArr) * 100);
+            const isHl = highlighted === p.location.toLowerCase();
+            return (
+              <div
+                key={p.location}
+                className={`geo-region-card${isHl ? " hovered" : ""}`}
+                onMouseEnter={() => setHighlighted(p.location.toLowerCase())}
+                onMouseLeave={() => setHighlighted(null)}
+              >
+                <div className="geo-region-rank">#{i + 1}</div>
+                <div className="geo-region-body">
+                  <div className="geo-region-top">
+                    <span className="geo-region-name">{p.location}</span>
+                    <span className="geo-region-arr">{fmt(p.totalArr)}</span>
+                  </div>
+                  <div className="geo-region-bar-track">
+                    <div className="geo-region-bar-fill" style={{ width: `${barW}%` }} />
+                  </div>
+                  <div className="geo-region-meta">
+                    <span>{p.quoteCount} quote{p.quoteCount !== 1 ? "s" : ""}</span>
+                    <span className={`geo-region-rate ${rate >= 50 ? "pass" : "fail"}`}>{rate}% pass</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

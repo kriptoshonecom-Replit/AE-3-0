@@ -236,54 +236,64 @@ export default function DashboardPage() {
       {/* ── Content ── */}
       <div className="admin-content">
 
-        {/* KPI cards */}
-        <div className="db-kpi-grid">
-          {kpiCards.map((card) => (
-            <div key={card.label} className="db-kpi-card">
-              <div className="db-kpi-header">
-                <span className="db-kpi-label">{card.label}</span>
-                <span style={{ color: card.color, opacity: 0.75 }}>{card.icon}</span>
+        {/* Hero row: KPI stack (left) + Geo Map (right) */}
+        <div className="db-hero-row">
+
+          {/* Left: 6 KPI cards stacked */}
+          <div className="db-kpi-stack">
+            {kpiCards.map((card) => (
+              <div key={card.label} className="db-kpi-card">
+                <div className="db-kpi-header">
+                  <span className="db-kpi-label">{card.label}</span>
+                  <span style={{ color: card.color, opacity: 0.75 }}>{card.icon}</span>
+                </div>
+                <div className="db-kpi-value">{card.value}</div>
+                <div className="db-kpi-sub">{card.sub}</div>
               </div>
-              <div className="db-kpi-value">{card.value}</div>
-              <div className="db-kpi-sub">{card.sub}</div>
-            </div>
-          ))}
+            ))}
 
-          {/* Customer Requested Amount */}
-          <div className="db-kpi-card">
-            <div className="db-kpi-header">
-              <span className="db-kpi-label">Customer Requested Amount</span>
-              <span style={{ color: "#14b8a6", opacity: 0.75 }}>
-                <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                  <path d="M10 3v14M7 6h4.5a2.5 2.5 0 0 1 0 5H7m0 0h5.5a2.5 2.5 0 0 1 0 5H7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </span>
+            {/* Customer Requested Amount */}
+            <div className="db-kpi-card">
+              <div className="db-kpi-header">
+                <span className="db-kpi-label">Customer Requested Amount</span>
+                <span style={{ color: "#14b8a6", opacity: 0.75 }}>
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                    <path d="M10 3v14M7 6h4.5a2.5 2.5 0 0 1 0 5H7m0 0h5.5a2.5 2.5 0 0 1 0 5H7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </span>
+              </div>
+              <div className="db-kpi-value">{fmt(totalReqMonthly)}<span style={{ fontSize: 13, fontWeight: 400, color: "var(--text-3)" }}>/mo</span></div>
+              <div className="db-kpi-sub">{fmt(totalReqMonthly * 12)} ARR</div>
+              <div className="db-kpi-breakdown">
+                <span className="db-kpi-pass">Pass {fmt(kpis.passRequestedMonthly)}</span>
+                <span className="db-kpi-fail">Fail {fmt(kpis.failRequestedMonthly)}</span>
+              </div>
             </div>
-            <div className="db-kpi-value">{fmt(totalReqMonthly)}<span style={{ fontSize: 13, fontWeight: 400, color: "var(--text-3)" }}>/mo</span></div>
-            <div className="db-kpi-sub">{fmt(totalReqMonthly * 12)} ARR</div>
-            <div className="db-kpi-breakdown">
-              <span className="db-kpi-pass">Pass {fmt(kpis.passRequestedMonthly)}</span>
-              <span className="db-kpi-fail">Fail {fmt(kpis.failRequestedMonthly)}</span>
+
+            {/* Requested Upfront Amount */}
+            <div className="db-kpi-card">
+              <div className="db-kpi-header">
+                <span className="db-kpi-label">Requested Upfront Amount</span>
+                <span style={{ color: "#8b5cf6", opacity: 0.75 }}>
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                    <path d="M3 10h14M10 3l7 7-7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+              </div>
+              <div className="db-kpi-value">{fmt(totalReqUpfront)}</div>
+              <div className="db-kpi-sub">total one-time requested</div>
+              <div className="db-kpi-breakdown">
+                <span className="db-kpi-pass">Pass {fmt(kpis.passRequestedUpfront)}</span>
+                <span className="db-kpi-fail">Fail {fmt(kpis.failRequestedUpfront)}</span>
+              </div>
             </div>
           </div>
 
-          {/* Requested Upfront Amount */}
-          <div className="db-kpi-card">
-            <div className="db-kpi-header">
-              <span className="db-kpi-label">Requested Upfront Amount</span>
-              <span style={{ color: "#8b5cf6", opacity: 0.75 }}>
-                <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                  <path d="M3 10h14M10 3l7 7-7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </span>
-            </div>
-            <div className="db-kpi-value">{fmt(totalReqUpfront)}</div>
-            <div className="db-kpi-sub">total one-time requested</div>
-            <div className="db-kpi-breakdown">
-              <span className="db-kpi-pass">Pass {fmt(kpis.passRequestedUpfront)}</span>
-              <span className="db-kpi-fail">Fail {fmt(kpis.failRequestedUpfront)}</span>
-            </div>
-          </div>
+          {/* Right: Geo map with region cards */}
+          <GeoMapCard
+            byState={geoDistribution?.byState ?? []}
+            byCountry={geoDistribution?.byCountry ?? []}
+          />
         </div>
 
         {/* Row 2: Recent Quotes table + sidebar */}
@@ -491,11 +501,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Row 4: Geo Map */}
-        <GeoMapCard
-          byState={geoDistribution?.byState ?? []}
-          byCountry={geoDistribution?.byCountry ?? []}
-        />
 
       </div>
     </div>
