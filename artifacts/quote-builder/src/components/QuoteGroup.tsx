@@ -294,12 +294,12 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
                 type="button"
                 className="info-icon-btn"
                 onClick={() => setModalOpen(true)}
-                title={infoEntry.type === "warning" ? "Warning" : "Info"}
-                aria-label={infoEntry.type === "warning" ? "Warning" : "Info"}
+                title={infoEntry.type === "warning" ? "Warning" : infoEntry.type === "product" ? "Product" : "Info"}
+                aria-label={infoEntry.type === "warning" ? "Warning" : infoEntry.type === "product" ? "Product" : "Info"}
               >
                 <img
-                  src={infoEntry.type === "warning" ? "/warning-btn.png" : "/info-btn.png"}
-                  alt={infoEntry.type === "warning" ? "Warning" : "Info"}
+                  src={infoEntry.type === "warning" ? "/warning-btn.png" : infoEntry.type === "product" ? "/product-btn.svg" : "/info-btn.png"}
+                  alt={infoEntry.type === "warning" ? "Warning" : infoEntry.type === "product" ? "Product" : "Info"}
                   className="info-icon-img"
                   style={{ width: 25, height: 25 }}
                 />
@@ -312,12 +312,12 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
                   >
                     <div className={`info-modal-header ${infoEntry.type}`}>
                       <img
-                        src={infoEntry.type === "warning" ? "/warning-btn.png" : "/info-btn.png"}
-                        alt={infoEntry.type === "warning" ? "Warning" : "Info"}
+                        src={infoEntry.type === "warning" ? "/warning-btn.png" : infoEntry.type === "product" ? "/product-btn.svg" : "/info-btn.png"}
+                        alt={infoEntry.type === "warning" ? "Warning" : infoEntry.type === "product" ? "Product" : "Info"}
                         className="info-modal-icon"
                         style={{ width: 30, height: 30 }}
                       />
-                      <span>{infoEntry.type === "warning" ? "Warning" : "Info"}</span>
+                      <span>{infoEntry.type === "warning" ? "Warning" : infoEntry.type === "product" ? "Product" : "Info"}</span>
                     </div>
                     <p className="info-modal-text">{infoEntry.text}</p>
                     <button

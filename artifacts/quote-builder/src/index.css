@@ -1074,6 +1074,10 @@ button {
   color: #ef4444;
 }
 
+.info-modal-header.product {
+  color: #059669;
+}
+
 .info-modal-text {
   font-size: 13px;
   line-height: 1.55;
