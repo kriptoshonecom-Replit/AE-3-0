@@ -19,6 +19,15 @@ export interface ProductItem {
    * Set from the Products Config admin page.
    */
   exclusiveGroup?: string;
+  /**
+   * Restocking Fee (RF) — dollar amount charged per unit when a product is
+   * returned or restocked. Carried on the product definition and used in
+   * amendment delta calculations.
+   *
+   * NOTE: RF display and calculation logic is not yet implemented.
+   *       This field is reserved for a future update.
+   */
+  rf?: number;
 }
 
 export interface ProductCategory {
