@@ -93,6 +93,13 @@ export interface QuoteMeta {
   addressState?: string;
   zipCode?: string;
   addressCountry?: string;
+  sameForBilling?: boolean;
+  billingAddressName?: string;
+  billingAddressNumber?: string;
+  billingAddressCity?: string;
+  billingAddressState?: string;
+  billingZipCode?: string;
+  billingAddressCountry?: string;
 }
 
 export interface PitLineItem {

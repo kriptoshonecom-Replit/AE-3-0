@@ -11,9 +11,21 @@ interface AddressFields {
   addressCountry: string;
 }
 
+interface BillingFields {
+  billingAddressName: string;
+  billingAddressNumber: string;
+  billingAddressCity: string;
+  billingAddressState: string;
+  billingZipCode: string;
+  billingAddressCountry: string;
+}
+
 interface Props {
   values: AddressFields;
   onChange: (fields: Partial<AddressFields>) => void;
+  sameForBilling?: boolean;
+  billingValues?: Partial<BillingFields>;
+  onBillingChange?: (fields: Partial<BillingFields & { sameForBilling: boolean }>) => void;
 }
 
 const COUNTRIES = [
@@ -54,7 +66,7 @@ function matchCountry(raw: string | undefined): string {
   return COUNTRIES.find((c) => c.toLowerCase() === raw.toLowerCase()) ?? raw;
 }
 
-export default function AddressMapSection({ values, onChange }: Props) {
+export default function AddressMapSection({ values, onChange, sameForBilling = true, billingValues = {}, onBillingChange }: Props) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef          = useRef<LeafletMap | null>(null);
   const markerRef       = useRef<import("leaflet").Marker | null>(null);
@@ -314,6 +326,87 @@ export default function AddressMapSection({ values, onChange }: Props) {
           Click anywhere on the satellite view to pin a location and auto-fill the address fields
         </div>
       </div>
+
+      {/* Same for Billing checkbox */}
+      <label className="address-billing-toggle">
+        <input
+          type="checkbox"
+          checked={sameForBilling}
+          onChange={(e) => onBillingChange?.({ sameForBilling: e.target.checked })}
+        />
+        <span>Same for Billing</span>
+      </label>
+
+      {/* Billing Operation Address — shown only when unchecked */}
+      {!sameForBilling && (
+        <div className="address-billing-section">
+          <div className="address-billing-title">Billing Operation Address</div>
+          <div className="address-fields-grid">
+
+            <div className="field-group">
+              <label>Street Name</label>
+              <input
+                type="text"
+                value={billingValues.billingAddressName ?? ""}
+                onChange={(e) => onBillingChange?.({ billingAddressName: e.target.value })}
+                placeholder="e.g. Main Street"
+              />
+            </div>
+            <div className="field-group">
+              <label>Street Number</label>
+              <input
+                type="text"
+                value={billingValues.billingAddressNumber ?? ""}
+                onChange={(e) => onBillingChange?.({ billingAddressNumber: e.target.value })}
+                placeholder="e.g. 123"
+              />
+            </div>
+
+            <div className="field-group">
+              <label>State / Province</label>
+              <input
+                type="text"
+                value={billingValues.billingAddressState ?? ""}
+                onChange={(e) => onBillingChange?.({ billingAddressState: e.target.value })}
+                placeholder="e.g. California"
+              />
+            </div>
+            <div className="field-group">
+              <label>ZIP / Postal Code</label>
+              <input
+                type="text"
+                value={billingValues.billingZipCode ?? ""}
+                onChange={(e) => onBillingChange?.({ billingZipCode: e.target.value })}
+                placeholder="e.g. 90210"
+              />
+            </div>
+
+            <div className="field-group span-2">
+              <div className="address-city-country-row">
+                <div className="field-group address-city-field">
+                  <label>City</label>
+                  <input
+                    type="text"
+                    value={billingValues.billingAddressCity ?? ""}
+                    onChange={(e) => onBillingChange?.({ billingAddressCity: e.target.value })}
+                    placeholder="e.g. Los Angeles"
+                  />
+                </div>
+                <div className="field-group address-country-field">
+                  <label>Country</label>
+                  <select
+                    value={billingValues.billingAddressCountry ?? "United States"}
+                    onChange={(e) => onBillingChange?.({ billingAddressCountry: e.target.value })}
+                  >
+                    {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

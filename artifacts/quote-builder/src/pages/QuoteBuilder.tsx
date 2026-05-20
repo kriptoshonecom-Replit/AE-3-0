@@ -1164,6 +1164,16 @@ export default function QuoteBuilder() {
                         addressCountry: quote.meta.addressCountry ?? "United States",
                       }}
                       onChange={(fields) => handleMetaChange({ ...quote.meta, ...fields })}
+                      sameForBilling={quote.meta.sameForBilling ?? true}
+                      billingValues={{
+                        billingAddressName: quote.meta.billingAddressName ?? "",
+                        billingAddressNumber: quote.meta.billingAddressNumber ?? "",
+                        billingAddressCity: quote.meta.billingAddressCity ?? "",
+                        billingAddressState: quote.meta.billingAddressState ?? "",
+                        billingZipCode: quote.meta.billingZipCode ?? "",
+                        billingAddressCountry: quote.meta.billingAddressCountry ?? "United States",
+                      }}
+                      onBillingChange={(fields) => handleMetaChange({ ...quote.meta, ...fields })}
                     />
                     <div className="field-group" style={{ marginTop: 12 }}>
                       <label>Notes</label>
