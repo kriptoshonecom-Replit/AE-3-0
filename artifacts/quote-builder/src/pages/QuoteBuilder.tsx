@@ -30,6 +30,7 @@ import QuoteGroupComponent from "../components/QuoteGroup";
 import QuoteSummary from "../components/QuoteSummary";
 import QuoteList from "../components/QuoteList";
 import AddGroupModal from "../components/AddGroupModal";
+import AmendModal from "../components/AmendModal";
 import { saveQuote, loadAllQuotes, getActiveQuoteId, loadQuote, consumePendingOpenQuote } from "../utils/storage";
 import { syncQuoteToServer, saveQuoteToServerNow, adminSaveQuoteToServer, fetchServerQuotes, bulkUploadQuotesToServer } from "../utils/serverSync";
 import { exportQuoteToPDF } from "../utils/pdfExport";
@@ -145,6 +146,7 @@ export default function QuoteBuilder() {
   const [quote, setQuote] = useState<Quote>(createNewQuote);
   const [initialized, setInitialized] = useState(false);
   const [showAddGroup, setShowAddGroup] = useState(false);
+  const [showAmendModal, setShowAmendModal] = useState(false);
   const { open: sidebarOpen, setOpen: setSidebarOpen } = useGlobalNav();
   const [activeTab, setActiveTab] = useState(0);
   const [appVersion, setAppVersion] = useState<string>("");
@@ -1273,7 +1275,21 @@ export default function QuoteBuilder() {
 
                 {quote.groups.some((g) => g.lineItems.length > 0) && (
                   <section className="section summary-section">
-                    <h2 className="section-title">Summary</h2>
+                    <div className="section-header">
+                      <h2 className="section-title">Summary</h2>
+                      {stampStatus === "pass" && (
+                        <button
+                          type="button"
+                          className="btn-amend"
+                          onClick={() => setShowAmendModal(true)}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                            <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          Amend
+                        </button>
+                      )}
+                    </div>
                     <div className="summary-stamp-wrap">
                       <QuoteSummary
                         quote={quote}
@@ -1300,6 +1316,20 @@ export default function QuoteBuilder() {
                         </div>
                       )}
                     </div>
+                    {stampStatus === "pass" && (
+                      <div className="amend-btn-mobile-wrap">
+                        <button
+                          type="button"
+                          className="btn-amend"
+                          onClick={() => setShowAmendModal(true)}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                            <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          Amend
+                        </button>
+                      </div>
+                    )}
                   </section>
                 )}
               </>
@@ -1367,6 +1397,15 @@ export default function QuoteBuilder() {
           existingGroupIds={existingGroupIds}
           onAdd={(id) => { addGroup(id); setShowAddGroup(false); }}
           onClose={() => setShowAddGroup(false)}
+        />
+      )}
+
+      {showAmendModal && (
+        <AmendModal
+          quote={quote}
+          tieredAdditionalPrice={tieredAdditionalPrice}
+          onClose={() => setShowAmendModal(false)}
+          onSaved={() => setShowAmendModal(false)}
         />
       )}
 

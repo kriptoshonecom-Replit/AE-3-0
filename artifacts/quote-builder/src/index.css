@@ -5990,3 +5990,285 @@ tr:hover .drag-handle { opacity: 1; }
     grid-template-columns: 1fr;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   AMENDMENTS — Amend button, modal, page, drawer delta list
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Amend button in Summary section header ── */
+.btn-amend {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7c3aed;
+  background: #f3f0ff;
+  border: 1px solid #c4b5fd;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.btn-amend:hover {
+  background: #ede9fe;
+  border-color: #a78bfa;
+}
+.btn-amend svg {
+  flex-shrink: 0;
+  color: #7c3aed;
+}
+
+/* Mobile: hide desktop button, show mobile wrapper */
+.amend-btn-mobile-wrap {
+  display: none;
+  margin-top: 16px;
+}
+@media (max-width: 640px) {
+  .section-header .btn-amend {
+    display: none;
+  }
+  .amend-btn-mobile-wrap {
+    display: flex;
+    justify-content: center;
+  }
+}
+
+/* ── Amend Modal ── */
+.amend-modal {
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22);
+  width: min(860px, 96vw);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.amend-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.amend-modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+.amend-modal-sub {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 2px;
+}
+.amend-modal-sub strong {
+  color: var(--text);
+}
+
+.amend-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.amend-field-row {
+  display: flex;
+  gap: 12px;
+}
+
+/* ── Delta tables ── */
+.amend-group {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.amend-group-title {
+  padding: 8px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-2);
+  background: var(--surface-subtle);
+  border-bottom: 1px solid var(--border);
+}
+.amend-table-wrap {
+  overflow-x: auto;
+}
+.amend-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.amend-table thead tr {
+  background: var(--surface-subtle);
+}
+.amend-table th {
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.amend-th-num {
+  text-align: right !important;
+}
+.amend-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.amend-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.amend-table tbody tr:hover {
+  background: #fafafa;
+}
+.amend-row-changed {
+  background: #fdfaff !important;
+}
+.amend-td-name {
+  font-weight: 500;
+  color: var(--text);
+  max-width: 220px;
+}
+.amend-td-num {
+  text-align: right;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.amend-td-qty {
+  text-align: right;
+  white-space: nowrap;
+}
+.amend-qty-input {
+  width: 70px;
+  padding: 4px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.amend-qty-input:focus {
+  border-color: #7c3aed;
+}
+
+/* ── Delta colour tokens ── */
+.amend-delta-pos {
+  color: #16a34a;
+}
+.amend-delta-neg {
+  color: #dc2626;
+}
+.amend-delta-neutral {
+  color: var(--text-3);
+}
+.amend-delta-bold {
+  font-weight: 700;
+}
+
+/* ── Summary bar ── */
+.amend-summary-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 12px 24px;
+  background: var(--surface-subtle);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.amend-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 20px;
+}
+.amend-summary-item:first-child {
+  padding-left: 0;
+}
+.amend-summary-sep {
+  width: 1px;
+  height: 32px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+.amend-summary-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-3);
+}
+.amend-summary-value {
+  font-size: 15px;
+  font-weight: 600;
+}
+.amend-summary-mrr {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* ── Footer ── */
+.amend-modal-footer {
+  padding: 14px 24px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--surface);
+}
+.amend-footer-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.amend-no-delta-hint {
+  font-size: 12px;
+  color: var(--text-3);
+  text-align: right;
+  margin-bottom: 8px;
+}
+
+/* ── Amendments page — edit drawer delta list ── */
+.amend-drawer-delta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: var(--surface-subtle);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.amend-drawer-delta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+}
+.amend-drawer-delta-name {
+  flex: 1;
+  color: var(--text);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.amend-drawer-delta-qty {
+  color: var(--text-2);
+  white-space: nowrap;
+  flex-shrink: 0;
+}

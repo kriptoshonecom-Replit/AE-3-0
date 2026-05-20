@@ -16,6 +16,7 @@ import AlertConfigPage from "@/pages/AlertConfigPage";
 import StatusPassConfigPage from "@/pages/StatusPassConfigPage";
 import QuoteLibraryPage from "@/pages/QuoteLibraryPage";
 import MyQuoteLibraryPage from "@/pages/MyQuoteLibraryPage";
+import AmendmentsPage from "@/pages/AmendmentsPage";
 import DashboardPage from "@/pages/DashboardPage";
 import LogJournalPage from "@/pages/LogJournalPage";
 import AppReleasePage from "@/pages/AppReleasePage";
@@ -92,6 +93,9 @@ function AppRoutes() {
           </Route>
           <Route path="/my-quotes">
             <ProtectedRoute><MyQuoteLibraryPage /></ProtectedRoute>
+          </Route>
+          <Route path="/amendments">
+            <ProtectedRoute><AmendmentsPage /></ProtectedRoute>
           </Route>
           <Route path="/admin/dashboard">
             <AdminRoute><DashboardPage /></AdminRoute>

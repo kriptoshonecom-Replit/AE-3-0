@@ -73,6 +73,12 @@ export default function GlobalNav() {
                 </svg>
                 My Quote Library
               </button>
+              <button type="button" className="sidebar-admin-link" onClick={() => go("/amendments")}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Amendments
+              </button>
             </div>
           )}
 
@@ -161,6 +167,12 @@ export default function GlobalNav() {
                   <path d="M8 2L13 8M13 8L8 14M13 8H3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 App Release
+              </button>
+              <button type="button" className="sidebar-admin-link" onClick={() => go("/amendments")}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Amendments
               </button>
             </div>
           )}
