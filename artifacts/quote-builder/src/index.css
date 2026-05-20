@@ -6082,6 +6082,8 @@ tr:hover .drag-handle { opacity: 1; }
     justify-content: center;
   }
   .amend-btn-mobile-wrap .btn-amend {
+    width: 100%;
+    justify-content: center;
     background: var(--accent);
     color: var(--accent-fg);
     border: none;
