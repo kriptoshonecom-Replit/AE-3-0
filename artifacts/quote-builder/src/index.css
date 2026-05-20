@@ -399,9 +399,10 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: none;
-  padding: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 5px;
+  border-radius: 5px;
   cursor: pointer;
   flex-shrink: 0;
 }
