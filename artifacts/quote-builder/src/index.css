@@ -6159,7 +6159,7 @@ tr:hover .drag-handle { opacity: 1; }
 .amend-group {
   border: 1px solid var(--border);
   border-radius: 8px;
-  overflow: hidden;
+  /* no overflow:hidden — it would clip the horizontal scroll of the table wrapper */
 }
 .amend-group-title {
   padding: 8px 14px;
@@ -6170,12 +6170,15 @@ tr:hover .drag-handle { opacity: 1; }
   color: var(--text-2);
   background: var(--surface-subtle);
   border-bottom: 1px solid var(--border);
+  border-radius: 8px 8px 0 0;
 }
 .amend-table-wrap {
   overflow-x: auto;
+  border-radius: 0 0 8px 8px;
 }
 .amend-table {
   width: 100%;
+  min-width: 520px;
   border-collapse: collapse;
   font-size: 13px;
 }
