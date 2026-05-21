@@ -196,16 +196,23 @@ export async function exportAmendmentToPDF(data: AmendmentExportData): Promise<v
     );
     y += 7;
 
+    // Column x positions (all right-aligned except ITEM)
+    const colOrigQty   = margin + 80;
+    const colNewQty    = margin + 103;
+    const colChange    = margin + 122;
+    const colUnitPrice = margin + 150;
+    const colDelta     = margin + contentWidth - 3;
+
     // Column headers
     doc.setTextColor(100, 116, 139);
     doc.setFontSize(7.5);
     doc.setFont("helvetica", "normal");
-    doc.text("ITEM", margin + 3, y + 3.5);
-    doc.text("ORIG QTY", margin + 95, y + 3.5, { align: "right" });
-    doc.text("NEW QTY", margin + 120, y + 3.5, { align: "right" });
-    doc.text("CHANGE", margin + 145, y + 3.5, { align: "right" });
-    doc.text("UNIT PRICE", margin + 168, y + 3.5, { align: "right" });
-    doc.text("DELTA VALUE", margin + contentWidth - 3, y + 3.5, { align: "right" });
+    doc.text("ITEM",        margin + 3,   y + 3.5);
+    doc.text("ORIG QTY",   colOrigQty,   y + 3.5, { align: "right" });
+    doc.text("NEW QTY",    colNewQty,    y + 3.5, { align: "right" });
+    doc.text("CHANGE",     colChange,    y + 3.5, { align: "right" });
+    doc.text("UNIT PRICE", colUnitPrice, y + 3.5, { align: "right" });
+    doc.text("DELTA VALUE",colDelta,     y + 3.5, { align: "right" });
     y += 5;
 
     doc.setDrawColor(226, 232, 240);
@@ -227,10 +234,10 @@ export async function exportAmendmentToPDF(data: AmendmentExportData): Promise<v
       }
       doc.rect(margin, y, contentWidth, 6.5, "F");
 
-      // Product name
+      // Product name (truncate to ~45 chars to stay clear of numeric cols)
       const name =
-        li.productName.length > 42
-          ? li.productName.slice(0, 40) + "…"
+        li.productName.length > 40
+          ? li.productName.slice(0, 38) + "…"
           : li.productName;
       doc.setTextColor(30, 41, 59);
       doc.setFontSize(8);
@@ -239,29 +246,28 @@ export async function exportAmendmentToPDF(data: AmendmentExportData): Promise<v
 
       // Orig qty
       doc.setTextColor(100, 116, 139);
-      doc.text(String(li.originalQty), margin + 95, y + 4, { align: "right" });
+      doc.text(String(li.originalQty), colOrigQty, y + 4, { align: "right" });
 
-      // New qty (bold)
+      // New qty (bold, colored)
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...deltaTextColor);
-      doc.text(String(li.amendedQty), margin + 120, y + 4, { align: "right" });
+      doc.text(String(li.amendedQty), colNewQty, y + 4, { align: "right" });
 
       // Change
-      doc.setFont("helvetica", "bold");
       doc.setTextColor(...deltaTextColor);
-      doc.text(`${deltaSign}${li.delta}`, margin + 145, y + 4, { align: "right" });
+      doc.text(`${deltaSign}${li.delta}`, colChange, y + 4, { align: "right" });
 
       // Unit price
       doc.setFont("helvetica", "normal");
       doc.setTextColor(30, 41, 59);
-      doc.text(formatCurrency(li.unitPrice), margin + 168, y + 4, { align: "right" });
+      doc.text(formatCurrency(li.unitPrice), colUnitPrice, y + 4, { align: "right" });
 
       // Delta value (bold, colored)
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...deltaTextColor);
       doc.text(
         `${deltaSign}${formatCurrency(li.deltaValue)}`,
-        margin + contentWidth - 3,
+        colDelta,
         y + 4,
         { align: "right" },
       );
