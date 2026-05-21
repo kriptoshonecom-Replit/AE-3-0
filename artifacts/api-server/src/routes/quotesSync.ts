@@ -122,27 +122,6 @@ router.get("/quotes", requireAuth, async (req, res) => {
   }
 });
 
-/* ── GET /api/quotes/:id — fetch a single quote by its meta.id ── */
-router.get("/quotes/:id", requireAuth, async (req, res) => {
-  const userId = req.auth!.userId;
-  const id = String(req.params.id);
-  try {
-    const rows = await db
-      .select()
-      .from(quotesTable)
-      .where(and(eq(quotesTable.id, id), eq(quotesTable.userId, userId)))
-      .limit(1);
-    if (!rows.length) {
-      res.status(404).json({ error: "Quote not found" });
-      return;
-    }
-    res.json({ quote: rows[0].data });
-  } catch (err) {
-    req.log.error(err, "GET /quotes/:id error");
-    res.status(500).json({ error: "Failed to load quote" });
-  }
-});
-
 /* ── GET /api/quotes/library — enriched list for the current user ── */
 router.get("/quotes/library", requireAuth, async (req, res) => {
   const userId = req.auth!.userId;
@@ -175,6 +154,28 @@ router.get("/quotes/library", requireAuth, async (req, res) => {
   } catch (err) {
     console.error("GET /quotes/library error:", err);
     res.status(500).json({ error: "Failed to load quotes" });
+  }
+});
+
+/* ── GET /api/quotes/:id — fetch a single quote by its meta.id ── */
+/* Must be AFTER /quotes/library to avoid matching "library" as an id */
+router.get("/quotes/:id", requireAuth, async (req, res) => {
+  const userId = req.auth!.userId;
+  const id = String(req.params.id);
+  try {
+    const rows = await db
+      .select()
+      .from(quotesTable)
+      .where(and(eq(quotesTable.id, id), eq(quotesTable.userId, userId)))
+      .limit(1);
+    if (!rows.length) {
+      res.status(404).json({ error: "Quote not found" });
+      return;
+    }
+    res.json({ quote: rows[0].data });
+  } catch (err) {
+    req.log.error(err, "GET /quotes/:id error");
+    res.status(500).json({ error: "Failed to load quote" });
   }
 });
 
