@@ -59,12 +59,12 @@ export default function AmendModal({
       .then((d: { amendments?: unknown[] }) => {
         const nextNum = (d.amendments?.length ?? 0) + 1;
         const padded = String(nextNum).padStart(3, "0");
-        const origNum = quote.meta.quoteNumber?.trim() || quote.meta.id;
-        setQuoteNumber(`${origNum}_Amend_${padded}`);
+        const origBase = (quote.meta.quoteNumber?.trim() || quote.meta.id).replace(/^[Qq]-?/, "");
+        setQuoteNumber(`AQ-${origBase}_${padded}`);
       })
       .catch(() => {
-        const origNum = quote.meta.quoteNumber?.trim() || quote.meta.id;
-        setQuoteNumber(`${origNum}_Amend_001`);
+        const origBase = (quote.meta.quoteNumber?.trim() || quote.meta.id).replace(/^[Qq]-?/, "");
+        setQuoteNumber(`AQ-${origBase}_001`);
       })
       .finally(() => setLoadingCount(false));
   }, [isEditMode, quote.meta.id, quote.meta.quoteNumber]);
