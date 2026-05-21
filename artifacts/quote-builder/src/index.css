@@ -6112,9 +6112,9 @@ tr:hover .drag-handle { opacity: 1; }
   border-radius: 14px;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22);
   width: min(860px, 96vw);
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
+  max-height: min(90vh, calc(100vh - 32px));
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
   overflow: hidden;
 }
 
@@ -6142,7 +6142,6 @@ tr:hover .drag-handle { opacity: 1; }
 }
 
 .amend-modal-body {
-  flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding: 16px 24px;

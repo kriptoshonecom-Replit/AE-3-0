@@ -211,6 +211,11 @@ export default function AmendModal({
 
         {/* ── Body ── */}
         <div className="amend-modal-body">
+          {!isEditMode && visibleGroups.length === 0 && (
+            <p style={{ color: "var(--text-3)", fontSize: 13, textAlign: "center", padding: "24px 0" }}>
+              No products found on this quote. Add products first.
+            </p>
+          )}
           <div className="amend-field-row">
             <label className="lib-label" style={{ flex: 1 }}>
               Amendment Quote Number
