@@ -348,20 +348,7 @@ export default function MyQuoteLibraryPage() {
                     </td>
                     <td style={{ textAlign: "center" }}>
                       {amendCounts[row.id] ? (
-                        <span style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          minWidth: 20,
-                          height: 20,
-                          padding: "0 6px",
-                          borderRadius: 10,
-                          background: "var(--accent)",
-                          color: "#fff",
-                          fontSize: 11,
-                          fontWeight: 700,
-                          letterSpacing: 0.2,
-                        }}>
+                        <span style={{ color: "var(--accent)", fontWeight: 700, fontSize: 13 }}>
                           {amendCounts[row.id]}
                         </span>
                       ) : (
