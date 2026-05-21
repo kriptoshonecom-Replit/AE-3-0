@@ -174,6 +174,7 @@ export default function AmendmentsPage() {
         const map = new Map<string, Quote>();
         if (isAdmin) {
           for (const r of (qd as { quotes: { id: string; data: Quote }[] }).quotes ?? []) {
+            if (r.id) map.set(r.id, r.data);
             if (r.data?.meta?.id) map.set(r.data.meta.id, r.data);
           }
         } else {
