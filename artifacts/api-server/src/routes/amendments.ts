@@ -46,6 +46,12 @@ router.post("/amendments", requireAuth, async (req, res) => {
     discount?: number;
     tax?: number;
     notes?: string;
+    addressNumber?: string;
+    addressName?: string;
+    addressCity?: string;
+    addressState?: string;
+    zipCode?: string;
+    addressCountry?: string;
   };
 
   if (!body.originalQuoteId?.trim()) {
@@ -70,6 +76,12 @@ router.post("/amendments", requireAuth, async (req, res) => {
       discount: body.discount ?? 0,
       tax: body.tax ?? 0,
       notes: body.notes ?? "",
+      addressNumber: body.addressNumber ?? "",
+      addressName: body.addressName ?? "",
+      addressCity: body.addressCity ?? "",
+      addressState: body.addressState ?? "",
+      zipCode: body.zipCode ?? "",
+      addressCountry: body.addressCountry ?? "",
     };
 
     const [row] = await db
