@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { quotesTable, usersTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { quotesTable, usersTable, amendmentsTable } from "@workspace/db/schema";
+import { eq, sql } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/requireAdmin";
 
 const router = Router();
@@ -215,6 +215,27 @@ router.delete("/admin/quotes/:id", requireAdmin, async (req, res) => {
   } catch (err) {
     console.error("DELETE /admin/quotes/:id error:", err);
     res.status(500).json({ error: "Failed to delete quote" });
+  }
+});
+
+/* ── GET /api/admin/amendments/counts — amendment count per quote ── */
+router.get("/admin/amendments/counts", requireAdmin, async (_req, res) => {
+  try {
+    const rows = await db
+      .select({
+        originalQuoteId: amendmentsTable.originalQuoteId,
+        count: sql<number>`cast(count(*) as int)`,
+      })
+      .from(amendmentsTable)
+      .groupBy(amendmentsTable.originalQuoteId);
+    const counts: Record<string, number> = {};
+    for (const row of rows) {
+      counts[row.originalQuoteId] = row.count;
+    }
+    res.json({ counts });
+  } catch (err) {
+    console.error("GET /admin/amendments/counts error:", err);
+    res.status(500).json({ error: "Failed to load amendment counts" });
   }
 });
 
