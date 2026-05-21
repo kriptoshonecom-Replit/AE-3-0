@@ -35,6 +35,12 @@ interface AmendmentDataShape {
   discount?: number;
   tax?: number;
   notes?: string;
+  addressNumber?: string;
+  addressName?: string;
+  addressCity?: string;
+  addressState?: string;
+  zipCode?: string;
+  addressCountry?: string;
 }
 
 interface ViewRow {
@@ -113,6 +119,24 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
               {row.customerName ? ` · ${row.customerName}` : ""}
               <span style={{ marginLeft: 10, color: "var(--text-3)" }}>{fmtDate(row.createdAt)}</span>
             </p>
+            {(() => {
+              const d = row.data ?? {};
+              const street = [d.addressNumber, d.addressName].filter(Boolean).join(" ");
+              const cityState = [d.addressCity, d.addressState].filter(Boolean).join(", ");
+              const zip = d.zipCode;
+              const country = d.addressCountry;
+              const parts = [street, cityState, zip, country].filter(Boolean);
+              if (parts.length === 0) return null;
+              return (
+                <p className="amend-modal-sub" style={{ marginTop: 2 }}>
+                  <svg width="10" height="10" viewBox="0 0 14 14" fill="none" style={{ marginRight: 4, verticalAlign: "middle", opacity: 0.55 }}>
+                    <path d="M7 1.5C4.79 1.5 3 3.29 3 5.5c0 3.25 4 7 4 7s4-3.75 4-7c0-2.21-1.79-4-4-4z" stroke="currentColor" strokeWidth="1.3" fill="none" />
+                    <circle cx="7" cy="5.5" r="1.2" fill="currentColor" />
+                  </svg>
+                  {parts.join(" · ")}
+                </p>
+              );
+            })()}
           </div>
           <button className="edit-modal-close" type="button" onClick={onClose} aria-label="Close">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

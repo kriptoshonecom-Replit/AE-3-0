@@ -108,6 +108,12 @@ router.patch("/amendments/:id", requireAuth, async (req, res) => {
     mrrDelta?: number;
     discount?: number;
     tax?: number;
+    addressNumber?: string;
+    addressName?: string;
+    addressCity?: string;
+    addressState?: string;
+    zipCode?: string;
+    addressCountry?: string;
   };
 
   try {
@@ -134,6 +140,10 @@ router.patch("/amendments/:id", requireAuth, async (req, res) => {
     }
     if (body.discount !== undefined) updatedData["discount"] = body.discount;
     if (body.tax !== undefined) updatedData["tax"] = body.tax;
+    const addrFields = ["addressNumber", "addressName", "addressCity", "addressState", "zipCode", "addressCountry"] as const;
+    for (const f of addrFields) {
+      if (body[f] !== undefined) updatedData[f] = body[f];
+    }
 
     const [updated] = await db
       .update(amendmentsTable)

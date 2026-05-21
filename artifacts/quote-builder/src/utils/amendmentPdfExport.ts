@@ -44,6 +44,12 @@ export interface AmendmentExportData {
   discount?: number;
   tax?: number;
   notes?: string;
+  addressNumber?: string;
+  addressName?: string;
+  addressCity?: string;
+  addressState?: string;
+  zipCode?: string;
+  addressCountry?: string;
 }
 
 export async function exportAmendmentToPDF(data: AmendmentExportData): Promise<void> {
@@ -157,6 +163,29 @@ export async function exportAmendmentToPDF(data: AmendmentExportData): Promise<v
 
   if (data.companyName) rightRow("Company:", data.companyName, true);
   if (data.customerName) rightRow("Customer:", data.customerName);
+
+  // Business address
+  const addrStreet = [data.addressNumber, data.addressName].filter(Boolean).join(" ");
+  const addrCityState = [data.addressCity, data.addressState].filter(Boolean).join(", ");
+  const addrZip = data.zipCode ?? "";
+  const addrCountry = data.addressCountry ?? "";
+  const addrParts = [addrStreet, addrCityState, addrZip, addrCountry].filter(Boolean);
+  if (addrParts.length > 0) {
+    rightY += 2;
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(150, 150, 148);
+    doc.text("BUSINESS ADDRESS", rightLabelStart, rightY);
+    rightY += 4;
+    for (const part of addrParts) {
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...infoValueColor);
+      doc.text(part, rightColX, rightY, { align: "right" });
+      rightY += 4.5;
+    }
+  }
+
   if (data.discount && data.discount > 0) rightRow("Discount:", `${data.discount}%`);
   if (data.tax && data.tax > 0) rightRow("Tax:", `${data.tax}%`);
 
@@ -381,6 +410,8 @@ export async function exportAmendmentToPDF(data: AmendmentExportData): Promise<v
   }
 
   // ── Save ────────────────────────────────────────────
-  const safeName = (data.quoteNumber || `Amend_${String(data.amendmentNumber).padStart(3, "0")}`).replace(/[^a-zA-Z0-9_-]/g, "_");
+  const origBase = (data.originalQuoteNumber ?? "").replace(/^[Qq]-?/, "");
+  const paddedNum = String(data.amendmentNumber).padStart(3, "0");
+  const safeName = `AQ-${origBase || "AMEND"}_${paddedNum}`.replace(/[^a-zA-Z0-9_-]/g, "_");
   doc.save(`${safeName}.pdf`);
 }

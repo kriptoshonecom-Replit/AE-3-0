@@ -114,6 +114,15 @@ export default function AmendModal({
     try {
       let res: Response;
 
+      const addrPayload = {
+        addressNumber: quote.meta.addressNumber ?? "",
+        addressName: quote.meta.addressName ?? "",
+        addressCity: quote.meta.addressCity ?? "",
+        addressState: quote.meta.addressState ?? "",
+        zipCode: quote.meta.zipCode ?? "",
+        addressCountry: quote.meta.addressCountry ?? "",
+      };
+
       if (isEditMode && editAmendmentId) {
         res = await fetch(`${API_BASE}/api/amendments/${editAmendmentId}`, {
           method: "PATCH",
@@ -127,6 +136,7 @@ export default function AmendModal({
             mrrDelta: deltaSummary.mrrDelta,
             discount: quote.meta.discount ?? 0,
             tax: quote.meta.tax ?? 0,
+            ...addrPayload,
           }),
         });
       } else {
@@ -147,6 +157,7 @@ export default function AmendModal({
             discount: quote.meta.discount ?? 0,
             tax: quote.meta.tax ?? 0,
             notes,
+            ...addrPayload,
           }),
         });
       }

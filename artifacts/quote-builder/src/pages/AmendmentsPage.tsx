@@ -99,6 +99,7 @@ function buildEditState(row: AmendmentRow): EditModeState {
     }),
   }));
 
+  const d = row.data as Record<string, unknown> ?? {};
   const quote: Quote = {
     meta: {
       id: row.originalQuoteId,
@@ -112,9 +113,15 @@ function buildEditState(row: AmendmentRow): EditModeState {
       notes: "",
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
-      discount: (row.data?.discount as number) ?? 0,
-      tax: (row.data?.tax as number) ?? 0,
+      discount: (d["discount"] as number) ?? 0,
+      tax: (d["tax"] as number) ?? 0,
       passStatus: "pass",
+      addressNumber: (d["addressNumber"] as string) ?? "",
+      addressName: (d["addressName"] as string) ?? "",
+      addressCity: (d["addressCity"] as string) ?? "",
+      addressState: (d["addressState"] as string) ?? "",
+      zipCode: (d["zipCode"] as string) ?? "",
+      addressCountry: (d["addressCountry"] as string) ?? "",
     },
     groups,
   };
