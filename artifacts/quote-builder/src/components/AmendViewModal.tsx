@@ -76,7 +76,6 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
   const changedGroups = deltaGroups
     .map((g) => ({ ...g, lineItems: g.lineItems.filter((li) => li.amendedQty - li.originalQty !== 0) }))
     .filter((g) => g.lineItems.length > 0);
-  const visibleGroups = deltaGroups.filter((g) => g.lineItems.length > 0);
 
   async function handleExport() {
     setExporting(true);
@@ -153,7 +152,12 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
 
         {/* ── Body ── */}
         <div className="amend-modal-body">
-          {visibleGroups.map((group) => (
+          {changedGroups.length === 0 && (
+            <p style={{ color: "var(--text-3)", fontSize: 13, textAlign: "center", padding: "24px 0" }}>
+              No quantity changes recorded for this amendment.
+            </p>
+          )}
+          {changedGroups.map((group) => (
             <div key={group.categoryId} className="amend-group">
               <div className="amend-group-title">{group.categoryName}</div>
               <div className="amend-table-wrap">
