@@ -216,7 +216,7 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
             <button type="button" className="edit-modal-cancel" onClick={onClose}>Close</button>
             <button
               type="button"
-              className="export-btn"
+              className="btn-primary"
               onClick={() => void handleExport()}
               disabled={exporting}
             >
