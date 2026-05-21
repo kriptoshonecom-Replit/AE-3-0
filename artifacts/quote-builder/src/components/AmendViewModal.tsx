@@ -94,6 +94,12 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
         discount: data.discount as number | undefined,
         tax: data.tax as number | undefined,
         notes,
+        addressNumber: data.addressNumber as string | undefined,
+        addressName: data.addressName as string | undefined,
+        addressCity: data.addressCity as string | undefined,
+        addressState: data.addressState as string | undefined,
+        zipCode: data.zipCode as string | undefined,
+        addressCountry: data.addressCountry as string | undefined,
       });
     } finally {
       setExporting(false);
@@ -128,8 +134,8 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
               const parts = [street, cityState, zip, country].filter(Boolean);
               if (parts.length === 0) return null;
               return (
-                <p className="amend-modal-sub" style={{ marginTop: 2 }}>
-                  <svg width="10" height="10" viewBox="0 0 14 14" fill="none" style={{ marginRight: 4, verticalAlign: "middle", opacity: 0.55 }}>
+                <p className="amend-modal-sub" style={{ marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
+                  <svg width="10" height="10" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, opacity: 0.55 }}>
                     <path d="M7 1.5C4.79 1.5 3 3.29 3 5.5c0 3.25 4 7 4 7s4-3.75 4-7c0-2.21-1.79-4-4-4z" stroke="currentColor" strokeWidth="1.3" fill="none" />
                     <circle cx="7" cy="5.5" r="1.2" fill="currentColor" />
                   </svg>
