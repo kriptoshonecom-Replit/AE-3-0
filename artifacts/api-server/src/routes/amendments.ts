@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { amendmentsTable } from "@workspace/db/schema";
+import { amendmentsTable, usersTable } from "@workspace/db/schema";
 import { and, eq } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
+import { requireAdmin } from "../middlewares/requireAdmin";
 import { logger } from "../lib/logger";
 
 const router = Router();
@@ -193,6 +194,54 @@ router.delete("/amendments/:id", requireAuth, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     logger.error(err, "DELETE /amendments/:id error");
+    res.status(500).json({ error: "Failed to delete amendment" });
+  }
+});
+
+/* GET /api/admin/amendments — all amendments from all users (admin only) */
+router.get("/admin/amendments", requireAdmin, async (_req, res) => {
+  try {
+    const rows = await db
+      .select({
+        id: amendmentsTable.id,
+        originalQuoteId: amendmentsTable.originalQuoteId,
+        userId: amendmentsTable.userId,
+        amendmentNumber: amendmentsTable.amendmentNumber,
+        quoteNumber: amendmentsTable.quoteNumber,
+        originalQuoteNumber: amendmentsTable.originalQuoteNumber,
+        companyName: amendmentsTable.companyName,
+        customerName: amendmentsTable.customerName,
+        data: amendmentsTable.data,
+        createdAt: amendmentsTable.createdAt,
+        updatedAt: amendmentsTable.updatedAt,
+        creatorName: usersTable.fullName,
+        creatorEmail: usersTable.email,
+      })
+      .from(amendmentsTable)
+      .leftJoin(usersTable, eq(amendmentsTable.userId, usersTable.id))
+      .orderBy(amendmentsTable.createdAt);
+    res.json({ amendments: rows });
+  } catch (err) {
+    logger.error(err, "GET /admin/amendments error");
+    res.status(500).json({ error: "Failed to load amendments" });
+  }
+});
+
+/* DELETE /api/admin/amendments/:id — admin can delete any amendment */
+router.delete("/admin/amendments/:id", requireAdmin, async (req, res) => {
+  const id = String(req.params.id);
+  try {
+    const deleted = await db
+      .delete(amendmentsTable)
+      .where(eq(amendmentsTable.id, id))
+      .returning({ id: amendmentsTable.id });
+    if (deleted.length === 0) {
+      res.status(404).json({ error: "Amendment not found" });
+      return;
+    }
+    res.json({ success: true });
+  } catch (err) {
+    logger.error(err, "DELETE /admin/amendments/:id error");
     res.status(500).json({ error: "Failed to delete amendment" });
   }
 });

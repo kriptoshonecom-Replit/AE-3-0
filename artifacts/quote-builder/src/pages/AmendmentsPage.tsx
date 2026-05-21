@@ -3,6 +3,7 @@ import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 import { formatCurrency } from "../utils/calculations";
 import AmendModal from "../components/AmendModal";
 import AmendViewModal from "../components/AmendViewModal";
+import { useAuth } from "@/context/AuthContext";
 import type { Quote } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
@@ -51,6 +52,8 @@ interface AmendmentRow {
   createdAt: string;
   updatedAt: string;
   userId: string;
+  creatorName?: string | null;
+  creatorEmail?: string | null;
 }
 
 interface EditModeState {
@@ -137,6 +140,9 @@ function buildEditState(row: AmendmentRow): EditModeState {
 
 /* ── Main Page ────────────────────────────────────────────── */
 export default function AmendmentsPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+
   const [amendments, setAmendments] = useState<AmendmentRow[]>([]);
   const [quotesMap, setQuotesMap] = useState<Map<string, Quote>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -149,9 +155,11 @@ export default function AmendmentsPage() {
     setLoading(true);
     setError("");
     try {
+      const amendEndpoint = isAdmin ? `${API_BASE}/api/admin/amendments` : `${API_BASE}/api/amendments`;
+      const quotesEndpoint = isAdmin ? `${API_BASE}/api/admin/quotes` : `${API_BASE}/api/quotes`;
       const [amendRes, quotesRes] = await Promise.all([
-        fetch(`${API_BASE}/api/amendments`, { credentials: "include" }),
-        fetch(`${API_BASE}/api/quotes`, { credentials: "include" }),
+        fetch(amendEndpoint, { credentials: "include" }),
+        fetch(quotesEndpoint, { credentials: "include" }),
       ]);
       if (!amendRes.ok) {
         const d = (await amendRes.json()) as { error?: string };
@@ -160,10 +168,18 @@ export default function AmendmentsPage() {
       const data = (await amendRes.json()) as { amendments: AmendmentRow[] };
       setAmendments([...data.amendments].reverse());
       if (quotesRes.ok) {
-        const qd = (await quotesRes.json()) as { quotes: Quote[] };
+        const qd = isAdmin
+          ? (await quotesRes.json()) as { quotes: { id: string; data: Quote }[] }
+          : (await quotesRes.json()) as { quotes: Quote[] };
         const map = new Map<string, Quote>();
-        for (const q of qd.quotes ?? []) {
-          if (q.meta?.id) map.set(q.meta.id, q);
+        if (isAdmin) {
+          for (const r of (qd as { quotes: { id: string; data: Quote }[] }).quotes ?? []) {
+            if (r.data?.meta?.id) map.set(r.data.meta.id, r.data);
+          }
+        } else {
+          for (const q of (qd as { quotes: Quote[] }).quotes ?? []) {
+            if (q.meta?.id) map.set(q.meta.id, q);
+          }
         }
         setQuotesMap(map);
       }
@@ -172,7 +188,7 @@ export default function AmendmentsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAdmin]);
 
   /** Fill in address from the original quote when the amendment's stored address is blank */
   function augmentRowWithAddress(row: AmendmentRow): AmendmentRow {
@@ -202,10 +218,10 @@ export default function AmendmentsPage() {
   async function handleDelete(id: string) {
     if (!window.confirm("Permanently delete this amendment?")) return;
     try {
-      const res = await fetch(`${API_BASE}/api/amendments/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+      const url = isAdmin
+        ? `${API_BASE}/api/admin/amendments/${id}`
+        : `${API_BASE}/api/amendments/${id}`;
+      const res = await fetch(url, { method: "DELETE", credentials: "include" });
       if (!res.ok) {
         const d = (await res.json()) as { error?: string };
         throw new Error(d.error ?? "Delete failed");
@@ -219,7 +235,7 @@ export default function AmendmentsPage() {
   const filtered = amendments.filter((row) => {
     const s = search.trim().toLowerCase();
     if (!s) return true;
-    return [row.quoteNumber, row.originalQuoteNumber, row.companyName, row.customerName].some((v) =>
+    return [row.quoteNumber, row.originalQuoteNumber, row.companyName, row.customerName, row.creatorName, row.creatorEmail].some((v) =>
       v?.toLowerCase().includes(s)
     );
   });
@@ -284,6 +300,7 @@ export default function AmendmentsPage() {
                   <th>Original Quote</th>
                   <th>Company</th>
                   <th>Customer</th>
+                  {isAdmin && <th>Creator</th>}
                   <th>Created</th>
                   <th style={{ textAlign: "right" }}>MRR Delta</th>
                   <th style={{ textAlign: "right" }}>Actions</th>
@@ -292,7 +309,7 @@ export default function AmendmentsPage() {
               <tbody>
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="admin-table-empty">
+                    <td colSpan={isAdmin ? 9 : 8} className="admin-table-empty">
                       {search
                         ? `No amendments match "${search}"`
                         : "No amendments yet — open a quote with PASS status in the builder and click Amend."}
@@ -312,6 +329,16 @@ export default function AmendmentsPage() {
                     </td>
                     <td>{row.companyName || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
                     <td>{row.customerName || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
+                    {isAdmin && (
+                      <td>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          <span style={{ fontWeight: 500 }}>{row.creatorName || "—"}</span>
+                          {row.creatorEmail && (
+                            <span style={{ fontSize: 11, color: "var(--text-3)" }}>{row.creatorEmail}</span>
+                          )}
+                        </div>
+                      </td>
+                    )}
                     <td style={{ whiteSpace: "nowrap", fontSize: 12, color: "var(--text-2)" }}>
                       {fmtDate(row.createdAt)}
                     </td>
