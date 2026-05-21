@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { formatCurrency } from "../utils/calculations";
+import { exportAmendmentToPDF } from "../utils/amendmentPdfExport";
 
 const TIERED_ADDITIONAL_UNIT_PRICE = 30;
 
@@ -58,14 +60,39 @@ function fmtDate(s: string) {
 }
 
 export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
+  const [exporting, setExporting] = useState(false);
   const data = row.data ?? {};
   const deltaGroups = (data.deltaGroups ?? []) as DeltaGroup[];
   const subtotalDelta = data.subtotalDelta ?? 0;
   const mrrDelta = data.mrrDelta ?? 0;
   const notes = data.notes ?? "";
   const amendNumStr = String(row.amendmentNumber).padStart(3, "0");
-
+  const changedGroups = deltaGroups
+    .map((g) => ({ ...g, lineItems: g.lineItems.filter((li) => li.amendedQty - li.originalQty !== 0) }))
+    .filter((g) => g.lineItems.length > 0);
   const visibleGroups = deltaGroups.filter((g) => g.lineItems.length > 0);
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      await exportAmendmentToPDF({
+        amendmentNumber: row.amendmentNumber,
+        quoteNumber: row.quoteNumber,
+        originalQuoteNumber: row.originalQuoteNumber,
+        companyName: row.companyName,
+        customerName: row.customerName,
+        createdAt: row.createdAt,
+        deltaGroups: changedGroups as Parameters<typeof exportAmendmentToPDF>[0]["deltaGroups"],
+        subtotalDelta,
+        mrrDelta,
+        discount: data.discount as number | undefined,
+        tax: data.tax as number | undefined,
+        notes,
+      });
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
     <div
@@ -185,8 +212,31 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
 
         {/* ── Footer ── */}
         <div className="amend-modal-footer">
-          <div className="amend-footer-actions">
-            <button type="button" className="edit-modal-save" onClick={onClose}>Close</button>
+          <div className="amend-footer-actions" style={{ justifyContent: "space-between" }}>
+            <button type="button" className="edit-modal-cancel" onClick={onClose}>Close</button>
+            <button
+              type="button"
+              className="export-btn"
+              onClick={() => void handleExport()}
+              disabled={exporting}
+            >
+              {exporting ? (
+                <>
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ opacity: 0.5 }}>
+                    <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" strokeDasharray="10 6" />
+                  </svg>
+                  Exporting…
+                </>
+              ) : (
+                <>
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M3 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                  Export PDF
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
