@@ -31,6 +31,12 @@ interface AmendmentData {
   discount?: number;
   tax?: number;
   notes?: string;
+  addressNumber?: string;
+  addressName?: string;
+  addressCity?: string;
+  addressState?: string;
+  zipCode?: string;
+  addressCountry?: string;
 }
 
 interface AmendmentRow {
@@ -132,6 +138,7 @@ function buildEditState(row: AmendmentRow): EditModeState {
 /* ── Main Page ────────────────────────────────────────────── */
 export default function AmendmentsPage() {
   const [amendments, setAmendments] = useState<AmendmentRow[]>([]);
+  const [quotesMap, setQuotesMap] = useState<Map<string, Quote>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -142,19 +149,53 @@ export default function AmendmentsPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/api/amendments`, { credentials: "include" });
-      if (!res.ok) {
-        const d = (await res.json()) as { error?: string };
+      const [amendRes, quotesRes] = await Promise.all([
+        fetch(`${API_BASE}/api/amendments`, { credentials: "include" }),
+        fetch(`${API_BASE}/api/quotes`, { credentials: "include" }),
+      ]);
+      if (!amendRes.ok) {
+        const d = (await amendRes.json()) as { error?: string };
         throw new Error(d.error ?? "Failed to load");
       }
-      const data = (await res.json()) as { amendments: AmendmentRow[] };
+      const data = (await amendRes.json()) as { amendments: AmendmentRow[] };
       setAmendments([...data.amendments].reverse());
+      if (quotesRes.ok) {
+        const qd = (await quotesRes.json()) as { quotes: Quote[] };
+        const map = new Map<string, Quote>();
+        for (const q of qd.quotes ?? []) {
+          if (q.meta?.id) map.set(q.meta.id, q);
+        }
+        setQuotesMap(map);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
       setLoading(false);
     }
   }, []);
+
+  /** Fill in address from the original quote when the amendment's stored address is blank */
+  function augmentRowWithAddress(row: AmendmentRow): AmendmentRow {
+    const d = row.data ?? {};
+    const hasAddr = [d.addressNumber, d.addressName, d.addressCity, d.addressState, d.zipCode]
+      .some((v) => v && v.trim() !== "");
+    if (hasAddr) return row;
+    const origQuote = quotesMap.get(row.originalQuoteId);
+    if (!origQuote?.meta) return row;
+    const m = origQuote.meta;
+    return {
+      ...row,
+      data: {
+        ...d,
+        addressNumber: m.addressNumber ?? "",
+        addressName: m.addressName ?? "",
+        addressCity: m.addressCity ?? "",
+        addressState: m.addressState ?? "",
+        zipCode: m.zipCode ?? "",
+        addressCountry: m.addressCountry ?? "",
+      },
+    };
+  }
 
   useEffect(() => { void load(); }, [load]);
 
@@ -282,7 +323,7 @@ export default function AmendmentsPage() {
                         <button
                           type="button"
                           className="admin-btn-view"
-                          onClick={() => setViewRow(row)}
+                          onClick={() => setViewRow(augmentRowWithAddress(row))}
                           title="Preview amendment"
                         >
                           <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
@@ -294,7 +335,7 @@ export default function AmendmentsPage() {
                         <button
                           type="button"
                           className="admin-btn-edit"
-                          onClick={() => setEditState(buildEditState(row))}
+                          onClick={() => setEditState(buildEditState(augmentRowWithAddress(row)))}
                           title="Edit amendment"
                         >
                           <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
