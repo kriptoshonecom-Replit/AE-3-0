@@ -42,8 +42,9 @@ export default function AmendModal({
     if (initialAmendedQty) return { ...initialAmendedQty };
     const map: Record<string, number> = {};
     for (const g of quote.groups) {
-      for (const li of g.lineItems) {
-        map[li.id] = li.quantity;
+      const items = Array.isArray(g.lineItems) ? g.lineItems : [];
+      for (const li of items) {
+        if (li && li.id) map[li.id] = li.quantity ?? 0;
       }
     }
     return map;
@@ -73,11 +74,11 @@ export default function AmendModal({
   const deltaSummary = useMemo(() => {
     let subtotalDelta = 0;
     const deltaGroups = quote.groups
-      .filter((g) => g.lineItems.length > 0)
+      .filter((g) => Array.isArray(g.lineItems) && g.lineItems.filter(Boolean).length > 0)
       .map((g) => ({
         categoryId: g.categoryId,
         categoryName: g.categoryName,
-        lineItems: g.lineItems.map((li) => {
+        lineItems: (Array.isArray(g.lineItems) ? g.lineItems : []).filter(Boolean).map((li) => {
           const oQty = li.quantity;
           const aQty = amendedQty[li.id] ?? li.quantity;
           const delta = aQty - oQty;
@@ -173,15 +174,17 @@ export default function AmendModal({
   }
 
   // In edit mode show only groups/items that carry a qty change (consistent with the view modal).
-  // In create mode show everything so the user can pick what to change.
+  // In create mode show ALL groups from the quote (no filter) so no items are ever hidden.
   const visibleGroups = isEditMode
     ? quote.groups
         .map((g) => ({
           ...g,
-          lineItems: g.lineItems.filter((li) => (amendedQty[li.id] ?? li.quantity) !== li.quantity),
+          lineItems: (Array.isArray(g.lineItems) ? g.lineItems : []).filter(
+            (li) => li && (amendedQty[li.id] ?? li.quantity) !== li.quantity,
+          ),
         }))
         .filter((g) => g.lineItems.length > 0)
-    : quote.groups.filter((g) => g.lineItems.length > 0);
+    : quote.groups.filter((g) => Array.isArray(g.lineItems) && g.lineItems.filter(Boolean).length > 0);
 
   return (
     <div
@@ -245,7 +248,7 @@ export default function AmendModal({
                     </tr>
                   </thead>
                   <tbody>
-                    {group.lineItems.map((li) => {
+                    {(Array.isArray(group.lineItems) ? group.lineItems : []).filter(Boolean).map((li) => {
                       const oQty = li.quantity;
                       const aQty = amendedQty[li.id] ?? li.quantity;
                       const delta = aQty - oQty;
