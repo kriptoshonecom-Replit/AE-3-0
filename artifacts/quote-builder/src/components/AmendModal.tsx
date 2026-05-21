@@ -172,7 +172,16 @@ export default function AmendModal({
     }
   }
 
-  const visibleGroups = quote.groups.filter((g) => g.lineItems.length > 0);
+  // In edit mode show only groups/items that carry a qty change (consistent with the view modal).
+  // In create mode show everything so the user can pick what to change.
+  const visibleGroups = isEditMode
+    ? quote.groups
+        .map((g) => ({
+          ...g,
+          lineItems: g.lineItems.filter((li) => (amendedQty[li.id] ?? li.quantity) !== li.quantity),
+        }))
+        .filter((g) => g.lineItems.length > 0)
+    : quote.groups.filter((g) => g.lineItems.length > 0);
 
   return (
     <div
