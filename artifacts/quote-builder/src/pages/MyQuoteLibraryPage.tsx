@@ -189,6 +189,7 @@ function EditDrawer({ row, onClose, onSaved }: EditDrawerProps) {
 export default function MyQuoteLibraryPage() {
   const [, setLocation] = useLocation();
   const [quotes, setQuotes] = useState<UserQuoteRow[]>([]);
+  const [amendCounts, setAmendCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -198,13 +199,24 @@ export default function MyQuoteLibraryPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/api/quotes/library`, { credentials: "include" });
-      if (!res.ok) {
-        const d = (await res.json()) as { error?: string };
+      const [quotesRes, amendRes] = await Promise.all([
+        fetch(`${API_BASE}/api/quotes/library`, { credentials: "include" }),
+        fetch(`${API_BASE}/api/amendments`, { credentials: "include" }),
+      ]);
+      if (!quotesRes.ok) {
+        const d = (await quotesRes.json()) as { error?: string };
         throw new Error(d.error ?? "Failed to load");
       }
-      const data = (await res.json()) as { quotes: UserQuoteRow[] };
+      const data = (await quotesRes.json()) as { quotes: UserQuoteRow[] };
       setQuotes([...data.quotes].reverse());
+      if (amendRes.ok) {
+        const ad = (await amendRes.json()) as { amendments: { originalQuoteId: string }[] };
+        const counts: Record<string, number> = {};
+        for (const a of ad.amendments ?? []) {
+          counts[a.originalQuoteId] = (counts[a.originalQuoteId] ?? 0) + 1;
+        }
+        setAmendCounts(counts);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
@@ -300,6 +312,7 @@ export default function MyQuoteLibraryPage() {
                   <th>Updated</th>
                   <th>Updated By</th>
                   <th>Status</th>
+                  <th style={{ textAlign: "center" }}>Amend</th>
                   <th style={{ textAlign: "right" }}>Total MRR</th>
                   <th style={{ textAlign: "right" }}>Actions</th>
                 </tr>
@@ -307,7 +320,7 @@ export default function MyQuoteLibraryPage() {
               <tbody>
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="admin-table-empty">
+                    <td colSpan={10} className="admin-table-empty">
                       {search
                         ? `No quotes match "${search}"`
                         : "No quotes yet — open a quote in the builder and it will appear here automatically."}
@@ -332,6 +345,28 @@ export default function MyQuoteLibraryPage() {
                     </td>
                     <td>
                       <StatusBadge status={row.passStatus} />
+                    </td>
+                    <td style={{ textAlign: "center" }}>
+                      {amendCounts[row.id] ? (
+                        <span style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          minWidth: 20,
+                          height: 20,
+                          padding: "0 6px",
+                          borderRadius: 10,
+                          background: "var(--accent)",
+                          color: "#fff",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          letterSpacing: 0.2,
+                        }}>
+                          {amendCounts[row.id]}
+                        </span>
+                      ) : (
+                        <span style={{ color: "var(--text-3)" }}>—</span>
+                      )}
                     </td>
                     <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                       {row.data ? formatCurrency(computeTotal(row.data)) : "—"}
