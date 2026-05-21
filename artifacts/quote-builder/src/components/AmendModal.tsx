@@ -34,18 +34,10 @@ export default function AmendModal({
   const [quoteNumber, setQuoteNumber] = useState(initialQuoteNumber ?? "");
   const [notes, setNotes] = useState(initialNotes ?? "");
   const [loadingCount, setLoadingCount] = useState(!isEditMode);
-  // In create mode, we always re-fetch the quote from the server to ensure
-  // we have the authoritative version (not a stale browser/localStorage copy).
-  const [loadingQuote, setLoadingQuote] = useState(!isEditMode);
-  const [serverQuote, setServerQuote] = useState<Quote | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // The quote we render groups from: server version (fresh) → prop fallback
-  const activeQuote = serverQuote ?? quote;
-
-  // amendedQty keyed by line item id — initialised from prop in edit mode,
-  // or from the server quote once it arrives in create mode.
+  // amendedQty keyed by line item id
   const [amendedQty, setAmendedQty] = useState<Record<string, number>>(() => {
     if (initialAmendedQty) return { ...initialAmendedQty };
     const map: Record<string, number> = {};
@@ -58,33 +50,7 @@ export default function AmendModal({
     return map;
   });
 
-  // In create mode: fetch the quote fresh from the server so the modal always
-  // shows the authoritative line items regardless of local state.
-  useEffect(() => {
-    if (isEditMode) return;
-    fetch(`${API_BASE}/api/quotes/${encodeURIComponent(quote.meta.id)}`, {
-      credentials: "include",
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d: { quote?: Quote } | null) => {
-        if (d?.quote) {
-          setServerQuote(d.quote);
-          // Re-seed amendedQty from the server groups so every item is present
-          const map: Record<string, number> = {};
-          for (const g of (d.quote.groups ?? [])) {
-            const items = Array.isArray(g.lineItems) ? g.lineItems : [];
-            for (const li of items) {
-              if (li && li.id) map[li.id] = li.quantity ?? 0;
-            }
-          }
-          setAmendedQty(map);
-        }
-      })
-      .catch(() => { /* network error — fall back to prop */ })
-      .finally(() => setLoadingQuote(false));
-  }, [isEditMode, quote.meta.id]);
-
-  // Fetch existing amendment count to build the suggested quote number
+  // Fetch existing count only in create mode to build the suggested quote number
   useEffect(() => {
     if (isEditMode) return;
     fetch(`${API_BASE}/api/amendments?originalQuoteId=${encodeURIComponent(quote.meta.id)}`, {
@@ -107,7 +73,7 @@ export default function AmendModal({
   // Delta calculations — recomputed whenever amendedQty changes
   const deltaSummary = useMemo(() => {
     let subtotalDelta = 0;
-    const deltaGroups = activeQuote.groups
+    const deltaGroups = quote.groups
       .filter((g) => Array.isArray(g.lineItems) && g.lineItems.filter(Boolean).length > 0)
       .map((g) => ({
         categoryId: g.categoryId,
@@ -134,12 +100,12 @@ export default function AmendModal({
         }),
       }));
 
-    const discount = activeQuote.meta.discount ?? 0;
-    const tax = activeQuote.meta.tax ?? 0;
+    const discount = quote.meta.discount ?? 0;
+    const tax = quote.meta.tax ?? 0;
     const afterDiscount = subtotalDelta * (1 - discount / 100);
     const mrrDelta = afterDiscount * (1 + tax / 100);
     return { deltaGroups, subtotalDelta, mrrDelta };
-  }, [activeQuote, amendedQty, tieredAdditionalPrice]);
+  }, [quote, amendedQty, tieredAdditionalPrice]);
 
   const hasAnyDelta = deltaSummary.deltaGroups.some((g) => g.lineItems.some((li) => li.delta !== 0));
 
@@ -208,9 +174,9 @@ export default function AmendModal({
   }
 
   // In edit mode show only groups/items that carry a qty change (consistent with the view modal).
-  // In create mode show ALL groups from the server-fetched quote so no items are ever hidden.
+  // In create mode show ALL groups from the quote (no filter) so no items are ever hidden.
   const visibleGroups = isEditMode
-    ? activeQuote.groups
+    ? quote.groups
         .map((g) => ({
           ...g,
           lineItems: (Array.isArray(g.lineItems) ? g.lineItems : []).filter(
@@ -218,7 +184,7 @@ export default function AmendModal({
           ),
         }))
         .filter((g) => g.lineItems.length > 0)
-    : activeQuote.groups.filter((g) => Array.isArray(g.lineItems) && g.lineItems.filter(Boolean).length > 0);
+    : quote.groups.filter((g) => Array.isArray(g.lineItems) && g.lineItems.filter(Boolean).length > 0);
 
   return (
     <div
@@ -248,12 +214,7 @@ export default function AmendModal({
 
         {/* ── Body ── */}
         <div className="amend-modal-body">
-          {loadingQuote && (
-            <p style={{ color: "var(--text-3)", fontSize: 13, textAlign: "center", padding: "24px 0" }}>
-              Loading quote items…
-            </p>
-          )}
-          {!loadingQuote && !isEditMode && visibleGroups.length === 0 && (
+          {!isEditMode && visibleGroups.length === 0 && (
             <p style={{ color: "var(--text-3)", fontSize: 13, textAlign: "center", padding: "24px 0" }}>
               No products found on this quote. Add products first.
             </p>
@@ -383,7 +344,7 @@ export default function AmendModal({
               type="button"
               className="edit-modal-save"
               onClick={handleSave}
-              disabled={saving || !hasAnyDelta || loadingCount || loadingQuote}
+              disabled={saving || !hasAnyDelta || loadingCount}
             >
               {saving ? "Saving…" : isEditMode ? "Save Changes" : "Create Amendment"}
             </button>

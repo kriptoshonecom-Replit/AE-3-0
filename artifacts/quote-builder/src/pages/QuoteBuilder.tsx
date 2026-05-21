@@ -147,6 +147,8 @@ export default function QuoteBuilder() {
   const [initialized, setInitialized] = useState(false);
   const [showAddGroup, setShowAddGroup] = useState(false);
   const [showAmendModal, setShowAmendModal] = useState(false);
+  // The quote passed into AmendModal — fetched fresh from server on button click
+  const [amendQuote, setAmendQuote] = useState<Quote | null>(null);
   const { open: sidebarOpen, setOpen: setSidebarOpen } = useGlobalNav();
   const [activeTab, setActiveTab] = useState(0);
   const [appVersion, setAppVersion] = useState<string>("");
@@ -1280,7 +1282,25 @@ export default function QuoteBuilder() {
                         <button
                           type="button"
                           className="btn-amend"
-                          onClick={() => setShowAmendModal(true)}
+                          onClick={async () => {
+                            // Fetch fresh from server so modal always has all line items
+                            try {
+                              const res = await fetch(`${API_BASE}/api/quotes/${encodeURIComponent(quote.meta.id)}`, {
+                                credentials: "include",
+                              });
+                              if (res.ok) {
+                                const d = (await res.json()) as { quote?: Quote };
+                                if (d.quote) {
+                                  setAmendQuote(d.quote);
+                                  setShowAmendModal(true);
+                                  return;
+                                }
+                              }
+                            } catch { /* fall through */ }
+                            // Fallback: use current in-memory quote
+                            setAmendQuote(quote);
+                            setShowAmendModal(true);
+                          }}
                         >
                           <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
                             <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -1400,12 +1420,12 @@ export default function QuoteBuilder() {
         />
       )}
 
-      {showAmendModal && (
+      {showAmendModal && amendQuote && (
         <AmendModal
-          quote={quote}
+          quote={amendQuote}
           tieredAdditionalPrice={tieredAdditionalPrice}
-          onClose={() => setShowAmendModal(false)}
-          onSaved={() => setShowAmendModal(false)}
+          onClose={() => { setShowAmendModal(false); setAmendQuote(null); }}
+          onSaved={() => { setShowAmendModal(false); setAmendQuote(null); }}
         />
       )}
 
