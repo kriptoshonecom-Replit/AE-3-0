@@ -44,6 +44,7 @@ router.post("/amendments", requireAuth, async (req, res) => {
     deltaGroups?: unknown;
     subtotalDelta?: number;
     mrrDelta?: number;
+    restockingFee?: number;
     discount?: number;
     tax?: number;
     notes?: string;
@@ -74,6 +75,7 @@ router.post("/amendments", requireAuth, async (req, res) => {
       deltaGroups: body.deltaGroups ?? [],
       subtotalDelta: body.subtotalDelta ?? 0,
       mrrDelta: body.mrrDelta ?? 0,
+      restockingFee: body.restockingFee ?? 0,
       discount: body.discount ?? 0,
       tax: body.tax ?? 0,
       notes: body.notes ?? "",
@@ -119,6 +121,7 @@ router.patch("/amendments/:id", requireAuth, async (req, res) => {
     deltaGroups?: unknown;
     subtotalDelta?: number;
     mrrDelta?: number;
+    restockingFee?: number;
     discount?: number;
     tax?: number;
     addressNumber?: string;
@@ -150,6 +153,7 @@ router.patch("/amendments/:id", requireAuth, async (req, res) => {
       updatedData["deltaGroups"] = body.deltaGroups;
       updatedData["subtotalDelta"] = body.subtotalDelta ?? existingData["subtotalDelta"] ?? 0;
       updatedData["mrrDelta"] = body.mrrDelta ?? existingData["mrrDelta"] ?? 0;
+      updatedData["restockingFee"] = body.restockingFee ?? existingData["restockingFee"] ?? 0;
     }
     if (body.discount !== undefined) updatedData["discount"] = body.discount;
     if (body.tax !== undefined) updatedData["tax"] = body.tax;

@@ -181,6 +181,16 @@ export default function QuoteBuilder() {
     [productCategories],
   );
 
+  const rfByProductId = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const cat of productCategories) {
+      for (const item of cat.items) {
+        if (item.rf) map[item.id] = item.rf;
+      }
+    }
+    return map;
+  }, [productCategories]);
+
   const [pitCategories, setPitCategories] = useState<PitCategory[]>(
     (pitDataStatic.categories as unknown as PitCategory[]).filter((c) => c.id !== "heatmap"),
   );
@@ -1440,6 +1450,7 @@ export default function QuoteBuilder() {
         <AmendModal
           quote={amendQuote}
           tieredAdditionalPrice={tieredAdditionalPrice}
+          rfByProductId={rfByProductId}
           onClose={() => { setShowAmendModal(false); setAmendQuote(null); }}
           onSaved={() => { setShowAmendModal(false); setAmendQuote(null); }}
         />

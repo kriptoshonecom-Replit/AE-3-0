@@ -8,6 +8,8 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 interface AmendModalProps {
   quote: Quote;
   tieredAdditionalPrice: number;
+  /** productId → RF dollar amount, built from the live product catalog */
+  rfByProductId?: Record<string, number>;
   onClose: () => void;
   onSaved: () => void;
   /** Edit-mode: if set, PATCHes this amendment id instead of POSTing a new one */
@@ -21,6 +23,7 @@ interface AmendModalProps {
 export default function AmendModal({
   quote,
   tieredAdditionalPrice,
+  rfByProductId = {},
   onClose,
   onSaved,
   editAmendmentId,
@@ -73,6 +76,7 @@ export default function AmendModal({
   // Delta calculations — recomputed whenever amendedQty changes
   const deltaSummary = useMemo(() => {
     let subtotalDelta = 0;
+    let restockingFee = 0;
     const deltaGroups = quote.groups
       .filter((g) => Array.isArray(g.lineItems) && g.lineItems.filter(Boolean).length > 0)
       .map((g) => ({
@@ -86,6 +90,11 @@ export default function AmendModal({
           const amendedValue = computeLineItemTotal(li.productId, li.unitPrice, aQty, tieredAdditionalPrice);
           const deltaValue = amendedValue - originalValue;
           subtotalDelta += deltaValue;
+          // Restocking fee only applies when reducing quantity
+          if (delta < 0) {
+            const rf = rfByProductId[li.productId] ?? 0;
+            restockingFee += Math.abs(delta) * rf;
+          }
           return {
             productId: li.productId,
             productName: li.productName,
@@ -104,8 +113,8 @@ export default function AmendModal({
     const tax = quote.meta.tax ?? 0;
     const afterDiscount = subtotalDelta * (1 - discount / 100);
     const mrrDelta = afterDiscount * (1 + tax / 100);
-    return { deltaGroups, subtotalDelta, mrrDelta };
-  }, [quote, amendedQty, tieredAdditionalPrice]);
+    return { deltaGroups, subtotalDelta, mrrDelta, restockingFee };
+  }, [quote, amendedQty, tieredAdditionalPrice, rfByProductId]);
 
   const hasAnyDelta = deltaSummary.deltaGroups.some((g) => g.lineItems.some((li) => li.delta !== 0));
 
@@ -135,6 +144,7 @@ export default function AmendModal({
             deltaGroups: deltaSummary.deltaGroups,
             subtotalDelta: deltaSummary.subtotalDelta,
             mrrDelta: deltaSummary.mrrDelta,
+            restockingFee: deltaSummary.restockingFee,
             discount: quote.meta.discount ?? 0,
             tax: quote.meta.tax ?? 0,
             ...addrPayload,
@@ -155,6 +165,7 @@ export default function AmendModal({
             deltaGroups: deltaSummary.deltaGroups,
             subtotalDelta: deltaSummary.subtotalDelta,
             mrrDelta: deltaSummary.mrrDelta,
+            restockingFee: deltaSummary.restockingFee,
             discount: quote.meta.discount ?? 0,
             tax: quote.meta.tax ?? 0,
             notes,
@@ -330,6 +341,17 @@ export default function AmendModal({
               {deltaSummary.mrrDelta === 0 ? "—" : `${deltaSummary.mrrDelta > 0 ? "+" : ""}${formatCurrency(deltaSummary.mrrDelta)}`}
             </span>
           </div>
+          {deltaSummary.restockingFee > 0 && (
+            <>
+              <div className="amend-summary-sep" />
+              <div className="amend-summary-item">
+                <span className="amend-summary-label">Restocking Fee</span>
+                <span className="amend-summary-value amend-delta-neg amend-delta-bold">
+                  {formatCurrency(deltaSummary.restockingFee)}
+                </span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* ── Footer ── */}
