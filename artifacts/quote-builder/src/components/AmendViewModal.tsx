@@ -32,6 +32,7 @@ interface AmendmentDataShape {
   deltaGroups?: DeltaGroup[];
   subtotalDelta?: number;
   mrrDelta?: number;
+  restockingFee?: number;
   discount?: number;
   tax?: number;
   notes?: string;
@@ -71,6 +72,7 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
   const deltaGroups = (data.deltaGroups ?? []) as DeltaGroup[];
   const subtotalDelta = data.subtotalDelta ?? 0;
   const mrrDelta = data.mrrDelta ?? 0;
+  const restockingFee = data.restockingFee ?? 0;
   const notes = data.notes ?? "";
   const amendNumStr = String(row.amendmentNumber).padStart(3, "0");
   const changedGroups = deltaGroups
@@ -90,6 +92,7 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
         deltaGroups: changedGroups as Parameters<typeof exportAmendmentToPDF>[0]["deltaGroups"],
         subtotalDelta,
         mrrDelta,
+        restockingFee,
         discount: data.discount as number | undefined,
         tax: data.tax as number | undefined,
         notes,
@@ -242,6 +245,17 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
               {mrrDelta === 0 ? "—" : `${mrrDelta > 0 ? "+" : ""}${formatCurrency(mrrDelta)}`}
             </span>
           </div>
+          {restockingFee > 0 && (
+            <>
+              <div className="amend-summary-sep" />
+              <div className="amend-summary-item">
+                <span className="amend-summary-label">Restocking Fee</span>
+                <span className="amend-summary-value amend-delta-neg amend-delta-bold">
+                  {formatCurrency(restockingFee)}
+                </span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* ── Footer ── */}

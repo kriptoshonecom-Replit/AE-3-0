@@ -41,6 +41,7 @@ export interface AmendmentExportData {
   deltaGroups: DeltaGroup[];
   subtotalDelta: number;
   mrrDelta: number;
+  restockingFee?: number;
   discount?: number;
   tax?: number;
   notes?: string;
@@ -338,6 +339,17 @@ export async function exportAmendmentToPDF(data: AmendmentExportData): Promise<v
   };
 
   deltaRow("Subtotal Delta", data.subtotalDelta);
+
+  if (data.restockingFee && data.restockingFee > 0) {
+    addPageIfNeeded(8);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(100, 116, 139);
+    doc.text("Restocking Fee", totalsX, y);
+    doc.setTextColor(185, 28, 28);
+    doc.text(formatCurrency(data.restockingFee), valueX, y, { align: "right" });
+    y += 6;
+  }
 
   if (data.discount && data.discount > 0) {
     doc.setFontSize(8.5);
