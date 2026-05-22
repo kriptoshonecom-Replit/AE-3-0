@@ -31,10 +31,17 @@ export function findSubjectItem(
 
 /** Returns true if any lookup product's qty changed between old and new group */
 export function lookupQtyChanged(oldGroup: QuoteGroup, newGroup: QuoteGroup, lookupIds: string[]): boolean {
+  // Detect qty change on a lookup item that is still present
   for (const newItem of newGroup.lineItems) {
     if (!lookupIds.includes(newItem.productId)) continue;
     const oldItem = oldGroup.lineItems.find((i) => i.id === newItem.id);
     if (oldItem && oldItem.quantity !== newItem.quantity) return true;
+  }
+  // Detect a lookup item that was removed entirely from the group
+  for (const oldItem of oldGroup.lineItems) {
+    if (!lookupIds.includes(oldItem.productId)) continue;
+    const stillPresent = newGroup.lineItems.some((i) => i.id === oldItem.id);
+    if (!stillPresent) return true;
   }
   return false;
 }

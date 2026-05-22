@@ -2,7 +2,7 @@ export interface ProductItem {
   id: string;
   name: string;
   price: number;
-  type?: "info" | "warning";
+  type?: "info" | "warning" | "product";
   text?: string;
   image?: string;
   produration?: number;
