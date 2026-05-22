@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 import { formatCurrency } from "../utils/calculations";
 import AmendModal from "../components/AmendModal";
@@ -150,6 +150,15 @@ export default function AmendmentsPage() {
   const [search, setSearch] = useState("");
   const [editState, setEditState] = useState<EditModeState | null>(null);
   const [viewRow, setViewRow] = useState<AmendmentRow | null>(null);
+  const [closedGroups, setClosedGroups] = useState<Set<string>>(new Set());
+
+  function toggleGroup(key: string) {
+    setClosedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -241,6 +250,23 @@ export default function AmendmentsPage() {
     );
   });
 
+  const groups = useMemo(() => {
+    const map = new Map<string, {
+      key: string;
+      originalQuoteNumber: string | null;
+      companyName: string | null;
+      rows: AmendmentRow[];
+    }>();
+    for (const row of filtered) {
+      const key = row.originalQuoteNumber || row.originalQuoteId;
+      if (!map.has(key)) {
+        map.set(key, { key, originalQuoteNumber: row.originalQuoteNumber, companyName: row.companyName, rows: [] });
+      }
+      map.get(key)!.rows.push(row);
+    }
+    return [...map.values()];
+  }, [filtered]);
+
   return (
     <div className="admin-page">
       <div className="admin-topbar">
@@ -292,102 +318,146 @@ export default function AmendmentsPage() {
         {!loading && error && <div className="edit-modal-error">{error}</div>}
 
         {!loading && !error && (
-          <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Amendment #</th>
-                  <th>Quote #</th>
-                  <th>Original Quote</th>
-                  <th>Company</th>
-                  <th>Customer</th>
-                  {isAdmin && <th>Creator</th>}
-                  <th>Created</th>
-                  <th style={{ textAlign: "right" }}>MRR Delta</th>
-                  <th style={{ textAlign: "right" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 && (
-                  <tr>
-                    <td colSpan={isAdmin ? 9 : 8} className="admin-table-empty">
-                      {search
-                        ? `No amendments match "${search}"`
-                        : "No amendments yet — open a quote with PASS status in the builder and click Amend."}
-                    </td>
-                  </tr>
-                )}
-                {filtered.map((row) => (
-                  <tr key={row.id}>
-                    <td style={{ fontFamily: "monospace", fontSize: 12, color: "var(--text-2)" }}>
-                      {fmtAmendNum(row.amendmentNumber)}
-                    </td>
-                    <td className="admin-td-bold" style={{ fontFamily: "monospace", fontSize: 12 }}>
-                      {row.quoteNumber || <span style={{ color: "var(--text-3)" }}>Untitled</span>}
-                    </td>
-                    <td style={{ fontFamily: "monospace", fontSize: 12, color: "var(--text-2)" }}>
-                      {row.originalQuoteNumber || <span style={{ color: "var(--text-3)" }}>—</span>}
-                    </td>
-                    <td>{row.companyName || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
-                    <td>{row.customerName || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
-                    {isAdmin && (
-                      <td>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                          <span style={{ fontWeight: 500 }}>{row.creatorName || "—"}</span>
-                          {row.creatorEmail && (
-                            <span style={{ fontSize: 11, color: "var(--text-3)" }}>{row.creatorEmail}</span>
-                          )}
-                        </div>
-                      </td>
+          <div className="amend-accordion-list">
+            {groups.length === 0 && (
+              <div className="admin-table-empty" style={{ padding: "32px 0", textAlign: "center", color: "var(--text-3)", fontSize: 13 }}>
+                {search
+                  ? `No amendments match "${search}"`
+                  : "No amendments yet — open a quote with PASS status in the builder and click Amend."}
+              </div>
+            )}
+
+            {groups.map((group) => {
+              const isOpen = !closedGroups.has(group.key);
+              const totalMrr = group.rows.reduce((sum, r) => sum + (r.data?.mrrDelta ?? 0), 0);
+              const mrrColor = totalMrr > 0 ? "var(--green, #15803d)" : totalMrr < 0 ? "var(--red, #b91c1c)" : "var(--text-3)";
+
+              return (
+                <div key={group.key} className="amend-accordion">
+                  {/* ── Accordion header ── */}
+                  <button
+                    type="button"
+                    className="amend-accordion-header"
+                    onClick={() => toggleGroup(group.key)}
+                    aria-expanded={isOpen}
+                  >
+                    <svg
+                      className={`amend-accordion-chevron${isOpen ? " open" : ""}`}
+                      width="14" height="14" viewBox="0 0 16 16" fill="none"
+                    >
+                      <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+
+                    <span className="amend-accordion-title">
+                      {group.originalQuoteNumber || <span style={{ color: "var(--text-3)", fontWeight: 400 }}>No quote number</span>}
+                    </span>
+
+                    {group.companyName && (
+                      <span className="amend-accordion-company">· {group.companyName}</span>
                     )}
-                    <td style={{ whiteSpace: "nowrap", fontSize: 12, color: "var(--text-2)" }}>
-                      {fmtDate(row.createdAt)}
-                    </td>
-                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      <MrrDeltaBadge value={row.data?.mrrDelta} />
-                    </td>
-                    <td>
-                      <div className="admin-actions">
-                        <button
-                          type="button"
-                          className="admin-btn-view"
-                          onClick={() => setViewRow(augmentRowWithAddress(row))}
-                          title="Preview amendment"
-                        >
-                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                            <ellipse cx="8" cy="8" rx="6.5" ry="4.5" stroke="currentColor" strokeWidth="1.4" />
-                            <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3" />
-                          </svg>
-                          View
-                        </button>
-                        <button
-                          type="button"
-                          className="admin-btn-edit"
-                          onClick={() => setEditState(buildEditState(augmentRowWithAddress(row)))}
-                          title="Edit amendment"
-                        >
-                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                            <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          className="admin-btn-delete"
-                          onClick={() => void handleDelete(row.id)}
-                          title="Delete amendment"
-                        >
-                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                            <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M13 4l-1 9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L3 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          Delete
-                        </button>
+
+                    <span className="amend-accordion-meta">
+                      <span className="amend-accordion-count">
+                        {group.rows.length} amendment{group.rows.length !== 1 ? "s" : ""}
+                      </span>
+                      {totalMrr !== 0 && (
+                        <span className="amend-accordion-mrr" style={{ color: mrrColor }}>
+                          {totalMrr > 0 ? "+" : ""}{formatCurrency(totalMrr)} MRR
+                        </span>
+                      )}
+                    </span>
+                  </button>
+
+                  {/* ── Accordion body ── */}
+                  {isOpen && (
+                    <div className="amend-accordion-body">
+                      <div className="admin-table-wrap" style={{ borderRadius: 0, border: "none" }}>
+                        <table className="admin-table" style={{ borderRadius: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Amendment #</th>
+                              <th>Quote #</th>
+                              <th>Customer</th>
+                              {isAdmin && <th>Creator</th>}
+                              <th>Created</th>
+                              <th style={{ textAlign: "right" }}>MRR Delta</th>
+                              <th style={{ textAlign: "right" }}>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {group.rows.map((row) => (
+                              <tr key={row.id}>
+                                <td style={{ fontFamily: "monospace", fontSize: 12, color: "var(--text-2)" }}>
+                                  {fmtAmendNum(row.amendmentNumber)}
+                                </td>
+                                <td className="admin-td-bold" style={{ fontFamily: "monospace", fontSize: 12 }}>
+                                  {row.quoteNumber || <span style={{ color: "var(--text-3)" }}>Untitled</span>}
+                                </td>
+                                <td>{row.customerName || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
+                                {isAdmin && (
+                                  <td>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                      <span style={{ fontWeight: 500 }}>{row.creatorName || "—"}</span>
+                                      {row.creatorEmail && (
+                                        <span style={{ fontSize: 11, color: "var(--text-3)" }}>{row.creatorEmail}</span>
+                                      )}
+                                    </div>
+                                  </td>
+                                )}
+                                <td style={{ whiteSpace: "nowrap", fontSize: 12, color: "var(--text-2)" }}>
+                                  {fmtDate(row.createdAt)}
+                                </td>
+                                <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                                  <MrrDeltaBadge value={row.data?.mrrDelta} />
+                                </td>
+                                <td>
+                                  <div className="admin-actions">
+                                    <button
+                                      type="button"
+                                      className="admin-btn-view"
+                                      onClick={() => setViewRow(augmentRowWithAddress(row))}
+                                      title="Preview amendment"
+                                    >
+                                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                                        <ellipse cx="8" cy="8" rx="6.5" ry="4.5" stroke="currentColor" strokeWidth="1.4" />
+                                        <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3" />
+                                      </svg>
+                                      View
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="admin-btn-edit"
+                                      onClick={() => setEditState(buildEditState(augmentRowWithAddress(row)))}
+                                      title="Edit amendment"
+                                    >
+                                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                                        <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                      Edit
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="admin-btn-delete"
+                                      onClick={() => void handleDelete(row.id)}
+                                      title="Delete amendment"
+                                    >
+                                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                                        <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M13 4l-1 9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L3 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                      Delete
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
