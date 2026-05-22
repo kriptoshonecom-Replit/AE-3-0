@@ -423,6 +423,17 @@ export default function QuoteBuilder() {
   const configAlertStateRef = useRef(configAlertState);
   useEffect(() => { configAlertStateRef.current = configAlertState; }, [configAlertState]);
 
+  // Queue of pending alerts — shown one at a time after the current modal is dismissed
+  const configAlertQueueRef = useRef<Array<{
+    configId: string;
+    subjectCount: number;
+    subjectProductName: string;
+    displayMessage: string;
+    groupIdx: number;
+    itemIdx: number;
+    infoOnly: boolean;
+  }>>([]);
+
   // Clear timers on unmount
   useEffect(() => {
     return () => {
@@ -678,9 +689,10 @@ export default function QuoteBuilder() {
     // ── Dynamic DB-configured alert checks ──────────────────────────────────
     for (const cfg of alertConfigs) {
       const tryShowConfigAlert = (grps: QuoteGroup[]) => {
-        if (configAlertStateRef.current) return; // don't stack modals
         const subject = findSubjectItem(grps, cfg.subjectProductId);
         if (!subject) return;
+
+        let alertPayload: typeof configAlertState;
 
         if (cfg.infoOnly) {
           // info-only: skip entirely if every lookup product is already present (qty > 0)
@@ -701,7 +713,7 @@ export default function QuoteBuilder() {
             latestGroupsRef.current = resolvedGroups;
           }
 
-          setConfigAlertState({
+          alertPayload = {
             configId: cfg.id,
             subjectCount: computeLookupCount(resolvedGroups, cfg.lookupProductIds),
             subjectProductName: subject.productName,
@@ -709,11 +721,11 @@ export default function QuoteBuilder() {
             groupIdx: subject.groupIdx,
             itemIdx: subject.itemIdx,
             infoOnly: true,
-          });
+          };
         } else {
           const count = computeLookupCount(grps, cfg.lookupProductIds);
           if (count === subject.currentQty) return;
-          setConfigAlertState({
+          alertPayload = {
             configId: cfg.id,
             subjectCount: count,
             subjectProductName: subject.productName,
@@ -721,7 +733,14 @@ export default function QuoteBuilder() {
             groupIdx: subject.groupIdx,
             itemIdx: subject.itemIdx,
             infoOnly: false,
-          });
+          };
+        }
+
+        // If a modal is already visible, queue this alert for later; otherwise show immediately
+        if (configAlertStateRef.current) {
+          configAlertQueueRef.current.push(alertPayload);
+        } else {
+          setConfigAlertState(alertPayload);
         }
       };
 
@@ -750,6 +769,12 @@ export default function QuoteBuilder() {
     }
   };
 
+  // Advance to the next queued alert after the current one is dismissed
+  const showNextQueuedAlert = () => {
+    const next = configAlertQueueRef.current.shift();
+    setConfigAlertState(next ?? null);
+  };
+
   const handleConfigAlertAutoAdjust = () => {
     if (!configAlertState) return;
     if (configAlertState.infoOnly) { handleConfigAlertKeep(); return; }
@@ -771,18 +796,18 @@ export default function QuoteBuilder() {
     const updated = { ...quote, groups };
     setQuote(updated);
     autosave(updated);
-    setConfigAlertState(null);
     if (preflightAction) {
       preflightGroupsRef.current = groups;
       advancePreflightQueue(preflightQueue, preflightAction);
     }
+    showNextQueuedAlert();
   };
 
   const handleConfigAlertKeep = () => {
-    setConfigAlertState(null);
     if (preflightAction) {
       advancePreflightQueue(preflightQueue, preflightAction);
     }
+    showNextQueuedAlert();
   };
 
   const handleGroupRemove = (idx: number) => {
@@ -941,6 +966,9 @@ export default function QuoteBuilder() {
   }, []);
 
   const handleSelectQuote = (q: Quote) => {
+    // Clear any pending alerts from the previous quote
+    configAlertQueueRef.current = [];
+    setConfigAlertState(null);
     // Detect admin editing another user's quote
     const rawMeta = q.meta as unknown as Record<string, unknown>;
     const ownerId = rawMeta._adminOwnerId as string | undefined;
