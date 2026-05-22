@@ -18,6 +18,8 @@ interface ProductItem {
   traduration?: number;
   instaduration?: number;
   stageduration?: number;
+  /** Restocking Fee — dollar amount charged on return */
+  rf?: number;
   /** Quantity Limit Toggle — when true, quantity is locked to 1 in quotes */
   qlt?: boolean;
   /** Exclusive Group — products sharing the same label are mutually exclusive */
@@ -205,6 +207,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
   const [tra, setTra] = useState(numberOrEmpty(item?.traduration));
   const [ins, setIns] = useState(numberOrEmpty(item?.instaduration));
   const [sta, setSta] = useState(numberOrEmpty(item?.stageduration));
+  const [rf, setRf] = useState(numberOrEmpty(item?.rf));
   const [imageUrl, setImageUrl] = useState<string | null>(item?.image ?? null);
   const [imageUploading, setImageUploading] = useState(false);
   const [imageError, setImageError] = useState("");
@@ -268,6 +271,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
       traduration: Number(tra) || 0,
       instaduration: Number(ins) || 0,
       stageduration: Number(sta) || 0,
+      rf: Number(rf) || 0,
       image: imageUrl ?? null,
     };
 
@@ -438,6 +442,10 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
             <div className="edit-field-group">
               <label>Stage Duration (h)</label>
               <input type="number" min="0" step="0.5" value={sta} onChange={(e) => setSta(e.target.value)} placeholder="0" />
+            </div>
+            <div className="edit-field-group">
+              <label>RF ($)</label>
+              <input type="number" min="0" step="0.01" value={rf} onChange={(e) => setRf(e.target.value)} placeholder="0" />
             </div>
           </div>
 
