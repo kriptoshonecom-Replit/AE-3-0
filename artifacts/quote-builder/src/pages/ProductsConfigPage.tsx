@@ -606,7 +606,7 @@ export default function ProductsConfigPage() {
   useEffect(() => { void load(); }, [load]);
 
   async function patchItem(catId: string, itemId: string, field: string, raw: string | boolean | null) {
-    const numFields = ["price", "pci", "hwmc", "produration", "traduration", "instaduration", "stageduration"];
+    const numFields = ["price", "pci", "hwmc", "produration", "traduration", "instaduration", "stageduration", "rf"];
     const val = raw === null ? null : typeof raw === "boolean" ? raw : numFields.includes(field) ? Number(raw) : raw;
     // Optimistic update
     setData((prev) => {
@@ -744,6 +744,7 @@ export default function ProductsConfigPage() {
                       <th>Train</th>
                       <th>Install</th>
                       <th>Stage</th>
+                      <th title="Restocking Fee per unit">RF</th>
                       <th title="Quantity Limit Toggle — when On, quantity is locked to 1">QLT</th>
                       <th title="Exclusive Group — products sharing the same label are mutually exclusive in the quote builder">Excl. Group</th>
                       <th>Description</th>
@@ -752,7 +753,7 @@ export default function ProductsConfigPage() {
                   </thead>
                   <tbody>
                     {currentCat.items.length === 0 && (
-                      <tr><td colSpan={16} className="admin-table-empty">No products in this category</td></tr>
+                      <tr><td colSpan={17} className="admin-table-empty">No products in this category</td></tr>
                     )}
                     {currentCat.items.map((item, idx) => (
                       <tr
@@ -835,6 +836,13 @@ export default function ProductsConfigPage() {
                             value={item.stageduration ?? 0}
                             type="number" step={1} min={0} suffix="h"
                             onSave={(v) => patchItem(currentCat.id, item.id, "stageduration", v)}
+                          />
+                        </td>
+                        <td>
+                          <InlineCell
+                            value={(item.rf ?? 0).toFixed(2)}
+                            type="number" step={0.01} min={0} prefix="$"
+                            onSave={(v) => patchItem(currentCat.id, item.id, "rf", v)}
                           />
                         </td>
                         <td style={{ textAlign: "center" }}>
