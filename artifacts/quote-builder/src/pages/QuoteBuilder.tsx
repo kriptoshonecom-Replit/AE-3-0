@@ -736,12 +736,8 @@ export default function QuoteBuilder() {
           };
         }
 
-        // If a modal is already visible, queue this alert for later; otherwise show immediately
-        if (configAlertStateRef.current) {
-          configAlertQueueRef.current.push(alertPayload);
-        } else {
-          setConfigAlertState(alertPayload);
-        }
+        // Always push onto the queue — caller pops after the loop is done
+        configAlertQueueRef.current.push(alertPayload);
       };
 
       const qtyChanged =
@@ -758,14 +754,28 @@ export default function QuoteBuilder() {
         if (configTimersRef.current[cfg.id]) clearTimeout(configTimersRef.current[cfg.id]);
         delete configTimersRef.current[cfg.id];
         tryShowConfigAlert(groups);
+        // NOTE: do NOT pop here — wait until after the entire loop so all
+        // matching configs have pushed their payloads before we show the first.
       } else if (productSelected) {
         if (configTimersRef.current[cfg.id]) clearTimeout(configTimersRef.current[cfg.id]);
         const delaySec = cfg.delaySeconds > 0 ? cfg.delaySeconds * 1000 : 5000;
         configTimersRef.current[cfg.id] = setTimeout(() => {
           delete configTimersRef.current[cfg.id];
           tryShowConfigAlert(latestGroupsRef.current);
+          // In the async timer context the ref is always fresh — safe to pop now
+          if (!configAlertStateRef.current && configAlertQueueRef.current.length > 0) {
+            setConfigAlertState(configAlertQueueRef.current.shift()!);
+          }
         }, delaySec);
       }
+    }
+
+    // After all configs have been evaluated, show the first queued alert if
+    // no modal is currently open. configAlertStateRef.current is checked here
+    // (not inside tryShowConfigAlert) because the ref only updates via useEffect
+    // and would still be null for every iteration of the synchronous loop above.
+    if (!configAlertStateRef.current && configAlertQueueRef.current.length > 0) {
+      setConfigAlertState(configAlertQueueRef.current.shift()!);
     }
   };
 
