@@ -364,12 +364,24 @@ router.post("/products/categories/:catId/items", async (req, res) => {
 router.patch("/products/categories/:catId/items/:itemId", async (req, res) => {
   try {
     const { catId, itemId } = req.params;
-    const updates = req.body as Partial<ProductItem>;
+    const { newId, ...updates } = req.body as Partial<ProductItem> & { newId?: string };
     const data = await readProducts();
     const cat = data.categories.find((c) => c.id === catId);
     if (!cat) { res.status(404).json({ error: "Category not found" }); return; }
     const item = cat.items.find((i) => i.id === itemId);
     if (!item) { res.status(404).json({ error: "Product not found" }); return; }
+
+    // Handle ID rename — check for duplicates across all categories first
+    if (newId && newId.trim() && newId.trim() !== itemId) {
+      const newIdTrimmed = newId.trim().toLowerCase();
+      const allIds = data.categories.flatMap((c) => c.items.map((i) => i.id.toLowerCase()));
+      if (allIds.includes(newIdTrimmed)) {
+        res.status(409).json({ error: "This Product ID is already in use — please choose a different one" });
+        return;
+      }
+      item.id = newId.trim();
+    }
+
     Object.assign(item, updates);
     if (updates.image === null) delete item.image;
     await writeProducts(data);

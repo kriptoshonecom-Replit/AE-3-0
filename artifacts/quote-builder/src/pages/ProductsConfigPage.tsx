@@ -213,7 +213,9 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
   const [loading, setLoading] = useState(false);
 
   const idTrimmed = id.trim().toLowerCase();
-  const idTaken = (mode === "add" || mode === "duplicate") && idTrimmed.length > 0 && allIds.includes(idTrimmed);
+  // In edit mode, the current item's own ID is allowed — only other IDs are duplicates
+  const idTaken = idTrimmed.length > 0 && allIds.includes(idTrimmed) &&
+    (mode !== "edit" || idTrimmed !== (item?.id ?? "").toLowerCase());
 
   async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
     setImageError("");
@@ -251,11 +253,13 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
     e.preventDefault();
     setError("");
     if (!name.trim()) { setError("Name is required"); return; }
-    if ((mode === "add" || mode === "duplicate") && !id.trim()) { setError("ID is required"); return; }
+    if (!id.trim()) { setError("ID is required"); return; }
     if (idTaken) { setError("This Product ID is already in use — please choose a different one"); return; }
 
     const body: Record<string, unknown> = {
       ...(mode !== "edit" ? { id: id.trim() } : {}),
+      // In edit mode, send newId only when the admin changed the ID
+      ...(mode === "edit" && id.trim() !== (item?.id ?? "") ? { newId: id.trim() } : {}),
       name: name.trim(), type, text,
       price: Number(price) || 0,
       pci: Number(pci) || 0,
@@ -303,27 +307,25 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
           {error && <div className="edit-modal-error">{error}</div>}
 
           <div className="admin-form-row">
-            {(mode === "add" || mode === "duplicate") && (
-              <div className="edit-field-group">
-                <label>Product ID</label>
-                <input
-                  type="text"
-                  value={id}
-                  onChange={(e) => setId(e.target.value)}
-                  placeholder="tm-005"
-                  style={idTaken ? { borderColor: "#ef4444", background: "#fff8f8" } : undefined}
-                />
-                {idTaken && (
-                  <span style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                      <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                      <path d="M8 5v4M8 11v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                    This ID is not available
-                  </span>
-                )}
-              </div>
-            )}
+            <div className="edit-field-group">
+              <label>Product ID</label>
+              <input
+                type="text"
+                value={id}
+                onChange={(e) => setId(e.target.value)}
+                placeholder="tm-005"
+                style={idTaken ? { borderColor: "#ef4444", background: "#fff8f8" } : undefined}
+              />
+              {idTaken && (
+                <span style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M8 5v4M8 11v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  This ID is already in use
+                </span>
+              )}
+            </div>
             <div className="edit-field-group" style={{ flex: 2 }}>
               <label>Name</label>
               <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Product name" />
