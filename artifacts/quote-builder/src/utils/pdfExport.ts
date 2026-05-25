@@ -168,6 +168,7 @@ export async function exportQuoteToPDF(
 
   if (quote.meta.quoteNumber) leftRow("Quote Number:", quote.meta.quoteNumber);
   if (quote.meta.oppNumber) leftRow("Opp Number:", quote.meta.oppNumber);
+  if (quote.meta.mcn) leftRow("MCN:", quote.meta.mcn);
   if (quote.meta.salesRep) leftRow("Sales Rep:", quote.meta.salesRep);
 
   // Right: Company Name, Customer Name, Customer Email

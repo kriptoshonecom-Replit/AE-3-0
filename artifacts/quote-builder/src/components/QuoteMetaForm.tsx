@@ -52,6 +52,16 @@ export default function QuoteMetaForm({ meta, onChange, pspmDiscountPct, upfront
         </div>
 
         <div className="field-group">
+          <label>MCN</label>
+          <input
+            type="number"
+            value={meta.mcn ?? ""}
+            onChange={set("mcn")}
+            placeholder="0"
+          />
+        </div>
+
+        <div className="field-group">
           <label>Sales Rep</label>
           <input
             type="text"

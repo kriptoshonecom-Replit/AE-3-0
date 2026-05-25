@@ -62,6 +62,7 @@ function createNewQuote(): Quote {
       id: generateId(),
       quoteNumber: "",
       oppNumber: "",
+      mcn: "",
       salesRep: "",
       companyName: "",
       customerName: "",
