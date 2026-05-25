@@ -175,7 +175,7 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
 
   const handleTabChange = (t: Tab) => {
     setTab(t);
-    if ((t === "amendments" || t === "email") && amendments.length === 0 && !amendsLoading) {
+    if ((t === "amendments" || t === "email") && !amendsLoading) {
       void loadAmendments();
     }
   };

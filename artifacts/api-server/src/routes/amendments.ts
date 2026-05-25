@@ -218,6 +218,8 @@ router.get("/admin/amendments", requireAdmin, async (_req, res) => {
         data: amendmentsTable.data,
         createdAt: amendmentsTable.createdAt,
         updatedAt: amendmentsTable.updatedAt,
+        pdfSavedAt: amendmentsTable.pdfSavedAt,
+        pdfPath: amendmentsTable.pdfPath,
         creatorName: usersTable.fullName,
         creatorEmail: usersTable.email,
       })
