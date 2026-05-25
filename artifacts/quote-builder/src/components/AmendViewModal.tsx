@@ -36,12 +36,22 @@ interface AmendmentDataShape {
   discount?: number;
   tax?: number;
   notes?: string;
+  mcn?: string;
+  addressLine?: string;
   addressNumber?: string;
   addressName?: string;
   addressCity?: string;
   addressState?: string;
   zipCode?: string;
   addressCountry?: string;
+  sameForBilling?: boolean;
+  billingAddressLine?: string;
+  billingAddressNumber?: string;
+  billingAddressName?: string;
+  billingAddressCity?: string;
+  billingAddressState?: string;
+  billingZipCode?: string;
+  billingAddressCountry?: string;
 }
 
 interface ViewRow {
@@ -97,12 +107,22 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
     discount: data.discount as number | undefined,
     tax: data.tax as number | undefined,
     notes,
+    mcn: data.mcn as string | undefined,
+    addressLine: data.addressLine as string | undefined,
     addressNumber: data.addressNumber as string | undefined,
     addressName: data.addressName as string | undefined,
     addressCity: data.addressCity as string | undefined,
     addressState: data.addressState as string | undefined,
     zipCode: data.zipCode as string | undefined,
     addressCountry: data.addressCountry as string | undefined,
+    sameForBilling: data.sameForBilling as boolean | undefined,
+    billingAddressLine: data.billingAddressLine as string | undefined,
+    billingAddressNumber: data.billingAddressNumber as string | undefined,
+    billingAddressName: data.billingAddressName as string | undefined,
+    billingAddressCity: data.billingAddressCity as string | undefined,
+    billingAddressState: data.billingAddressState as string | undefined,
+    billingZipCode: data.billingZipCode as string | undefined,
+    billingAddressCountry: data.billingAddressCountry as string | undefined,
   };
 
   async function handleExport() {

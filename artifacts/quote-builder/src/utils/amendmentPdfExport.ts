@@ -59,6 +59,7 @@ export interface AmendmentExportData {
   discount?: number;
   tax?: number;
   notes?: string;
+  mcn?: string;
   addressLine?: string;
   addressNumber?: string;
   addressName?: string;
@@ -66,6 +67,14 @@ export interface AmendmentExportData {
   addressState?: string;
   zipCode?: string;
   addressCountry?: string;
+  sameForBilling?: boolean;
+  billingAddressLine?: string;
+  billingAddressNumber?: string;
+  billingAddressName?: string;
+  billingAddressCity?: string;
+  billingAddressState?: string;
+  billingZipCode?: string;
+  billingAddressCountry?: string;
 }
 
 export async function exportAmendmentToPDF(data: AmendmentExportData, mode?: "download" | "base64"): Promise<string | undefined> {
@@ -171,28 +180,58 @@ export async function exportAmendmentToPDF(data: AmendmentExportData, mode?: "do
   leftRow("Amendment #:", amendNumStr);
   if (data.quoteNumber) leftRow("Amendment Quote #:", data.quoteNumber);
   if (data.originalQuoteNumber) leftRow("Original Quote #:", data.originalQuoteNumber);
+  if (data.mcn) leftRow("MCN:", data.mcn);
 
   if (data.companyName) rightRow("Company:", data.companyName, true);
   if (data.customerName) rightRow("Customer:", data.customerName);
 
   // Business address
-  const addrStreet = [data.addressNumber, data.addressName].filter(Boolean).join(" ");
-  const addrCityState = [data.addressCity, data.addressState].filter(Boolean).join(", ");
-  const addrZip = data.zipCode ?? "";
-  const addrCountry = data.addressCountry ?? "";
-  const addrParts = [addrStreet, addrCityState, addrZip, addrCountry].filter(Boolean);
-  if (addrParts.length > 0) {
+  const addrLine = data.addressLine || [
+    [data.addressNumber, data.addressName].filter(Boolean).join(" "),
+    data.addressCity,
+    [data.addressState, data.zipCode].filter(Boolean).join(" "),
+    data.addressCountry,
+  ].filter(Boolean).join(", ");
+
+  if (addrLine) {
     rightY += 2;
     doc.setFontSize(7);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(150, 150, 148);
     doc.text("BUSINESS ADDRESS", rightLabelStart, rightY);
     rightY += 4;
-    for (const part of addrParts) {
+    const addrWrapped = doc.splitTextToSize(addrLine, rightColX - rightLabelStart);
+    for (const line of addrWrapped as string[]) {
       doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(...infoValueColor);
-      doc.text(part, rightColX, rightY, { align: "right" });
+      doc.text(line, rightColX, rightY, { align: "right" });
+      rightY += 4.5;
+    }
+  }
+
+  // Billing address (only when different from business)
+  const showBilling = data.sameForBilling === false;
+  const billingLine = data.billingAddressLine || [
+    [data.billingAddressNumber, data.billingAddressName].filter(Boolean).join(" "),
+    data.billingAddressCity,
+    [data.billingAddressState, data.billingZipCode].filter(Boolean).join(" "),
+    data.billingAddressCountry,
+  ].filter(Boolean).join(", ");
+
+  if (showBilling && billingLine) {
+    rightY += 2;
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(150, 150, 148);
+    doc.text("BILLING ADDRESS", rightLabelStart, rightY);
+    rightY += 4;
+    const billingWrapped = doc.splitTextToSize(billingLine, rightColX - rightLabelStart);
+    for (const line of billingWrapped as string[]) {
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...infoValueColor);
+      doc.text(line, rightColX, rightY, { align: "right" });
       rightY += 4.5;
     }
   }

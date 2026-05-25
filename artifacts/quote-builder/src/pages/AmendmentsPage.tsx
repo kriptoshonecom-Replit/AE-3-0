@@ -32,12 +32,22 @@ interface AmendmentData {
   discount?: number;
   tax?: number;
   notes?: string;
+  mcn?: string;
+  addressLine?: string;
   addressNumber?: string;
   addressName?: string;
   addressCity?: string;
   addressState?: string;
   zipCode?: string;
   addressCountry?: string;
+  sameForBilling?: boolean;
+  billingAddressLine?: string;
+  billingAddressNumber?: string;
+  billingAddressName?: string;
+  billingAddressCity?: string;
+  billingAddressState?: string;
+  billingZipCode?: string;
+  billingAddressCountry?: string;
 }
 
 interface AmendmentRow {
@@ -214,12 +224,22 @@ export default function AmendmentsPage() {
       ...row,
       data: {
         ...d,
+        mcn: m.mcn ?? "",
+        addressLine: m.addressLine ?? "",
         addressNumber: m.addressNumber ?? "",
         addressName: m.addressName ?? "",
         addressCity: m.addressCity ?? "",
         addressState: m.addressState ?? "",
         zipCode: m.zipCode ?? "",
         addressCountry: m.addressCountry ?? "",
+        sameForBilling: m.sameForBilling ?? true,
+        billingAddressLine: m.billingAddressLine ?? "",
+        billingAddressNumber: m.billingAddressNumber ?? "",
+        billingAddressName: m.billingAddressName ?? "",
+        billingAddressCity: m.billingAddressCity ?? "",
+        billingAddressState: m.billingAddressState ?? "",
+        billingZipCode: m.billingZipCode ?? "",
+        billingAddressCountry: m.billingAddressCountry ?? "",
       },
     };
   }
