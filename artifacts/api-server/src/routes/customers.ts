@@ -126,7 +126,7 @@ function buildCustomers(rows: QuoteRow[]) {
     .sort((a, b) => (a.companyName || a.customerName).localeCompare(b.companyName || b.customerName));
 }
 
-router.get("/api/customers", requireAuth, async (_req, res) => {
+router.get("/customers", requireAuth, async (_req, res) => {
   try {
     const rows = await db
       .select({
@@ -153,7 +153,7 @@ router.get("/api/customers", requireAuth, async (_req, res) => {
   }
 });
 
-router.get("/api/admin/customers", requireAdmin, async (_req, res) => {
+router.get("/admin/customers", requireAdmin, async (_req, res) => {
   try {
     const rows = await db
       .select({
@@ -180,7 +180,7 @@ router.get("/api/admin/customers", requireAdmin, async (_req, res) => {
   }
 });
 
-router.patch("/api/admin/customers/:key", requireAdmin, async (req, res) => {
+router.patch("/admin/customers/:key", requireAdmin, async (req, res) => {
   const key = decodeURIComponent(String(req.params.key));
   const { companyName, customerName, customerEmail, customerPhone } = req.body as {
     companyName?: string;
@@ -229,7 +229,7 @@ router.patch("/api/admin/customers/:key", requireAdmin, async (req, res) => {
   }
 });
 
-router.delete("/api/admin/customers/:key", requireAdmin, async (req, res) => {
+router.delete("/admin/customers/:key", requireAdmin, async (req, res) => {
   const key = decodeURIComponent(String(req.params.key));
   try {
     const allRows = await db
@@ -260,7 +260,7 @@ router.delete("/api/admin/customers/:key", requireAdmin, async (req, res) => {
   }
 });
 
-router.post("/api/customers/send-email", requireAuth, async (req, res) => {
+router.post("/customers/send-email", requireAuth, async (req, res) => {
   const { to, subject, body } = req.body as { to: string; subject: string; body: string };
   if (!to || !subject || !body) {
     res.status(400).json({ error: "to, subject, and body are required" });
