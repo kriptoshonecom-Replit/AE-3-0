@@ -179,19 +179,52 @@ export default function AddressMapSection({
   }, []);
 
   // ── Forward geocode: single address line → pin ─────────────────────────
+  // Builds a list of progressively-simplified queries to handle Google Maps
+  // format (e.g. "Business Name, 123 Main St, Atlanta, GA 30303, USA")
+  function buildGeoQueries(raw: string): string[] {
+    const trimmed = raw.trim();
+    const parts   = trimmed.split(",").map((p) => p.trim()).filter(Boolean);
+    const queries: string[] = [trimmed];
+
+    // If the first part looks like a name (no digits), try without it
+    if (parts.length > 2 && !/\d/.test(parts[0])) {
+      queries.push(parts.slice(1).join(", "));
+    }
+
+    // Also try without the last part (sometimes "USA" or country is appended)
+    if (parts.length > 3) {
+      queries.push(parts.slice(0, -1).join(", "));
+    }
+
+    // Fallback: just city + state/zip (last two meaningful parts)
+    if (parts.length >= 3) {
+      queries.push(parts.slice(-3).join(", "));
+    }
+
+    // Deduplicate
+    return [...new Set(queries)];
+  }
+
   const geocode = useCallback(async (query: string) => {
     if (!query || !mapRef.current) return;
     setGeocoding(true);
     setGeoError(null);
     try {
-      const url  = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
-      const res  = await fetch(url, { headers: { "Accept-Language": "en" } });
-      const data = await res.json() as Array<{ lat: string; lon: string }>;
-      if (!data || data.length === 0) {
-        setGeoError("Address not found — try adding more detail.");
+      const candidates = buildGeoQueries(query);
+      let result: Array<{ lat: string; lon: string }> = [];
+
+      for (const q of candidates) {
+        const url  = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`;
+        const res  = await fetch(url, { headers: { "Accept-Language": "en" } });
+        const data = await res.json() as Array<{ lat: string; lon: string }>;
+        if (data && data.length > 0) { result = data; break; }
+      }
+
+      if (result.length === 0) {
+        setGeoError("Address not found — try a shorter or simpler address.");
         return;
       }
-      const latlng: [number, number] = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+      const latlng: [number, number] = [parseFloat(result[0].lat), parseFloat(result[0].lon)];
       const L = await import("leaflet");
       if (markerRef.current) {
         markerRef.current.setLatLng(latlng);
