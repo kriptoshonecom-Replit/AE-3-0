@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { quotesTable, usersTable } from "@workspace/db/schema";
+import { quotesTable, usersTable, customersTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 import { requireAdmin } from "../middlewares/requireAdmin";
 import { sendEmail } from "../lib/email";
 import { downloadPdf } from "../lib/pdfStorage";
 import { logger } from "../lib/logger";
+import type { CustomerRow } from "@workspace/db/schema";
 
 const router = Router();
 
@@ -29,8 +30,13 @@ function getMeta(row: QuoteRow): Record<string, string> {
   return ((row.data as Record<string, unknown>)?.meta as Record<string, string>) ?? {};
 }
 
-function buildCustomers(rows: QuoteRow[]) {
-  const byKey = new Map<string, {
+function customerKey(meta: Record<string, string>): string {
+  const email = (meta.customerEmail ?? "").trim().toLowerCase();
+  return email || `${(meta.companyName ?? "").trim()}___${(meta.customerName ?? "").trim()}`;
+}
+
+function buildCustomers(quoteRows: QuoteRow[], storedRows: CustomerRow[]) {
+  type CustomerData = {
     key: string;
     companyName: string;
     customerName: string;
@@ -54,12 +60,35 @@ function buildCustomers(rows: QuoteRow[]) {
     creatorName: string | null;
     creatorEmail: string | null;
     userId: string;
-  }>();
+  };
 
-  for (const row of rows) {
+  const byKey = new Map<string, CustomerData>();
+
+  // Seed from the persistent customers table first
+  for (const c of storedRows) {
+    byKey.set(c.id, {
+      key: c.id,
+      companyName: c.companyName ?? "",
+      customerName: c.customerName ?? "",
+      customerEmail: c.customerEmail ?? "",
+      customerPhone: c.customerPhone ?? "",
+      mcn: c.mcn ?? null,
+      address: (c.address as Record<string, string> | null) ?? null,
+      billingAddress: (c.billingAddress as Record<string, string> | null) ?? null,
+      quotes: [],
+      passCount: 0,
+      failCount: 0,
+      lastActivity: c.updatedAt.toISOString(),
+      creatorName: null,
+      creatorEmail: null,
+      userId: c.creatorUserId ?? "",
+    });
+  }
+
+  // Overlay quote data
+  for (const row of quoteRows) {
     const meta = getMeta(row);
-    const email = (meta.customerEmail ?? "").trim().toLowerCase();
-    const key = email || `${(meta.companyName ?? "").trim()}___${(meta.customerName ?? "").trim()}`;
+    const key = customerKey(meta);
     if (!key || key === "___") continue;
 
     if (!byKey.has(key)) {
@@ -67,7 +96,7 @@ function buildCustomers(rows: QuoteRow[]) {
         key,
         companyName: meta.companyName || row.companyName || "",
         customerName: meta.customerName || row.customerName || "",
-        customerEmail: email,
+        customerEmail: (meta.customerEmail ?? "").trim().toLowerCase(),
         customerPhone: meta.customerPhone || "",
         address: null,
         billingAddress: null,
@@ -88,9 +117,10 @@ function buildCustomers(rows: QuoteRow[]) {
       c.lastActivity = row.updatedAt.toISOString();
     }
 
-    if (!c.customerPhone && meta.customerPhone) {
-      c.customerPhone = meta.customerPhone;
-    }
+    if (!c.customerPhone && meta.customerPhone) c.customerPhone = meta.customerPhone;
+    if (!c.mcn && meta.mcn) c.mcn = meta.mcn;
+    if (!c.creatorName && row.creatorName) c.creatorName = row.creatorName;
+    if (!c.creatorEmail && row.creatorEmail) c.creatorEmail = row.creatorEmail;
 
     if ((meta.addressLine || meta.addressCity || meta.addressName) && !c.address) {
       c.address = {
@@ -150,32 +180,30 @@ const QUOTE_SELECT = {
   creatorEmail: usersTable.email,
 } as const;
 
+async function fetchCustomers() {
+  const [quoteRows, storedRows] = await Promise.all([
+    db.select(QUOTE_SELECT).from(quotesTable).leftJoin(usersTable, eq(quotesTable.userId, usersTable.id)).orderBy(quotesTable.updatedAt),
+    db.select().from(customersTable),
+  ]);
+  return buildCustomers(quoteRows, storedRows);
+}
+
 router.get("/customers", requireAuth, async (_req, res) => {
   try {
-    const rows = await db
-      .select(QUOTE_SELECT)
-      .from(quotesTable)
-      .leftJoin(usersTable, eq(quotesTable.userId, usersTable.id))
-      .orderBy(quotesTable.updatedAt);
-
-    const customers = buildCustomers(rows);
+    const customers = await fetchCustomers();
     res.json({ customers });
   } catch (err) {
+    logger.error(err, "GET /customers error");
     res.status(500).json({ error: "Failed to load customers" });
   }
 });
 
 router.get("/admin/customers", requireAdmin, async (_req, res) => {
   try {
-    const rows = await db
-      .select(QUOTE_SELECT)
-      .from(quotesTable)
-      .leftJoin(usersTable, eq(quotesTable.userId, usersTable.id))
-      .orderBy(quotesTable.updatedAt);
-
-    const customers = buildCustomers(rows);
+    const customers = await fetchCustomers();
     res.json({ customers });
   } catch (err) {
+    logger.error(err, "GET /admin/customers error");
     res.status(500).json({ error: "Failed to load customers" });
   }
 });
@@ -190,18 +218,34 @@ router.patch("/admin/customers/:key", requireAdmin, async (req, res) => {
   };
 
   try {
+    // Update the persistent customer record
+    await db
+      .insert(customersTable)
+      .values({
+        id: key,
+        companyName: companyName ?? null,
+        customerName: customerName ?? null,
+        customerEmail: customerEmail ?? null,
+        customerPhone: customerPhone ?? null,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: customersTable.id,
+        set: {
+          ...(companyName !== undefined && { companyName }),
+          ...(customerName !== undefined && { customerName }),
+          ...(customerEmail !== undefined && { customerEmail }),
+          ...(customerPhone !== undefined && { customerPhone }),
+          updatedAt: new Date(),
+        },
+      });
+
+    // Also update all quote metas for display consistency
     const allRows = await db.select().from(quotesTable);
     const toUpdate = allRows.filter(r => {
       const meta = getMeta({ data: r.data } as QuoteRow);
-      const email = (meta.customerEmail ?? "").trim().toLowerCase();
-      const k = email || `${(meta.companyName ?? "").trim()}___${(meta.customerName ?? "").trim()}`;
-      return k === key;
+      return customerKey(meta) === key;
     });
-
-    if (toUpdate.length === 0) {
-      res.status(404).json({ error: "Customer not found" });
-      return;
-    }
 
     for (const row of toUpdate) {
       const data = row.data as Record<string, unknown>;
@@ -225,6 +269,7 @@ router.patch("/admin/customers/:key", requireAdmin, async (req, res) => {
 
     res.json({ updated: toUpdate.length });
   } catch (err) {
+    logger.error(err, "PATCH /admin/customers/:key error");
     res.status(500).json({ error: "Failed to update customer" });
   }
 });
@@ -232,30 +277,21 @@ router.patch("/admin/customers/:key", requireAdmin, async (req, res) => {
 router.delete("/admin/customers/:key", requireAdmin, async (req, res) => {
   const key = decodeURIComponent(String(req.params.key));
   try {
-    const allRows = await db
-      .select({ id: quotesTable.id, data: quotesTable.data })
-      .from(quotesTable);
+    // Remove from customers table only — quotes are preserved
+    const deleted = await db
+      .delete(customersTable)
+      .where(eq(customersTable.id, key))
+      .returning({ id: customersTable.id });
 
-    const ids = allRows
-      .filter(r => {
-        const meta = getMeta({ data: r.data } as QuoteRow);
-        const email = (meta.customerEmail ?? "").trim().toLowerCase();
-        const k = email || `${(meta.companyName ?? "").trim()}___${(meta.customerName ?? "").trim()}`;
-        return k === key;
-      })
-      .map(r => r.id);
-
-    if (ids.length === 0) {
-      res.status(404).json({ error: "Customer not found" });
+    if (deleted.length === 0) {
+      // Customer may only exist in quotes (legacy); nothing to do in the customers table
+      res.status(404).json({ error: "Customer record not found" });
       return;
     }
 
-    for (const id of ids) {
-      await db.delete(quotesTable).where(eq(quotesTable.id, id));
-    }
-
-    res.json({ deleted: ids.length });
+    res.json({ deleted: deleted.length });
   } catch (err) {
+    logger.error(err, "DELETE /admin/customers/:key error");
     res.status(500).json({ error: "Failed to delete customer" });
   }
 });

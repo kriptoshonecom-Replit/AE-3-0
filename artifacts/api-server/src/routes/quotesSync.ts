@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { quotesTable, statusPassConfigTable } from "@workspace/db/schema";
+import { quotesTable, statusPassConfigTable, customersTable } from "@workspace/db/schema";
 import { and, eq } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 
@@ -263,6 +263,69 @@ router.post("/quotes/sync", requireAuth, async (req, res) => {
           passStatus: (meta.passStatus as string) || null,
         },
       });
+
+    // Upsert customer record so it persists independently of quotes
+    const email = String(meta.customerEmail ?? "").trim().toLowerCase();
+    const cKey = email || `${String(meta.companyName ?? "").trim()}___${String(meta.customerName ?? "").trim()}`;
+    if (cKey && cKey !== "___") {
+      const addrLine = String(meta.addressLine ?? "");
+      const addrCity = String(meta.addressCity ?? "");
+      const addrName = String(meta.addressName ?? "");
+      const address = (addrLine || addrCity || addrName) ? {
+        line: addrLine,
+        name: addrName,
+        number: String(meta.addressNumber ?? ""),
+        city: addrCity,
+        state: String(meta.addressState ?? ""),
+        zip: String(meta.zipCode ?? ""),
+        country: String(meta.addressCountry ?? ""),
+      } : null;
+      const billingLine = String(meta.billingAddressLine ?? "");
+      const billingCity = String(meta.billingAddressCity ?? "");
+      const sameForBilling = meta.sameForBilling;
+      const billingAddress = (!sameForBilling && (billingLine || billingCity)) ? {
+        line: billingLine,
+        name: String(meta.billingAddressName ?? ""),
+        number: String(meta.billingAddressNumber ?? ""),
+        city: billingCity,
+        state: String(meta.billingAddressState ?? ""),
+        zip: String(meta.billingZipCode ?? ""),
+        country: String(meta.billingAddressCountry ?? ""),
+      } : null;
+
+      const companyName = String(meta.companyName ?? "") || null;
+      const customerName = String(meta.customerName ?? "") || null;
+      const customerPhone = String(meta.customerPhone ?? "") || null;
+      const mcn = String(meta.mcn ?? "") || null;
+
+      await db
+        .insert(customersTable)
+        .values({
+          id: cKey,
+          companyName,
+          customerName,
+          customerEmail: email || null,
+          customerPhone,
+          mcn,
+          address,
+          billingAddress,
+          creatorUserId: userId,
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: customersTable.id,
+          set: {
+            ...(companyName && { companyName }),
+            ...(customerName && { customerName }),
+            ...(email && { customerEmail: email }),
+            ...(customerPhone && { customerPhone }),
+            ...(mcn && { mcn }),
+            ...(address && { address }),
+            ...(billingAddress && { billingAddress }),
+            updatedAt: new Date(),
+          },
+        });
+    }
 
     res.json({ ok: true, creatorName: (quoteData.meta as Record<string, unknown>).creatorName });
   } catch (err) {

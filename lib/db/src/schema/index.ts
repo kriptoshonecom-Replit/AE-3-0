@@ -9,3 +9,4 @@ export * from "./quotes";
 export * from "./sessions";
 export * from "./loginEvents";
 export * from "./amendments";
+export * from "./customers";
