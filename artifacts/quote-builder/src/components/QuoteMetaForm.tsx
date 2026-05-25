@@ -94,6 +94,16 @@ export default function QuoteMetaForm({ meta, onChange, pspmDiscountPct, upfront
         </div>
 
         <div className="field-group">
+          <label>Customer Phone</label>
+          <input
+            type="tel"
+            value={meta.customerPhone ?? ""}
+            onChange={set("customerPhone")}
+            placeholder="(555) 000-0000"
+          />
+        </div>
+
+        <div className="field-group">
           <label>Valid Until</label>
           <input type="date" value={meta.validUntil} onChange={set("validUntil")} />
         </div>

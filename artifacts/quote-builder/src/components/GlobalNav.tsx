@@ -79,6 +79,15 @@ export default function GlobalNav() {
                 </svg>
                 Amendments
               </button>
+              <button type="button" className="sidebar-admin-link" onClick={() => go("/customers")}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <circle cx="6" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.4" />
+                  <path d="M1 13c0-2.5 2-4 5-4s5 1.5 5 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                  <circle cx="12" cy="5" r="1.8" stroke="currentColor" strokeWidth="1.3" />
+                  <path d="M14.5 12c0-1.8-1.1-2.9-2.5-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                </svg>
+                Customers
+              </button>
             </div>
           )}
 
@@ -173,6 +182,15 @@ export default function GlobalNav() {
                   <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 Amendments
+              </button>
+              <button type="button" className="sidebar-admin-link" onClick={() => go("/customers")}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <circle cx="6" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.4" />
+                  <path d="M1 13c0-2.5 2-4 5-4s5 1.5 5 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                  <circle cx="12" cy="5" r="1.8" stroke="currentColor" strokeWidth="1.3" />
+                  <path d="M14.5 12c0-1.8-1.1-2.9-2.5-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                </svg>
+                Customers
               </button>
             </div>
           )}

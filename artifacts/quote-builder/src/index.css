@@ -6432,3 +6432,355 @@ tr:hover .drag-handle { opacity: 1; }
   white-space: nowrap;
   flex-shrink: 0;
 }
+
+/* ── CDM (Customer Data Management) ──────────────────────────────────────── */
+
+.cdm-badge-mix {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Modal container */
+.cdm-modal {
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22);
+  width: min(860px, 96vw);
+  max-height: min(90vh, calc(100vh - 32px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: edit-modal-in 0.15s ease;
+}
+
+/* Modal header */
+.cdm-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.cdm-modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.cdm-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--accent, #7c3aed);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.cdm-header-names {
+  min-width: 0;
+}
+.cdm-modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cdm-modal-sub {
+  font-size: 12px;
+  color: var(--text-2);
+  margin: 2px 0 0;
+}
+.cdm-health-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.cdm-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.cdm-close-btn:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Tabs */
+.cdm-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  gap: 2px;
+  flex-shrink: 0;
+  background: var(--surface);
+}
+.cdm-tab {
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.cdm-tab:hover {
+  color: var(--text);
+}
+.cdm-tab.active {
+  color: var(--accent, #7c3aed);
+  border-bottom-color: var(--accent, #7c3aed);
+  font-weight: 600;
+}
+
+/* Modal body */
+.cdm-modal-body {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+.cdm-section {
+  padding: 24px;
+}
+
+/* Contact grid */
+.cdm-contact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px 24px;
+}
+.cdm-contact-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cdm-contact-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3, #94a3b8);
+}
+.cdm-contact-value {
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* Address section */
+.cdm-address-section {
+  display: flex;
+  gap: 24px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.cdm-address-block {
+  flex: 1;
+  min-width: 200px;
+}
+.cdm-address-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3, #94a3b8);
+  margin-bottom: 4px;
+}
+.cdm-address-value {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+/* Edit form */
+.cdm-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.cdm-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.cdm-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cdm-form-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.cdm-form-field input,
+.cdm-form-field textarea,
+.cdm-select {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  transition: border-color 0.15s;
+  outline: none;
+}
+.cdm-form-field input:focus,
+.cdm-form-field textarea:focus,
+.cdm-select:focus {
+  border-color: var(--accent, #7c3aed);
+}
+.cdm-select {
+  cursor: pointer;
+}
+.cdm-form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+/* Dashboard layout */
+.cdm-dashboard {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.cdm-donut-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.cdm-donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cdm-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.cdm-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Stat grid */
+.cdm-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.cdm-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  background: var(--surface-subtle, var(--bg));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.cdm-stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3, #94a3b8);
+}
+.cdm-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+/* Mail form */
+.cdm-mail-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.cdm-mail-body {
+  resize: vertical;
+  min-height: 160px;
+  line-height: 1.6;
+}
+.cdm-send-result {
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 7px;
+  font-weight: 500;
+}
+.cdm-send-ok {
+  background: #d1fae5;
+  color: #065f46;
+}
+.cdm-send-err {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+@media (max-width: 600px) {
+  .cdm-contact-grid {
+    grid-template-columns: 1fr;
+  }
+  .cdm-form-row {
+    grid-template-columns: 1fr;
+  }
+  .cdm-stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .cdm-dashboard {
+    flex-direction: column;
+    align-items: center;
+  }
+}

@@ -13,6 +13,7 @@ import adminLogJournalRouter from "./adminLogJournal";
 import { adminReleaseRouter, publicReleaseRouter } from "./adminRelease";
 import adminDashboardRouter from "./adminDashboard";
 import amendmentsRouter from "./amendments";
+import customersRouter from "./customers";
 
 const router: IRouter = Router();
 
@@ -27,6 +28,7 @@ router.use(publicReleaseRouter);
 // ── Authenticated user routes ────────────────────────────────────────────────
 router.use(quotesSyncRouter);
 router.use(amendmentsRouter);
+router.use(customersRouter);
 
 // ── Admin routes (requireAdmin applied inside each router) ───────────────────
 router.use("/admin", adminRouter);

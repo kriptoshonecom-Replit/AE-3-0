@@ -79,6 +79,10 @@ function getAppUrl(): string {
   return process.env.APP_URL ?? "https://your-app.replit.app";
 }
 
+export async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+  await send(to, subject, html);
+}
+
 export async function sendWelcomeEmail(
   to: string,
   fullName: string,

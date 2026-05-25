@@ -20,6 +20,7 @@ import AmendmentsPage from "@/pages/AmendmentsPage";
 import DashboardPage from "@/pages/DashboardPage";
 import LogJournalPage from "@/pages/LogJournalPage";
 import AppReleasePage from "@/pages/AppReleasePage";
+import CDMPage from "@/pages/CDMPage";
 
 const queryClient = new QueryClient();
 
@@ -108,6 +109,9 @@ function AppRoutes() {
           </Route>
           <Route path="/admin/app-release">
             <AdminRoute><AppReleasePage /></AdminRoute>
+          </Route>
+          <Route path="/customers">
+            <ProtectedRoute><CDMPage /></ProtectedRoute>
           </Route>
         </Switch>
       </QueryClientProvider>
