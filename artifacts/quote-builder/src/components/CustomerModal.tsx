@@ -6,7 +6,34 @@ import { quoteTotal, formatCurrency } from "../utils/calculations";
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 const C = 226.19;
 
-type Tab = "contact" | "quotes" | "dashboard" | "email";
+type Tab = "contact" | "quotes" | "amendments" | "dashboard" | "email";
+
+interface AmendmentRow {
+  id: string;
+  originalQuoteId: string;
+  originalQuoteNumber: string | null;
+  quoteNumber: string | null;
+  amendmentNumber: number;
+  companyName: string | null;
+  customerName: string | null;
+  data: { mrrDelta?: number; subtotalDelta?: number; notes?: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
+function fmtAmendNum(n: number) {
+  return `Amend ${String(n).padStart(3, "0")}`;
+}
+
+function MrrDeltaBadge({ value }: { value: number | undefined }) {
+  if (!value) return <span style={{ color: "var(--text-3)" }}>—</span>;
+  const color = value > 0 ? "#10b981" : "#ef4444";
+  return (
+    <span style={{ color, fontWeight: 600 }}>
+      {value > 0 ? "+" : ""}{formatCurrency(value)}
+    </span>
+  );
+}
 
 function fmtDate(s: string | null | undefined) {
   if (!s) return "—";
@@ -103,6 +130,8 @@ interface Props {
 
 export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: Props) {
   const [tab, setTab] = useState<Tab>("contact");
+  const [amendments, setAmendments] = useState<AmendmentRow[]>([]);
+  const [amendsLoading, setAmendsLoading] = useState(false);
 
   const [editing, setEditing] = useState(false);
   const [editFields, setEditFields] = useState({
@@ -120,6 +149,33 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
   const [mailRef, setMailRef] = useState("");
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<"sent" | "error" | null>(null);
+
+  const quoteIds = new Set(customer.quotes.map(q => q.id));
+
+  const loadAmendments = async () => {
+    if (amendsLoading) return;
+    setAmendsLoading(true);
+    try {
+      const endpoint = isAdmin
+        ? `${API_BASE}/api/admin/amendments`
+        : `${API_BASE}/api/amendments`;
+      const res = await fetch(endpoint, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed");
+      const d = (await res.json()) as { amendments: AmendmentRow[] };
+      setAmendments(d.amendments.filter(a => quoteIds.has(a.originalQuoteId)));
+    } catch {
+      setAmendments([]);
+    } finally {
+      setAmendsLoading(false);
+    }
+  };
+
+  const handleTabChange = (t: Tab) => {
+    setTab(t);
+    if (t === "amendments" && amendments.length === 0 && !amendsLoading) {
+      void loadAmendments();
+    }
+  };
 
   const health = getHealth(customer.passCount, customer.failCount);
   const noStatus = customer.quotes.filter(q => !q.passStatus).length;
@@ -183,6 +239,7 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
   const tabLabels: Record<Tab, string> = {
     contact: "Contact",
     quotes: `Quotes (${customer.quotes.length})`,
+    amendments: `Amendments (${amendments.length})`,
     dashboard: "Dashboard",
     email: "Send Email",
   };
@@ -228,12 +285,12 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
 
         {/* ── Tabs ── */}
         <div className="cdm-tabs">
-          {(["contact", "quotes", "dashboard", "email"] as Tab[]).map(t => (
+          {(["contact", "quotes", "amendments", "dashboard", "email"] as Tab[]).map(t => (
             <button
               key={t}
               type="button"
               className={`cdm-tab${tab === t ? " active" : ""}`}
-              onClick={() => setTab(t)}
+              onClick={() => handleTabChange(t)}
             >
               {tabLabels[t]}
             </button>
@@ -428,6 +485,59 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                             </td>
                             <td style={{ fontSize: 12, color: "var(--text-2)", whiteSpace: "nowrap" }}>
                               {fmtDate(q.updatedAt)}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* AMENDMENTS */}
+          {tab === "amendments" && (
+            <div className="cdm-section">
+              {amendsLoading ? (
+                <div className="admin-loading"><div className="spinner" /></div>
+              ) : amendments.length === 0 ? (
+                <div className="admin-table-empty">No amendments found for this customer's quotes.</div>
+              ) : (
+                <div className="admin-table-wrap">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Amendment #</th>
+                        <th>Original Quote</th>
+                        <th>Amendment Quote #</th>
+                        <th style={{ textAlign: "right" }}>MRR Delta</th>
+                        <th>Created</th>
+                        <th>Updated</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {amendments
+                        .slice()
+                        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                        .map(a => (
+                          <tr key={a.id}>
+                            <td className="admin-td-bold" style={{ fontFamily: "monospace", fontSize: 12 }}>
+                              {fmtAmendNum(a.amendmentNumber)}
+                            </td>
+                            <td style={{ fontFamily: "monospace", fontSize: 12, color: "var(--text-2)" }}>
+                              {a.originalQuoteNumber || <span style={{ color: "var(--text-3)" }}>—</span>}
+                            </td>
+                            <td style={{ fontFamily: "monospace", fontSize: 12 }}>
+                              {a.quoteNumber || <span style={{ color: "var(--text-3)" }}>—</span>}
+                            </td>
+                            <td style={{ textAlign: "right" }}>
+                              <MrrDeltaBadge value={a.data?.mrrDelta} />
+                            </td>
+                            <td style={{ fontSize: 12, color: "var(--text-2)", whiteSpace: "nowrap" }}>
+                              {fmtDate(a.createdAt)}
+                            </td>
+                            <td style={{ fontSize: 12, color: "var(--text-2)", whiteSpace: "nowrap" }}>
+                              {fmtDate(a.updatedAt)}
                             </td>
                           </tr>
                         ))}
