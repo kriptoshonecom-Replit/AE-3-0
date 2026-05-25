@@ -178,7 +178,18 @@ export default function QuoteBuilder() {
   // ── CDM duplicate detection ───────────────────────────────────
   const [cdmCustomers, setCdmCustomers] = useState<CustomerProfile[]>([]);
   const [cdmDuplicateMatch, setCdmDuplicateMatch] = useState<CustomerProfile | null>(null);
-  const duplicateCheckedIds = useRef<Set<string>>(new Set());
+  // Persisted across page reloads so the CDM check only fires once per quote creation
+  const duplicateCheckedIds = useRef<Set<string>>(
+    new Set<string>(JSON.parse(localStorage.getItem("cpq_cdm_checked") || "[]") as string[])
+  );
+  const markCdmChecked = (quoteId: string) => {
+    duplicateCheckedIds.current.add(quoteId);
+    try {
+      localStorage.setItem("cpq_cdm_checked", JSON.stringify([...duplicateCheckedIds.current]));
+    } catch {
+      // ignore quota errors
+    }
+  };
   const [groupDragOver, setGroupDragOver] = useState<number | null>(null);
   const [pendingAction, setPendingAction] = useState<null | "export" | "new">(null);
   // Tracks the original owner's userId when admin is editing another user's quote
@@ -431,7 +442,7 @@ export default function QuoteBuilder() {
           best.mcn && m.mcn === best.mcn &&
           m.companyName && m.customerName && m.customerEmail;
         if (alreadySynced) {
-          duplicateCheckedIds.current.add(quoteId);
+          markCdmChecked(quoteId);
         } else {
           setCdmDuplicateMatch(best);
         }
@@ -788,12 +799,12 @@ export default function QuoteBuilder() {
       addressCountry: customer.address?.country || quote.meta.addressCountry,
     };
     handleMetaChange(updated);
-    duplicateCheckedIds.current.add(quote.meta.id);
+    markCdmChecked(quote.meta.id);
     setCdmDuplicateMatch(null);
   };
 
   const handleDismissCdmDuplicate = () => {
-    duplicateCheckedIds.current.add(quote.meta.id);
+    markCdmChecked(quote.meta.id);
     setCdmDuplicateMatch(null);
   };
 
