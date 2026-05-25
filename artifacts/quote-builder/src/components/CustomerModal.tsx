@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { CustomerProfile } from "../pages/CDMPage";
 import type { Quote } from "../types";
 import { quoteTotal, formatCurrency } from "../utils/calculations";
@@ -173,6 +173,9 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
       setAmendsLoading(false);
     }
   };
+
+  // Load amendments on mount so the tab count is correct immediately
+  useEffect(() => { void loadAmendments(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTabChange = (t: Tab) => {
     setTab(t);
