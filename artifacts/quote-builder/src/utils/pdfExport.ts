@@ -740,27 +740,19 @@ export async function exportQuoteToPDF(
 
   // ── Footer ──────────────────────────────────────────
   const sameForBilling = quote.meta.sameForBilling !== false; // default true
-  const hasBillingAddr = !sameForBilling && (
-    quote.meta.billingAddressName ||
-    quote.meta.billingAddressNumber ||
-    quote.meta.billingAddressCity ||
-    quote.meta.billingAddressState
-  );
 
-  const billingStreet = hasBillingAddr
-    ? [quote.meta.billingAddressNumber, quote.meta.billingAddressName]
-        .filter(Boolean).join(" ")
+  // Support both new single-line field and old individual fields (backwards compat)
+  const billingOneLiner = !sameForBilling
+    ? (quote.meta.billingAddressLine ||
+       [
+         [quote.meta.billingAddressNumber, quote.meta.billingAddressName].filter(Boolean).join(" "),
+         quote.meta.billingAddressCity,
+         [quote.meta.billingAddressState, quote.meta.billingZipCode].filter(Boolean).join(" "),
+         quote.meta.billingAddressCountry,
+       ].filter(Boolean).join(", "))
     : "";
-  const billingCityLine = hasBillingAddr
-    ? [
-        quote.meta.billingAddressCity,
-        [quote.meta.billingAddressState, quote.meta.billingZipCode]
-          .filter(Boolean).join(" "),
-        quote.meta.billingAddressCountry,
-      ].filter(Boolean).join(", ")
-    : "";
-  const billingOneLiner = [billingStreet, billingCityLine]
-    .filter(Boolean).join("  ·  ");
+
+  const hasBillingAddr = !sameForBilling && !!billingOneLiner;
 
   const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
