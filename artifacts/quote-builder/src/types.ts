@@ -102,6 +102,7 @@ export interface QuoteMeta {
   creatorName?: string;
   updatedByName?: string;
   passStatus?: "pass" | "fail";
+  addressLine?: string;
   addressName?: string;
   addressNumber?: string;
   addressCity?: string;
@@ -109,6 +110,7 @@ export interface QuoteMeta {
   zipCode?: string;
   addressCountry?: string;
   sameForBilling?: boolean;
+  billingAddressLine?: string;
   billingAddressName?: string;
   billingAddressNumber?: string;
   billingAddressCity?: string;

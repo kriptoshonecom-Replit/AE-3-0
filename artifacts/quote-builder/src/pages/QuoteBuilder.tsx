@@ -750,6 +750,16 @@ export default function QuoteBuilder() {
       customerName: customer.customerName || quote.meta.customerName,
       customerEmail: customer.customerEmail || quote.meta.customerEmail,
       customerPhone: customer.customerPhone || quote.meta.customerPhone,
+      addressLine: (() => {
+        const a = customer.address;
+        if (!a) return quote.meta.addressLine;
+        return [
+          [a.number, a.name].filter(Boolean).join(" "),
+          a.city,
+          [a.state, a.zip].filter(Boolean).join(" "),
+          a.country,
+        ].filter(Boolean).join(", ") || quote.meta.addressLine;
+      })(),
       addressName: customer.address?.name || quote.meta.addressName,
       addressNumber: customer.address?.number || quote.meta.addressNumber,
       addressCity: customer.address?.city || quote.meta.addressCity,
@@ -1374,6 +1384,7 @@ export default function QuoteBuilder() {
                   <div className="quote-meta-form">
                     <AddressMapSection
                       values={{
+                        addressLine: quote.meta.addressLine ?? "",
                         addressName: quote.meta.addressName ?? "",
                         addressNumber: quote.meta.addressNumber ?? "",
                         addressCity: quote.meta.addressCity ?? "",
@@ -1384,6 +1395,7 @@ export default function QuoteBuilder() {
                       onChange={(fields) => handleMetaChange({ ...quote.meta, ...fields })}
                       sameForBilling={quote.meta.sameForBilling ?? true}
                       billingValues={{
+                        billingAddressLine: quote.meta.billingAddressLine ?? "",
                         billingAddressName: quote.meta.billingAddressName ?? "",
                         billingAddressNumber: quote.meta.billingAddressNumber ?? "",
                         billingAddressCity: quote.meta.billingAddressCity ?? "",

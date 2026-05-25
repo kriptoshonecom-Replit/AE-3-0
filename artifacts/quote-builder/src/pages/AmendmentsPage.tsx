@@ -125,6 +125,7 @@ function buildEditState(row: AmendmentRow): EditModeState {
       discount: (d["discount"] as number) ?? 0,
       tax: (d["tax"] as number) ?? 0,
       passStatus: "pass",
+      addressLine: (d["addressLine"] as string) ?? "",
       addressNumber: (d["addressNumber"] as string) ?? "",
       addressName: (d["addressName"] as string) ?? "",
       addressCity: (d["addressCity"] as string) ?? "",

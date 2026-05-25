@@ -196,13 +196,14 @@ export async function exportQuoteToPDF(
     rightRow("Customer Email:", quote.meta.customerEmail);
 
   // ── Business Operation Address — right column, below customer info ──
-  const addrStreet = [quote.meta.addressNumber, quote.meta.addressName]
-    .filter(Boolean).join(" ");
-  const addrStateZip = [quote.meta.addressState, quote.meta.zipCode]
-    .filter(Boolean).join(", ");
+  const addrLine = quote.meta.addressLine || [
+    [quote.meta.addressNumber, quote.meta.addressName].filter(Boolean).join(" "),
+    quote.meta.addressCity,
+    [quote.meta.addressState, quote.meta.zipCode].filter(Boolean).join(", "),
+    quote.meta.addressCountry,
+  ].filter(Boolean).join(", ");
 
-  if (addrStreet || addrStateZip || quote.meta.addressCountry) {
-    // Small divider label on the right
+  if (addrLine) {
     rightY += 1.5;
     doc.setFontSize(7);
     doc.setFont("helvetica", "bold");
@@ -210,9 +211,15 @@ export async function exportQuoteToPDF(
     doc.text("BUSINESS ADDRESS", rightLabelStart, rightY);
     rightY += 4;
 
-    if (addrStreet) rightRow("Street:", addrStreet);
-    if (addrStateZip) rightRow("State / ZIP:", addrStateZip);
-    if (quote.meta.addressCountry) rightRow("Country:", quote.meta.addressCountry);
+    const colW = rightColX - rightLabelStart - 2;
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...infoValueColor);
+    const addrWrapped = doc.splitTextToSize(addrLine, colW) as string[];
+    for (const ln of addrWrapped) {
+      doc.text(ln, rightColX, rightY, { align: "right" });
+      rightY += 5;
+    }
   }
 
   const parseCrAmt = (v?: string) => {

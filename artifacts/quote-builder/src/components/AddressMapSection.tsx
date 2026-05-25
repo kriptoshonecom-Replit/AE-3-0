@@ -2,7 +2,10 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import "leaflet/dist/leaflet.css";
 import type { Map as LeafletMap } from "leaflet";
 
+// addressLine is the single visible field; the individual fields are still
+// populated by reverse-geocode so PDF / amendments continue to work.
 interface AddressFields {
+  addressLine: string;
   addressName: string;
   addressNumber: string;
   addressCity: string;
@@ -12,6 +15,7 @@ interface AddressFields {
 }
 
 interface BillingFields {
+  billingAddressLine: string;
   billingAddressName: string;
   billingAddressNumber: string;
   billingAddressCity: string;
@@ -27,16 +31,6 @@ interface Props {
   billingValues?: Partial<BillingFields>;
   onBillingChange?: (fields: Partial<BillingFields & { sameForBilling: boolean }>) => void;
 }
-
-const COUNTRIES = [
-  "United States", "Canada", "Mexico", "United Kingdom", "Australia",
-  "Germany", "France", "Spain", "Italy", "Netherlands", "Belgium",
-  "Switzerland", "Austria", "Portugal", "Denmark", "Sweden", "Norway",
-  "Finland", "Ireland", "New Zealand", "Japan", "South Korea", "Singapore",
-  "Hong Kong", "India", "Brazil", "Argentina", "Chile", "Colombia",
-  "South Africa", "UAE", "Saudi Arabia", "Israel", "Turkey", "Poland",
-  "Czech Republic", "Hungary", "Romania", "Greece", "Croatia",
-];
 
 interface NominatimAddress {
   house_number?: string;
@@ -55,18 +49,37 @@ interface NominatimReverseResult {
   address: NominatimAddress;
 }
 
-function buildQuery(f: AddressFields): string {
-  return [f.addressNumber, f.addressName, f.addressCity, f.addressState, f.zipCode, f.addressCountry]
-    .filter(Boolean)
-    .join(", ");
-}
+// Atlanta, GA — default map centre
+const DEFAULT_LAT = 33.749;
+const DEFAULT_LON = -84.388;
+const DEFAULT_ZOOM = 12;
 
 function matchCountry(raw: string | undefined): string {
   if (!raw) return "United States";
+  const COUNTRIES = [
+    "United States", "Canada", "Mexico", "United Kingdom", "Australia",
+    "Germany", "France", "Spain", "Italy", "Netherlands", "Belgium",
+    "Switzerland", "Austria", "Portugal", "Denmark", "Sweden", "Norway",
+    "Finland", "Ireland", "New Zealand", "Japan", "South Korea", "Singapore",
+    "Hong Kong", "India", "Brazil", "Argentina", "Chile", "Colombia",
+    "South Africa", "UAE", "Saudi Arabia", "Israel", "Turkey", "Poland",
+    "Czech Republic", "Hungary", "Romania", "Greece", "Croatia",
+  ];
   return COUNTRIES.find((c) => c.toLowerCase() === raw.toLowerCase()) ?? raw;
 }
 
-export default function AddressMapSection({ values, onChange, sameForBilling = true, billingValues = {}, onBillingChange }: Props) {
+function composeAddressLine(addr: NominatimAddress): string {
+  const street = [addr.house_number, addr.road].filter(Boolean).join(" ");
+  const city   = addr.city ?? addr.town ?? addr.village ?? addr.suburb ?? "";
+  const stateZip = [addr.state ?? addr.county ?? "", addr.postcode ?? ""].filter(Boolean).join(" ");
+  const country  = matchCountry(addr.country);
+  return [street, city, stateZip, country].filter(Boolean).join(", ");
+}
+
+export default function AddressMapSection({
+  values, onChange,
+  sameForBilling = true, billingValues = {}, onBillingChange,
+}: Props) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef          = useRef<LeafletMap | null>(null);
   const markerRef       = useRef<import("leaflet").Marker | null>(null);
@@ -82,12 +95,12 @@ export default function AddressMapSection({ values, onChange, sameForBilling = t
   const [reversing, setReversing] = useState(false);
   const [geoError,  setGeoError]  = useState<string | null>(null);
 
+  // ── Reverse geocode: pin click → fill single address line + individual fields ──
   const reverseGeocode = useCallback(async (lat: number, lon: number) => {
     setReversing(true);
     setGeoError(null);
     try {
-      const url =
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`;
+      const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`;
       const res  = await fetch(url, { headers: { "Accept-Language": "en" } });
       const data = await res.json() as NominatimReverseResult;
       const addr = data.address ?? {};
@@ -95,6 +108,7 @@ export default function AddressMapSection({ values, onChange, sameForBilling = t
       skipForwardRef.current += 1;
 
       onChangeRef.current({
+        addressLine:    composeAddressLine(addr),
         addressNumber:  addr.house_number ?? "",
         addressName:    addr.road ?? "",
         addressCity:    addr.city ?? addr.town ?? addr.village ?? addr.suburb ?? "",
@@ -109,10 +123,9 @@ export default function AddressMapSection({ values, onChange, sameForBilling = t
     }
   }, []);
 
-  // ── Map initialisation — runs exactly once ─────────────────────────────
+  // ── Map initialisation ──────────────────────────────────────────────────
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
-
     const reverseGeocodeStable = reverseGeocode;
 
     import("leaflet").then((L) => {
@@ -125,13 +138,12 @@ export default function AddressMapSection({ values, onChange, sameForBilling = t
       });
 
       const map = L.map(mapContainerRef.current!, {
-        center: [39.5, -98.35],
-        zoom: 4,
+        center: [DEFAULT_LAT, DEFAULT_LON],
+        zoom: DEFAULT_ZOOM,
         zoomControl: true,
         scrollWheelZoom: false,
       });
 
-      // Esri World Topo Map — terrain tiles, no API key required
       L.tileLayer(
         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
         {
@@ -141,22 +153,18 @@ export default function AddressMapSection({ values, onChange, sameForBilling = t
         }
       ).addTo(map);
 
-      // ── Click on map → drop pin + reverse geocode ───────────────────────
       map.on("click", (e: import("leaflet").LeafletMouseEvent) => {
         const { lat, lng } = e.latlng;
-
         if (markerRef.current) {
           markerRef.current.setLatLng([lat, lng]);
         } else {
           markerRef.current = L.marker([lat, lng]).addTo(map);
         }
-
         void reverseGeocodeStable(lat, lng);
       });
 
       mapRef.current = map;
       setMapReady(true);
-
       requestAnimationFrame(() => map.invalidateSize());
       setTimeout(() => { if (mapRef.current) mapRef.current.invalidateSize(); }, 300);
     });
@@ -164,40 +172,32 @@ export default function AddressMapSection({ values, onChange, sameForBilling = t
     return () => {
       if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
       mapRef.current?.remove();
-      mapRef.current  = null;
+      mapRef.current   = null;
       markerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Forward geocode (address fields → pin on map) ─────────────────────
-  const geocode = useCallback(async (fields: AddressFields) => {
-    const query = buildQuery(fields);
+  // ── Forward geocode: single address line → pin ─────────────────────────
+  const geocode = useCallback(async (query: string) => {
     if (!query || !mapRef.current) return;
-
     setGeocoding(true);
     setGeoError(null);
-
     try {
-      const url =
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
+      const url  = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
       const res  = await fetch(url, { headers: { "Accept-Language": "en" } });
       const data = await res.json() as Array<{ lat: string; lon: string }>;
-
       if (!data || data.length === 0) {
         setGeoError("Address not found — try adding more detail.");
         return;
       }
-
       const latlng: [number, number] = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
       const L = await import("leaflet");
-
       if (markerRef.current) {
         markerRef.current.setLatLng(latlng);
       } else {
         markerRef.current = L.marker(latlng).addTo(mapRef.current!);
       }
-
       mapRef.current!.setView(latlng, 16, { animate: true });
       setGeoError(null);
     } catch {
@@ -209,98 +209,32 @@ export default function AddressMapSection({ values, onChange, sameForBilling = t
 
   useEffect(() => {
     if (!mapReady) return;
-
-    if (skipForwardRef.current > 0) {
-      skipForwardRef.current -= 1;
-      return;
-    }
-
-    const query = buildQuery(values);
+    if (skipForwardRef.current > 0) { skipForwardRef.current -= 1; return; }
+    const query = values.addressLine.trim();
     if (!query) return;
-
     if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
-    geocodeTimer.current = setTimeout(() => { void geocode(values); }, 900);
-
-    return () => {
-      if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
-    };
+    geocodeTimer.current = setTimeout(() => { void geocode(query); }, 900);
+    return () => { if (geocodeTimer.current) clearTimeout(geocodeTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [values.addressName, values.addressNumber, values.addressCity, values.addressState, values.zipCode, values.addressCountry, mapReady, geocode]);
-
-  const set = (key: keyof AddressFields) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-      onChange({ [key]: e.target.value });
+  }, [values.addressLine, mapReady, geocode]);
 
   const busy = geocoding || reversing;
 
   return (
     <div className="address-section">
-      <div className="address-fields-grid">
 
-        {/* Row 1: Street Name | Street Number */}
-        <div className="field-group">
-          <label>Street Name</label>
-          <input
-            type="text"
-            value={values.addressName}
-            onChange={set("addressName")}
-            placeholder="e.g. Main Street"
-          />
-        </div>
-        <div className="field-group">
-          <label>Street Number</label>
-          <input
-            type="text"
-            value={values.addressNumber}
-            onChange={set("addressNumber")}
-            placeholder="e.g. 123"
-          />
-        </div>
-
-        {/* Row 3: State / Province | ZIP / Postal Code */}
-        <div className="field-group">
-          <label>State / Province</label>
-          <input
-            type="text"
-            value={values.addressState}
-            onChange={set("addressState")}
-            placeholder="e.g. California"
-          />
-        </div>
-        <div className="field-group">
-          <label>ZIP / Postal Code</label>
-          <input
-            type="text"
-            value={values.zipCode}
-            onChange={set("zipCode")}
-            placeholder="e.g. 90210"
-          />
-        </div>
-
-        {/* Row 4: City | Country */}
-        <div className="field-group span-2">
-          <div className="address-city-country-row">
-            <div className="field-group address-city-field">
-              <label>City</label>
-              <input
-                type="text"
-                value={values.addressCity}
-                onChange={set("addressCity")}
-                placeholder="e.g. Los Angeles"
-              />
-            </div>
-            <div className="field-group address-country-field">
-              <label>Country</label>
-              <select value={values.addressCountry} onChange={set("addressCountry")}>
-                {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-          </div>
-        </div>
-
+      {/* Single address input */}
+      <div className="field-group">
+        <label>Address</label>
+        <input
+          type="text"
+          value={values.addressLine}
+          onChange={(e) => onChange({ addressLine: e.target.value })}
+          placeholder="e.g. 123 Main St, Atlanta, GA 30301"
+        />
       </div>
 
-      {/* Row 5: Map */}
+      {/* Map */}
       <div className="address-map-wrap">
         {busy && (
           <div className="address-map-overlay">
@@ -323,11 +257,11 @@ export default function AddressMapSection({ values, onChange, sameForBilling = t
             <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4" />
             <path d="M8 7v5M8 5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
-          Click anywhere on the satellite view to pin a location and auto-fill the address fields
+          Click anywhere on the map to pin a location and auto-fill the address field
         </div>
       </div>
 
-      {/* Same for Billing checkbox */}
+      {/* Same for Billing */}
       <label className="address-billing-toggle">
         <input
           type="checkbox"
@@ -337,73 +271,18 @@ export default function AddressMapSection({ values, onChange, sameForBilling = t
         <span>Same for Billing</span>
       </label>
 
-      {/* Billing Operation Address — shown only when unchecked */}
+      {/* Billing address — single line, no map */}
       {!sameForBilling && (
         <div className="address-billing-section">
           <div className="address-billing-title">Billing Operation Address</div>
-          <div className="address-fields-grid">
-
-            <div className="field-group">
-              <label>Street Name</label>
-              <input
-                type="text"
-                value={billingValues.billingAddressName ?? ""}
-                onChange={(e) => onBillingChange?.({ billingAddressName: e.target.value })}
-                placeholder="e.g. Main Street"
-              />
-            </div>
-            <div className="field-group">
-              <label>Street Number</label>
-              <input
-                type="text"
-                value={billingValues.billingAddressNumber ?? ""}
-                onChange={(e) => onBillingChange?.({ billingAddressNumber: e.target.value })}
-                placeholder="e.g. 123"
-              />
-            </div>
-
-            <div className="field-group">
-              <label>State / Province</label>
-              <input
-                type="text"
-                value={billingValues.billingAddressState ?? ""}
-                onChange={(e) => onBillingChange?.({ billingAddressState: e.target.value })}
-                placeholder="e.g. California"
-              />
-            </div>
-            <div className="field-group">
-              <label>ZIP / Postal Code</label>
-              <input
-                type="text"
-                value={billingValues.billingZipCode ?? ""}
-                onChange={(e) => onBillingChange?.({ billingZipCode: e.target.value })}
-                placeholder="e.g. 90210"
-              />
-            </div>
-
-            <div className="field-group span-2">
-              <div className="address-city-country-row">
-                <div className="field-group address-city-field">
-                  <label>City</label>
-                  <input
-                    type="text"
-                    value={billingValues.billingAddressCity ?? ""}
-                    onChange={(e) => onBillingChange?.({ billingAddressCity: e.target.value })}
-                    placeholder="e.g. Los Angeles"
-                  />
-                </div>
-                <div className="field-group address-country-field">
-                  <label>Country</label>
-                  <select
-                    value={billingValues.billingAddressCountry ?? "United States"}
-                    onChange={(e) => onBillingChange?.({ billingAddressCountry: e.target.value })}
-                  >
-                    {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-              </div>
-            </div>
-
+          <div className="field-group">
+            <label>Billing Address</label>
+            <input
+              type="text"
+              value={billingValues.billingAddressLine ?? ""}
+              onChange={(e) => onBillingChange?.({ billingAddressLine: e.target.value })}
+              placeholder="e.g. 456 Oak Ave, Atlanta, GA 30301"
+            />
           </div>
         </div>
       )}

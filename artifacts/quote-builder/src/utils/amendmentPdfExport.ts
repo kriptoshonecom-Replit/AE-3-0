@@ -59,6 +59,7 @@ export interface AmendmentExportData {
   discount?: number;
   tax?: number;
   notes?: string;
+  addressLine?: string;
   addressNumber?: string;
   addressName?: string;
   addressCity?: string;

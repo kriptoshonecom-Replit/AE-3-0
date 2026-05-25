@@ -125,6 +125,7 @@ export default function AmendModal({
       let res: Response;
 
       const addrPayload = {
+        addressLine: quote.meta.addressLine ?? "",
         addressNumber: quote.meta.addressNumber ?? "",
         addressName: quote.meta.addressName ?? "",
         addressCity: quote.meta.addressCity ?? "",
