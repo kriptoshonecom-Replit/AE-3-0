@@ -33,11 +33,10 @@ const pitCategories = pitData.categories as PitCategory[];
 
 const logoUrl = new URL("/logo.png", import.meta.url).href;
 
-/** Load an image, scale it down, and re-encode as JPEG to minimise PDF size. */
-async function loadLogoAsJpeg(
+/** Load an image, scale it down, and re-encode as PNG to minimise PDF size. */
+async function loadLogoAsPng(
   src: string,
   maxWidth = 600,
-  quality = 0.7,
 ): Promise<{ dataUrl: string; naturalWidth: number; naturalHeight: number }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -52,7 +51,7 @@ async function loadLogoAsJpeg(
       const ctx = canvas.getContext("2d");
       if (!ctx) { reject(new Error("Canvas 2d context unavailable")); return; }
       ctx.drawImage(img, 0, 0, w, h);
-      resolve({ dataUrl: canvas.toDataURL("image/jpeg", quality), naturalWidth, naturalHeight });
+      resolve({ dataUrl: canvas.toDataURL("image/png"), naturalWidth, naturalHeight });
     };
     img.onerror = () => reject(new Error(`Image load failed: ${src}`));
     img.src = src;
@@ -95,14 +94,14 @@ export async function exportQuoteToPDF(
   doc.setLineWidth(0.4);
   doc.line(0, bannerHeight, pageWidth, bannerHeight);
 
-  // Logo — load, downscale, and embed as JPEG to keep PDF size small
+  // Logo — load, downscale, and embed as PNG to keep PDF size small
   try {
-    const logo = await loadLogoAsJpeg(logoUrl);
+    const logo = await loadLogoAsPng(logoUrl);
     const logoHeightMm = 10;
     const aspectRatio = logo.naturalWidth / logo.naturalHeight;
     const logoWidthMm = logoHeightMm * aspectRatio;
     const logoTopY = 7;
-    doc.addImage(logo.dataUrl, "JPEG", margin, logoTopY, logoWidthMm, logoHeightMm);
+    doc.addImage(logo.dataUrl, "PNG", margin, logoTopY, logoWidthMm, logoHeightMm);
 
     // App name below the logo, left-aligned with logo
     doc.setFontSize(7.5);
