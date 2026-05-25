@@ -6716,6 +6716,13 @@ tr:hover .drag-handle { opacity: 1; }
   gap: 2px;
   flex-shrink: 0;
   background: var(--surface);
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.cdm-tabs::-webkit-scrollbar {
+  display: none;
 }
 .cdm-tab {
   padding: 10px 14px;
@@ -6728,6 +6735,7 @@ tr:hover .drag-handle { opacity: 1; }
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 .cdm-tab:hover {
   color: var(--text);
