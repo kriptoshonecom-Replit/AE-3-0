@@ -1,8 +1,11 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { quotesTable, usersTable } from "@workspace/db/schema";
+import { quotesTable, usersTable, amendmentsTable, statusPassConfigTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/requireAdmin";
+
+const STATUS_PASS_CONFIG_ID = "default";
+const DEFAULT_GATEWAY_COST = 0.005;
 
 const router = Router();
 
@@ -55,27 +58,43 @@ function computeQuoteTotal(data: Record<string, unknown>): number {
 
 router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
   try {
-    const rows = await db
-      .select({
-        id: quotesTable.id,
-        data: quotesTable.data,
-        quoteNumber: quotesTable.quoteNumber,
-        companyName: quotesTable.companyName,
-        customerName: quotesTable.customerName,
-        createdAt: quotesTable.createdAt,
-        updatedAt: quotesTable.updatedAt,
-        updatedByName: quotesTable.updatedByName,
-        passStatus: quotesTable.passStatus,
-        userId: quotesTable.userId,
-        creatorName: usersTable.fullName,
-        creatorEmail: usersTable.email,
-      })
-      .from(quotesTable)
-      .leftJoin(usersTable, eq(quotesTable.userId, usersTable.id))
-      .orderBy(quotesTable.updatedAt);
+    const [rows, configRows, amendRows] = await Promise.all([
+      db
+        .select({
+          id: quotesTable.id,
+          data: quotesTable.data,
+          quoteNumber: quotesTable.quoteNumber,
+          companyName: quotesTable.companyName,
+          customerName: quotesTable.customerName,
+          createdAt: quotesTable.createdAt,
+          updatedAt: quotesTable.updatedAt,
+          updatedByName: quotesTable.updatedByName,
+          passStatus: quotesTable.passStatus,
+          userId: quotesTable.userId,
+          creatorName: usersTable.fullName,
+          creatorEmail: usersTable.email,
+        })
+        .from(quotesTable)
+        .leftJoin(usersTable, eq(quotesTable.userId, usersTable.id))
+        .orderBy(quotesTable.updatedAt),
+      db
+        .select({ data: statusPassConfigTable.data })
+        .from(statusPassConfigTable)
+        .where(eq(statusPassConfigTable.id, STATUS_PASS_CONFIG_ID))
+        .limit(1),
+      db
+        .select({ createdAt: amendmentsTable.createdAt })
+        .from(amendmentsTable),
+    ]);
+
+    const cfgData = (configRows[0]?.data ?? {}) as Record<string, unknown>;
+    const gatewayCost = typeof cfgData.gatewayCost === "number" ? cfgData.gatewayCost : DEFAULT_GATEWAY_COST;
 
     const now = new Date();
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const totalAmendments = amendRows.length;
+    const amendmentsThisMonth = amendRows.filter(r => r.createdAt && r.createdAt >= thisMonthStart).length;
 
     let totalPipelineValue = 0;
     let totalMRR = 0;
@@ -86,6 +105,12 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
     let failRequestedMonthly = 0;
     let passRequestedUpfront = 0;
     let failRequestedUpfront = 0;
+    let passPaymentsRevMo = 0;
+    let passGatewayRevMo = 0;
+    let totalPaymentsRevMo = 0;
+    let totalGatewayRevMo = 0;
+    let passTotalSites = 0;
+    let allTotalSites = 0;
 
     const repMap = new Map<string, { quotes: number; value: number; pass: number }>();
     const customerMap = new Map<string, { value: number; sites: number }>();
@@ -123,6 +148,23 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
       }
 
       if (row.createdAt && row.createdAt >= thisMonthStart) quotesThisMonth++;
+
+      const annualStoreRev = parseFloat(String(meta.annualStoreRevenue ?? "").replace(/[^0-9.]/g, "")) || 0;
+      const sites = Math.max(parseInt(String(meta.numberOfSites ?? "1"), 10) || 1, 1);
+      const basisPts = parseFloat(String(meta.basisPoint ?? "0").replace(/[^0-9.]/g, "")) || 0;
+      const monthlyVol = annualStoreRev / 12;
+      const paymentsRevMo = (basisPts / 10000) * monthlyVol;
+      const gatewayRevMo = gatewayCost * monthlyVol;
+      if (annualStoreRev > 0) {
+        totalPaymentsRevMo += paymentsRevMo;
+        totalGatewayRevMo += gatewayRevMo;
+        allTotalSites += sites;
+        if (normalizedStatus?.toLowerCase() === "pass") {
+          passPaymentsRevMo += paymentsRevMo;
+          passGatewayRevMo += gatewayRevMo;
+          passTotalSites += sites;
+        }
+      }
 
       const repName = (meta.salesRep as string) || row.creatorName || "Unknown";
       const repEntry = repMap.get(repName) ?? { quotes: 0, value: 0, pass: 0 };
@@ -227,7 +269,14 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
         failRequestedMonthly,
         passRequestedUpfront,
         failRequestedUpfront,
+        passPaymentsRevMo,
+        passGatewayRevMo,
+        totalPaymentsRevMo,
+        totalGatewayRevMo,
+        passTotalSites,
+        allTotalSites,
       },
+      amendments: { total: totalAmendments, thisMonth: amendmentsThisMonth },
       topReps,
       topCustomers,
       monthlyData,
