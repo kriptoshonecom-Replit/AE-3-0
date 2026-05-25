@@ -31,8 +31,9 @@ function getMeta(row: QuoteRow): Record<string, string> {
 }
 
 function customerKey(meta: Record<string, string>): string {
+  const mcn = (meta.mcn ?? "").trim();
   const email = (meta.customerEmail ?? "").trim().toLowerCase();
-  return email || `${(meta.companyName ?? "").trim()}___${(meta.customerName ?? "").trim()}`;
+  return mcn || email || `${(meta.companyName ?? "").trim()}___${(meta.customerName ?? "").trim()}`;
 }
 
 function buildCustomers(quoteRows: QuoteRow[], storedRows: CustomerRow[]) {

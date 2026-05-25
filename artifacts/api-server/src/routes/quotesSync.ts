@@ -265,8 +265,9 @@ router.post("/quotes/sync", requireAuth, async (req, res) => {
       });
 
     // Upsert customer record so it persists independently of quotes
+    const mcn = String(meta.mcn ?? "").trim();
     const email = String(meta.customerEmail ?? "").trim().toLowerCase();
-    const cKey = email || `${String(meta.companyName ?? "").trim()}___${String(meta.customerName ?? "").trim()}`;
+    const cKey = mcn || email || `${String(meta.companyName ?? "").trim()}___${String(meta.customerName ?? "").trim()}`;
     if (cKey && cKey !== "___") {
       const addrLine = String(meta.addressLine ?? "");
       const addrCity = String(meta.addressCity ?? "");
