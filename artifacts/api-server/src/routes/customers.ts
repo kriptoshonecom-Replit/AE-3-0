@@ -126,8 +126,7 @@ function buildCustomers(rows: QuoteRow[]) {
     .sort((a, b) => (a.companyName || a.customerName).localeCompare(b.companyName || b.customerName));
 }
 
-router.get("/api/customers", requireAuth, async (req, res) => {
-  const userId = req.auth!.userId;
+router.get("/api/customers", requireAuth, async (_req, res) => {
   try {
     const rows = await db
       .select({
@@ -140,14 +139,14 @@ router.get("/api/customers", requireAuth, async (req, res) => {
         updatedAt: quotesTable.updatedAt,
         passStatus: quotesTable.passStatus,
         userId: quotesTable.userId,
+        creatorName: usersTable.fullName,
+        creatorEmail: usersTable.email,
       })
       .from(quotesTable)
-      .where(eq(quotesTable.userId, userId))
+      .leftJoin(usersTable, eq(quotesTable.userId, usersTable.id))
       .orderBy(quotesTable.updatedAt);
 
-    const customers = buildCustomers(
-      rows.map(r => ({ ...r, creatorName: null, creatorEmail: null }))
-    );
+    const customers = buildCustomers(rows);
     res.json({ customers });
   } catch (err) {
     res.status(500).json({ error: "Failed to load customers" });

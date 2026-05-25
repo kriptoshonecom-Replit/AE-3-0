@@ -73,8 +73,7 @@ export default function CDMPage() {
     setLoading(true);
     setError("");
     try {
-      const endpoint = isAdmin ? "/api/admin/customers" : "/api/customers";
-      const res = await fetch(`${API_BASE}${endpoint}`, { credentials: "include" });
+      const res = await fetch(`${API_BASE}/api/customers`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to load");
       const d = await res.json() as { customers: CustomerProfile[] };
       setCustomers(d.customers);
