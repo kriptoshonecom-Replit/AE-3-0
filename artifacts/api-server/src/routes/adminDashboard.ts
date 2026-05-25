@@ -9,6 +9,34 @@ const DEFAULT_GATEWAY_COST = 0.005;
 
 const router = Router();
 
+/**
+ * Parse state and country from a freeform address line.
+ * Handles typical formats like:
+ *   "123 Main St, Atlanta, GA 30301, United States"
+ *   "123 Main St, Atlanta, GA 30301"
+ *   "Atlanta, GA"
+ */
+function parseLocationFromAddressLine(line: string): { state: string; country: string } {
+  if (!line) return { state: "", country: "" };
+  const parts = line.split(",").map((p) => p.trim()).filter(Boolean);
+  let state = "";
+  let country = "";
+
+  // Last part is often the country (non-numeric, length > 2)
+  const lastPart = parts[parts.length - 1] ?? "";
+  if (lastPart && !/^\d/.test(lastPart) && lastPart.length > 2 && parts.length >= 3) {
+    country = lastPart;
+  }
+
+  // Find "STATE" or "STATE ZIPCODE" pattern — 2 uppercase letters optionally followed by digits
+  for (const part of parts) {
+    const match = part.match(/^([A-Z]{2})(?:\s+\d{4,5}(?:-\d{4})?)?$/);
+    if (match) { state = match[1]; break; }
+  }
+
+  return { state, country };
+}
+
 // Mirrors the frontend tiered pricing logic in quoteLogic.ts
 const TIERED_ITEM_IDS = new Set(["co-001", "co-002"]);
 const TIERED_ADDITIONAL_UNIT_PRICE = 30;
@@ -190,7 +218,11 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
       const isPass = normalizedStatus?.toLowerCase() === "pass";
       const isFail = normalizedStatus?.toLowerCase() === "fail";
 
-      const stateRaw = String(meta.addressState ?? "").trim();
+      // Use individual fields first; fall back to parsing the freeform addressLine
+      const addrLineFallback = String(meta.addressLine ?? "").trim();
+      const parsed = parseLocationFromAddressLine(addrLineFallback);
+
+      const stateRaw = String(meta.addressState ?? "").trim() || parsed.state;
       if (stateRaw) {
         const e = stateMap.get(stateRaw) ?? { quoteCount: 0, totalArr: 0, passCount: 0, failCount: 0 };
         e.quoteCount++; e.totalArr += arr;
@@ -198,7 +230,7 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
         stateMap.set(stateRaw, e);
       }
 
-      const countryRaw = String(meta.addressCountry ?? "").trim();
+      const countryRaw = String(meta.addressCountry ?? "").trim() || parsed.country;
       if (countryRaw) {
         const e = countryMap.get(countryRaw) ?? { quoteCount: 0, totalArr: 0, passCount: 0, failCount: 0 };
         e.quoteCount++; e.totalArr += arr;
@@ -304,6 +336,7 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
               (meta.passStatus as string | undefined) ??
               null,
             updatedAt: (r.updatedAt ?? r.createdAt ?? new Date()).toISOString(),
+            addressLine: (meta.addressLine as string) ?? null,
             addressCity: (meta.addressCity as string) ?? null,
             addressState: (meta.addressState as string) ?? null,
             addressCountry: (meta.addressCountry as string) ?? null,

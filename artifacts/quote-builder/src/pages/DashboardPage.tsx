@@ -65,6 +65,7 @@ interface RecentQuote {
   value: number;
   passStatus: string | null;
   updatedAt: string;
+  addressLine: string | null;
   addressCity: string | null;
   addressState: string | null;
   addressCountry: string | null;
@@ -405,9 +406,11 @@ export default function DashboardPage() {
                   ) : (
                     recentQuotes.map((q) => {
                       const st = q.passStatus?.toLowerCase();
-                      const location = [q.addressCity, q.addressState].filter(Boolean).join(", ")
-                        || [q.addressState, q.addressCountry].filter(Boolean).join(", ")
-                        || "—";
+                      const location =
+                        [q.addressCity, q.addressState].filter(Boolean).join(", ") ||
+                        [q.addressState, q.addressCountry].filter(Boolean).join(", ") ||
+                        q.addressLine?.split(",").slice(-3).join(",").trim() ||
+                        "—";
                       return (
                         <tr key={q.id}>
                           <td style={{ fontWeight: 600, color: "var(--accent)" }}>{q.quoteNumber}</td>
