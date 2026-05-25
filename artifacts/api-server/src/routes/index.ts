@@ -14,6 +14,7 @@ import { adminReleaseRouter, publicReleaseRouter } from "./adminRelease";
 import adminDashboardRouter from "./adminDashboard";
 import amendmentsRouter from "./amendments";
 import customersRouter from "./customers";
+import savePdfRouter from "./savePdf";
 
 const router: IRouter = Router();
 
@@ -29,6 +30,7 @@ router.use(publicReleaseRouter);
 router.use(quotesSyncRouter);
 router.use(amendmentsRouter);
 router.use(customersRouter);
+router.use(savePdfRouter);
 
 // ── Admin routes (requireAdmin applied inside each router) ───────────────────
 router.use("/admin", adminRouter);

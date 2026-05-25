@@ -13,6 +13,7 @@ export interface CustomerQuote {
   createdAt: string;
   updatedAt: string;
   data: Quote | null;
+  pdfSavedAt?: string | null;
 }
 
 export interface AddressBlock {

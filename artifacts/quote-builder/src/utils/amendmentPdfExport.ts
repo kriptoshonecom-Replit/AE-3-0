@@ -54,7 +54,7 @@ export interface AmendmentExportData {
   addressCountry?: string;
 }
 
-export async function exportAmendmentToPDF(data: AmendmentExportData): Promise<void> {
+export async function exportAmendmentToPDF(data: AmendmentExportData, mode?: "download" | "base64"): Promise<string | undefined> {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pageWidth = 210;
   const margin = 16;
@@ -429,5 +429,9 @@ export async function exportAmendmentToPDF(data: AmendmentExportData): Promise<v
   const origBase = (data.originalQuoteNumber ?? "").replace(/^[Qq]-?/, "");
   const paddedNum = String(data.amendmentNumber).padStart(3, "0");
   const safeName = `AQ-${origBase || "AMEND"}_${paddedNum}`.replace(/[^a-zA-Z0-9_-]/g, "_");
+  if (mode === "base64") {
+    return doc.output("datauristring");
+  }
   doc.save(`${safeName}.pdf`);
+  return undefined;
 }

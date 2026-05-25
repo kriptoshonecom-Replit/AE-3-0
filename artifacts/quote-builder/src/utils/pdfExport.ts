@@ -55,7 +55,8 @@ export async function exportQuoteToPDF(
   gatewayTxnRate?: number,
   tieredAdditionalPrice?: number,
   appVersion?: string,
-): Promise<void> {
+  mode?: "download" | "base64",
+): Promise<string | undefined> {
   const rate = pitHourlyRate ?? PIT_HOURLY_RATE;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pageWidth = 210;
@@ -787,5 +788,9 @@ export async function exportQuoteToPDF(
   }
 
   const filename = `${(quote.meta.quoteNumber || "quote").replace(/\s+/g, "-").toLowerCase()}.pdf`;
+  if (mode === "base64") {
+    return doc.output("datauristring");
+  }
   doc.save(filename);
+  return undefined;
 }

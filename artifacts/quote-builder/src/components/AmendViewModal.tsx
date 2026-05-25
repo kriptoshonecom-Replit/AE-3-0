@@ -66,8 +66,12 @@ function fmtDate(s: string) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+
 export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
   const [exporting, setExporting] = useState(false);
+  const [savingPdf, setSavingPdf] = useState(false);
+  const [pdfSaved, setPdfSaved] = useState(false);
   const data = row.data ?? {};
   const deltaGroups = (data.deltaGroups ?? []) as DeltaGroup[];
   const subtotalDelta = data.subtotalDelta ?? 0;
@@ -79,32 +83,55 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
     .map((g) => ({ ...g, lineItems: g.lineItems.filter((li) => li.amendedQty - li.originalQty !== 0) }))
     .filter((g) => g.lineItems.length > 0);
 
+  const exportArgs = {
+    amendmentNumber: row.amendmentNumber,
+    quoteNumber: row.quoteNumber,
+    originalQuoteNumber: row.originalQuoteNumber,
+    companyName: row.companyName,
+    customerName: row.customerName,
+    createdAt: row.createdAt,
+    deltaGroups: changedGroups as Parameters<typeof exportAmendmentToPDF>[0]["deltaGroups"],
+    subtotalDelta,
+    mrrDelta,
+    restockingFee,
+    discount: data.discount as number | undefined,
+    tax: data.tax as number | undefined,
+    notes,
+    addressNumber: data.addressNumber as string | undefined,
+    addressName: data.addressName as string | undefined,
+    addressCity: data.addressCity as string | undefined,
+    addressState: data.addressState as string | undefined,
+    zipCode: data.zipCode as string | undefined,
+    addressCountry: data.addressCountry as string | undefined,
+  };
+
   async function handleExport() {
     setExporting(true);
     try {
-      await exportAmendmentToPDF({
-        amendmentNumber: row.amendmentNumber,
-        quoteNumber: row.quoteNumber,
-        originalQuoteNumber: row.originalQuoteNumber,
-        companyName: row.companyName,
-        customerName: row.customerName,
-        createdAt: row.createdAt,
-        deltaGroups: changedGroups as Parameters<typeof exportAmendmentToPDF>[0]["deltaGroups"],
-        subtotalDelta,
-        mrrDelta,
-        restockingFee,
-        discount: data.discount as number | undefined,
-        tax: data.tax as number | undefined,
-        notes,
-        addressNumber: data.addressNumber as string | undefined,
-        addressName: data.addressName as string | undefined,
-        addressCity: data.addressCity as string | undefined,
-        addressState: data.addressState as string | undefined,
-        zipCode: data.zipCode as string | undefined,
-        addressCountry: data.addressCountry as string | undefined,
-      });
+      await exportAmendmentToPDF(exportArgs);
     } finally {
       setExporting(false);
+    }
+  }
+
+  async function handleSavePDF() {
+    setSavingPdf(true);
+    try {
+      const base64 = await exportAmendmentToPDF(exportArgs, "base64");
+      if (!base64) throw new Error("No PDF data");
+      const res = await fetch(`${API_BASE}/api/amendments/${row.id}/save-pdf`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ pdfBase64: base64 }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      setPdfSaved(true);
+      setTimeout(() => setPdfSaved(false), 3000);
+    } catch {
+      // silently ignore
+    } finally {
+      setSavingPdf(false);
     }
   }
 
@@ -262,29 +289,42 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
         <div className="amend-modal-footer">
           <div className="amend-footer-actions" style={{ justifyContent: "space-between" }}>
             <button type="button" className="edit-modal-cancel" onClick={onClose}>Close</button>
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={() => void handleExport()}
-              disabled={exporting}
-            >
-              {exporting ? (
-                <>
-                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ opacity: 0.5 }}>
-                    <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" strokeDasharray="10 6" />
-                  </svg>
-                  Exporting…
-                </>
-              ) : (
-                <>
-                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                    <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M3 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                  Export PDF
-                </>
-              )}
-            </button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                type="button"
+                className="edit-modal-cancel"
+                onClick={() => void handleSavePDF()}
+                disabled={savingPdf || exporting}
+                title="Save PDF to cloud for email attachments"
+              >
+                {pdfSaved ? (
+                  <span style={{ color: "#10b981", fontWeight: 600 }}>PDF Saved ✓</span>
+                ) : savingPdf ? "Saving…" : "Save PDF"}
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => void handleExport()}
+                disabled={exporting}
+              >
+                {exporting ? (
+                  <>
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ opacity: 0.5 }}>
+                      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" strokeDasharray="10 6" />
+                    </svg>
+                    Exporting…
+                  </>
+                ) : (
+                  <>
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                      <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M3 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                    Export PDF
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>

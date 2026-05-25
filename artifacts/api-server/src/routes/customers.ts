@@ -5,6 +5,8 @@ import { eq } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 import { requireAdmin } from "../middlewares/requireAdmin";
 import { sendEmail } from "../lib/email";
+import { downloadPdf } from "../lib/pdfStorage";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -18,6 +20,7 @@ interface QuoteRow {
   updatedAt: Date;
   passStatus: string | null;
   userId: string;
+  pdfSavedAt: Date | null;
   creatorName?: string | null;
   creatorEmail?: string | null;
 }
@@ -42,6 +45,7 @@ function buildCustomers(rows: QuoteRow[]) {
       createdAt: string;
       updatedAt: string;
       data: unknown;
+      pdfSavedAt: string | null;
     }>;
     passCount: number;
     failCount: number;
@@ -119,6 +123,7 @@ function buildCustomers(rows: QuoteRow[]) {
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
       data: row.data,
+      pdfSavedAt: row.pdfSavedAt ? row.pdfSavedAt.toISOString() : null,
     });
   }
 
@@ -126,22 +131,25 @@ function buildCustomers(rows: QuoteRow[]) {
     .sort((a, b) => (a.companyName || a.customerName).localeCompare(b.companyName || b.customerName));
 }
 
+const QUOTE_SELECT = {
+  id: quotesTable.id,
+  data: quotesTable.data,
+  quoteNumber: quotesTable.quoteNumber,
+  companyName: quotesTable.companyName,
+  customerName: quotesTable.customerName,
+  createdAt: quotesTable.createdAt,
+  updatedAt: quotesTable.updatedAt,
+  passStatus: quotesTable.passStatus,
+  userId: quotesTable.userId,
+  pdfSavedAt: quotesTable.pdfSavedAt,
+  creatorName: usersTable.fullName,
+  creatorEmail: usersTable.email,
+} as const;
+
 router.get("/customers", requireAuth, async (_req, res) => {
   try {
     const rows = await db
-      .select({
-        id: quotesTable.id,
-        data: quotesTable.data,
-        quoteNumber: quotesTable.quoteNumber,
-        companyName: quotesTable.companyName,
-        customerName: quotesTable.customerName,
-        createdAt: quotesTable.createdAt,
-        updatedAt: quotesTable.updatedAt,
-        passStatus: quotesTable.passStatus,
-        userId: quotesTable.userId,
-        creatorName: usersTable.fullName,
-        creatorEmail: usersTable.email,
-      })
+      .select(QUOTE_SELECT)
       .from(quotesTable)
       .leftJoin(usersTable, eq(quotesTable.userId, usersTable.id))
       .orderBy(quotesTable.updatedAt);
@@ -156,19 +164,7 @@ router.get("/customers", requireAuth, async (_req, res) => {
 router.get("/admin/customers", requireAdmin, async (_req, res) => {
   try {
     const rows = await db
-      .select({
-        id: quotesTable.id,
-        data: quotesTable.data,
-        quoteNumber: quotesTable.quoteNumber,
-        companyName: quotesTable.companyName,
-        customerName: quotesTable.customerName,
-        createdAt: quotesTable.createdAt,
-        updatedAt: quotesTable.updatedAt,
-        passStatus: quotesTable.passStatus,
-        userId: quotesTable.userId,
-        creatorName: usersTable.fullName,
-        creatorEmail: usersTable.email,
-      })
+      .select(QUOTE_SELECT)
       .from(quotesTable)
       .leftJoin(usersTable, eq(quotesTable.userId, usersTable.id))
       .orderBy(quotesTable.updatedAt);
@@ -261,19 +257,44 @@ router.delete("/admin/customers/:key", requireAdmin, async (req, res) => {
 });
 
 router.post("/customers/send-email", requireAuth, async (req, res) => {
-  const { to, subject, body } = req.body as { to: string; subject: string; body: string };
+  const { to, subject, body, attachments } = req.body as {
+    to: string;
+    subject: string;
+    body: string;
+    attachments?: { type: "quote" | "amendment"; id: string; filename: string }[];
+  };
   if (!to || !subject || !body) {
     res.status(400).json({ error: "to, subject, and body are required" });
     return;
   }
   try {
+    const emailAttachments: { filename: string; content: Buffer }[] = [];
+
+    if (attachments?.length) {
+      for (const a of attachments) {
+        try {
+          const storagePath = `pdfs/${a.type === "quote" ? "quotes" : "amendments"}/${a.id}.pdf`;
+          const buf = await downloadPdf(storagePath);
+          if (buf) {
+            emailAttachments.push({ filename: a.filename, content: buf });
+          } else {
+            logger.warn({ id: a.id, type: a.type }, "PDF not found in storage for attachment");
+          }
+        } catch (attachErr) {
+          logger.warn({ attachErr, id: a.id }, "Failed to fetch attachment PDF");
+        }
+      }
+    }
+
     await sendEmail(
       to,
       subject,
       `<div style="font-family:sans-serif;line-height:1.7;color:#1e293b">${body.replace(/\n/g, "<br>")}</div>`,
+      emailAttachments.length ? emailAttachments : undefined,
     );
     res.json({ sent: true });
   } catch (err) {
+    logger.error(err, "POST /customers/send-email error");
     res.status(500).json({ error: "Failed to send email" });
   }
 });

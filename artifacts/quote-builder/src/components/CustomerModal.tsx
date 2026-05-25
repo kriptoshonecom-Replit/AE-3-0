@@ -20,6 +20,7 @@ interface AmendmentRow {
   data: { mrrDelta?: number; subtotalDelta?: number; notes?: string };
   createdAt: string;
   updatedAt: string;
+  pdfSavedAt?: string | null;
 }
 
 function fmtAmendNum(n: number) {
@@ -173,7 +174,7 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
 
   const handleTabChange = (t: Tab) => {
     setTab(t);
-    if (t === "amendments" && amendments.length === 0 && !amendsLoading) {
+    if ((t === "amendments" || t === "email") && amendments.length === 0 && !amendsLoading) {
       void loadAmendments();
     }
   };
@@ -215,15 +216,46 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
     setSendResult(null);
     try {
       let body = mailBody;
+      const attachments: { type: "quote" | "amendment"; id: string; filename: string }[] = [];
+
       if (mailRef) {
-        const refQ = customer.quotes.find(q => q.id === mailRef);
-        if (refQ) body += `\n\nReferenced Quote: ${refQ.quoteNumber || "Untitled"}`;
+        const [refType, refId] = mailRef.split(":");
+        if (refType === "quote" && refId) {
+          const refQ = customer.quotes.find(q => q.id === refId);
+          if (refQ) {
+            body += `\n\nAttached Quote: ${refQ.quoteNumber || "Untitled"}`;
+            if (refQ.pdfSavedAt) {
+              attachments.push({
+                type: "quote",
+                id: refId,
+                filename: `${(refQ.quoteNumber || "quote").replace(/\s+/g, "-").toLowerCase()}.pdf`,
+              });
+            }
+          }
+        } else if (refType === "amendment" && refId) {
+          const refA = amendments.find(a => a.id === refId);
+          if (refA) {
+            const origBase = (refA.originalQuoteNumber ?? "").replace(/^[Qq]-?/, "");
+            const paddedNum = String(refA.amendmentNumber).padStart(3, "0");
+            const fname = `AQ-${origBase || "AMEND"}_${paddedNum}.pdf`;
+            body += `\n\nAttached Amendment: ${refA.quoteNumber || fname}`;
+            if (refA.pdfSavedAt) {
+              attachments.push({ type: "amendment", id: refId, filename: fname });
+            }
+          }
+        }
       }
+
       const res = await fetch(`${API_BASE}/api/customers/send-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ to: mailTo, subject: mailSubject, body }),
+        body: JSON.stringify({
+          to: mailTo,
+          subject: mailSubject,
+          body,
+          attachments: attachments.length ? attachments : undefined,
+        }),
       });
       if (!res.ok) throw new Error("Send failed");
       setSendResult("sent");
@@ -636,21 +668,54 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                     placeholder="Subject…"
                   />
                 </div>
-                {customer.quotes.length > 0 && (
+                {(customer.quotes.length > 0 || amendments.length > 0) && (
                   <div className="cdm-form-field">
-                    <label>Attach Quote Reference</label>
+                    <label>Attach PDF</label>
                     <select
                       value={mailRef}
                       onChange={e => setMailRef(e.target.value)}
                       className="cdm-select"
                     >
                       <option value="">None</option>
-                      {customer.quotes.map(q => (
-                        <option key={q.id} value={q.id}>
-                          {q.quoteNumber || "Untitled"} — {q.passStatus ? q.passStatus.toUpperCase() : "No Status"}
-                        </option>
-                      ))}
+                      {customer.quotes.length > 0 && (
+                        <optgroup label="Quotes">
+                          {customer.quotes.map(q => (
+                            <option key={q.id} value={`quote:${q.id}`}>
+                              {q.pdfSavedAt ? "📎 " : ""}
+                              {q.quoteNumber || "Untitled"} — {q.passStatus ? q.passStatus.toUpperCase() : "No Status"}
+                              {!q.pdfSavedAt ? " (no PDF saved)" : ""}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {amendments.length > 0 && (
+                        <optgroup label="Amendments">
+                          {amendments.map(a => {
+                            const origBase = (a.originalQuoteNumber ?? "").replace(/^[Qq]-?/, "");
+                            const paddedNum = String(a.amendmentNumber).padStart(3, "0");
+                            const label = `AQ-${origBase || "AMEND"}_${paddedNum}`;
+                            return (
+                              <option key={a.id} value={`amendment:${a.id}`}>
+                                {a.pdfSavedAt ? "📎 " : ""}
+                                {label}
+                                {!a.pdfSavedAt ? " (no PDF saved)" : ""}
+                              </option>
+                            );
+                          })}
+                        </optgroup>
+                      )}
                     </select>
+                    {mailRef && !mailRef.split(":")[0].length ? null : mailRef ? (() => {
+                      const [rType, rId] = mailRef.split(":");
+                      const hasPdf = rType === "quote"
+                        ? customer.quotes.find(q => q.id === rId)?.pdfSavedAt
+                        : amendments.find(a => a.id === rId)?.pdfSavedAt;
+                      return !hasPdf ? (
+                        <p style={{ fontSize: 11, color: "#f59e0b", marginTop: 4 }}>
+                          No PDF saved for this item — save it first using "Save PDF" in the quote or amendment.
+                        </p>
+                      ) : null;
+                    })() : null}
                   </div>
                 )}
                 <div className="cdm-form-field">

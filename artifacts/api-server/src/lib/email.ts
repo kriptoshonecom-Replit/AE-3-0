@@ -51,7 +51,17 @@ async function getResendClient(): Promise<{ client: Resend; fromEmail: string } 
   }
 }
 
-async function send(to: string, subject: string, html: string): Promise<void> {
+export interface EmailAttachment {
+  filename: string;
+  content: Buffer;
+}
+
+async function send(
+  to: string,
+  subject: string,
+  html: string,
+  attachments?: EmailAttachment[],
+): Promise<void> {
   const resend = await getResendClient();
   if (!resend) {
     logger.warn({ to, subject }, "Resend not configured — email logged to console");
@@ -59,7 +69,18 @@ async function send(to: string, subject: string, html: string): Promise<void> {
     return;
   }
 
-  const { error } = await resend.client.emails.send({ from: resend.fromEmail, to, subject, html });
+  const resendAttachments = attachments?.map(a => ({
+    filename: a.filename,
+    content: a.content.toString("base64"),
+  }));
+
+  const { error } = await resend.client.emails.send({
+    from: resend.fromEmail,
+    to,
+    subject,
+    html,
+    attachments: resendAttachments,
+  });
   if (error) {
     logger.error({ error, to, subject }, "Resend send error");
     console.log(`\n📧 EMAIL FAILED to ${to} | Subject: ${subject}\n[Error: ${JSON.stringify(error)}]\n`);
@@ -79,8 +100,13 @@ function getAppUrl(): string {
   return process.env.APP_URL ?? "https://your-app.replit.app";
 }
 
-export async function sendEmail(to: string, subject: string, html: string): Promise<void> {
-  await send(to, subject, html);
+export async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  attachments?: EmailAttachment[],
+): Promise<void> {
+  await send(to, subject, html, attachments);
 }
 
 export async function sendWelcomeEmail(

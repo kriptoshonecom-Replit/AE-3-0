@@ -18,6 +18,8 @@ export const amendmentsTable = pgTable("amendments", {
   data: jsonb("data").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  pdfPath: text("pdf_path"),
+  pdfSavedAt: timestamp("pdf_saved_at", { withTimezone: true }),
 });
 
 export type AmendmentRow = typeof amendmentsTable.$inferSelect;

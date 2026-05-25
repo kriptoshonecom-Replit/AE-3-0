@@ -113,6 +113,18 @@ async function runMigrations() {
     INSERT INTO app_settings (key, value) VALUES ('app_version', '6.0')
     ON CONFLICT (key) DO NOTHING
   `);
+  await pool.query(`
+    ALTER TABLE quotes ADD COLUMN IF NOT EXISTS pdf_path TEXT
+  `);
+  await pool.query(`
+    ALTER TABLE quotes ADD COLUMN IF NOT EXISTS pdf_saved_at TIMESTAMP WITH TIME ZONE
+  `);
+  await pool.query(`
+    ALTER TABLE amendments ADD COLUMN IF NOT EXISTS pdf_path TEXT
+  `);
+  await pool.query(`
+    ALTER TABLE amendments ADD COLUMN IF NOT EXISTS pdf_saved_at TIMESTAMP WITH TIME ZONE
+  `);
   logger.info("DB migrations complete");
 }
 

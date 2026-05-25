@@ -15,6 +15,8 @@ export const quotesTable = pgTable("quotes", {
   updatedByUserId: uuid("updated_by_user_id").references(() => usersTable.id),
   updatedByName: text("updated_by_name"),
   passStatus: text("pass_status"),
+  pdfPath: text("pdf_path"),
+  pdfSavedAt: timestamp("pdf_saved_at", { withTimezone: true }),
 });
 
 export type QuoteRow = typeof quotesTable.$inferSelect;
