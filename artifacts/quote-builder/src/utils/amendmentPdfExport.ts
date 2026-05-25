@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { formatCurrency } from "./calculations";
+import { addPolicySection } from "./pdfPolicy";
 
 const logoUrl = new URL("/logo.png", import.meta.url).href;
 
@@ -420,6 +421,9 @@ export async function exportAmendmentToPDF(data: AmendmentExportData): Promise<v
     doc.setTextColor(30, 41, 59);
     doc.text(noteLines, margin + notePad, y + 1);
   }
+
+  // ── Policy section ──────────────────────────────────
+  addPolicySection(doc, y, pageWidth, margin, contentWidth);
 
   // ── Save ────────────────────────────────────────────
   const origBase = (data.originalQuoteNumber ?? "").replace(/^[Qq]-?/, "");

@@ -13,6 +13,7 @@ import pitData from "../data/pit-services.json";
 import { PIT_HOURLY_RATE } from "../data/pit-config";
 import { computeLineItemTotal } from "./quoteLogic";
 import { computeProductRelatedPitTotal, computeProductRelatedPitHours } from "../components/ProductRelatedPitSection";
+import { addPolicySection } from "./pdfPolicy";
 
 const DEFAULT_YES_NO: Record<string, boolean> = {
   "connected-payments-yn": false,
@@ -716,6 +717,9 @@ export async function exportQuoteToPDF(
     .map((i) => ({ name: i.name, qty: 1, price: i.price ?? 0 }));
 
   drawItemsTable("Heatmap & Cabling", activeHeatmapRows, false);
+
+  // ── Policy section ──────────────────────────────────
+  y = addPolicySection(doc, y, pageWidth, margin, contentWidth);
 
   // ── Footer ──────────────────────────────────────────
   const sameForBilling = quote.meta.sameForBilling !== false; // default true
