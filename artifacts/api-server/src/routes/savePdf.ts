@@ -1,4 +1,5 @@
 import { Router } from "express";
+import express from "express";
 import { db } from "@workspace/db";
 import { quotesTable, amendmentsTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
@@ -7,6 +8,9 @@ import { uploadPdf } from "../lib/pdfStorage";
 import { logger } from "../lib/logger";
 
 const router = Router();
+
+// PDFs base64-encoded can be several MB — raise the limit for these routes only
+router.use(express.json({ limit: "20mb" }));
 
 router.post("/quotes/:id/save-pdf", requireAuth, async (req, res) => {
   const { userId, role } = req.auth!;
