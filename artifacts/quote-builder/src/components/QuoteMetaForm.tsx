@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { QuoteMeta } from "../types";
+import { formatPhoneUS } from "../utils/phone";
 
 interface Props {
   meta: QuoteMeta;
@@ -98,8 +99,8 @@ export default function QuoteMetaForm({ meta, onChange, pspmDiscountPct, upfront
           <input
             type="tel"
             value={meta.customerPhone ?? ""}
-            onChange={set("customerPhone")}
-            placeholder="(555) 000-0000"
+            onChange={e => onChange({ ...meta, customerPhone: formatPhoneUS(e.target.value) })}
+            placeholder="+1 (555) 000-0000"
           />
         </div>
 

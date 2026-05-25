@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { CustomerProfile } from "../pages/CDMPage";
 import type { Quote } from "../types";
 import { quoteTotal, formatCurrency } from "../utils/calculations";
+import { formatPhoneUS } from "../utils/phone";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 const C = 226.19;
@@ -337,7 +338,8 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                       <input
                         type="tel"
                         value={editFields.customerPhone}
-                        onChange={e => setEditFields(f => ({ ...f, customerPhone: e.target.value }))}
+                        onChange={e => setEditFields(f => ({ ...f, customerPhone: formatPhoneUS(e.target.value) }))}
+                        placeholder="+1 (555) 000-0000"
                       />
                     </div>
                   </div>
