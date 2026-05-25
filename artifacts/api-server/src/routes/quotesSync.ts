@@ -1,8 +1,11 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { quotesTable } from "@workspace/db/schema";
+import { quotesTable, statusPassConfigTable } from "@workspace/db/schema";
 import { and, eq } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
+
+const STATUS_PASS_CONFIG_ID = "default";
+const DEFAULT_GATEWAY_COST = 0.005;
 
 const router = Router();
 
@@ -60,10 +63,20 @@ router.get("/quotes/stats", requireAuth, async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   const { userId } = req.auth!;
   try {
-    const rows = await db
-      .select({ data: quotesTable.data, passStatus: quotesTable.passStatus })
-      .from(quotesTable)
-      .where(eq(quotesTable.userId, userId));
+    const [rows, configRows] = await Promise.all([
+      db
+        .select({ data: quotesTable.data, passStatus: quotesTable.passStatus })
+        .from(quotesTable)
+        .where(eq(quotesTable.userId, userId)),
+      db
+        .select({ data: statusPassConfigTable.data })
+        .from(statusPassConfigTable)
+        .where(eq(statusPassConfigTable.id, STATUS_PASS_CONFIG_ID))
+        .limit(1),
+    ]);
+
+    const cfgData = (configRows[0]?.data ?? {}) as Record<string, unknown>;
+    const gatewayCost = typeof cfgData.gatewayCost === "number" ? cfgData.gatewayCost : DEFAULT_GATEWAY_COST;
 
     let passCount = 0;
     let failCount = 0;
@@ -75,6 +88,12 @@ router.get("/quotes/stats", requireAuth, async (req, res) => {
     let failRequestedMonthly = 0;
     let passRequestedUpfront = 0;
     let failRequestedUpfront = 0;
+    let passPaymentsRevMo = 0;
+    let passGatewayRevMo = 0;
+    let totalPaymentsRevMo = 0;
+    let totalGatewayRevMo = 0;
+    let passTotalSites = 0;
+    let allTotalSites = 0;
 
     for (const row of rows) {
       const data = row.data as Record<string, unknown>;
@@ -85,10 +104,29 @@ router.get("/quotes/stats", requireAuth, async (req, res) => {
       const status = (row.passStatus ?? (meta.passStatus as string | undefined) ?? "").toLowerCase();
       const reqMonthly = parseFloat(String(meta.requestedSubscriptionAmount ?? "").replace(/[^0-9.]/g, "")) || 0;
       const reqUpfront = parseFloat(String(meta.requestedUpfrontAmount ?? "").replace(/[^0-9.]/g, "")) || 0;
+
+      const annualStoreRev = parseFloat(String(meta.annualStoreRevenue ?? "").replace(/[^0-9.]/g, "")) || 0;
+      const sites = Math.max(parseInt(String(meta.numberOfSites ?? "1"), 10) || 1, 1);
+      const basisPts = parseFloat(String(meta.basisPoint ?? "0").replace(/[^0-9.]/g, "")) || 0;
+      const monthlyVol = annualStoreRev / 12;
+      const paymentsRevMo = (basisPts / 10000) * monthlyVol;
+      const gatewayRevMo = gatewayCost * monthlyVol;
+
+      if (annualStoreRev > 0) {
+        totalPaymentsRevMo += paymentsRevMo;
+        totalGatewayRevMo += gatewayRevMo;
+        allTotalSites += sites;
+      }
+
       if (status === "pass") {
         passCount++; passMrr += mrr; passArr += arr;
         passRequestedMonthly += reqMonthly;
         passRequestedUpfront += reqUpfront;
+        if (annualStoreRev > 0) {
+          passPaymentsRevMo += paymentsRevMo;
+          passGatewayRevMo += gatewayRevMo;
+          passTotalSites += sites;
+        }
       } else if (status === "fail") {
         failCount++;
         failRequestedMonthly += reqMonthly;
@@ -101,6 +139,8 @@ router.get("/quotes/stats", requireAuth, async (req, res) => {
     res.json({
       total, passCount, failCount, passMrr, passArr, totalMrr, totalArr, successRate,
       passRequestedMonthly, failRequestedMonthly, passRequestedUpfront, failRequestedUpfront,
+      passPaymentsRevMo, passGatewayRevMo, totalPaymentsRevMo, totalGatewayRevMo,
+      passTotalSites, allTotalSites,
     });
   } catch (err) {
     req.log.error(err, "GET /quotes/stats error");

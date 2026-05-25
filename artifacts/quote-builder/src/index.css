@@ -2773,10 +2773,11 @@ textarea:focus::placeholder {
   line-height: 1.1;
 }
 
-.profile-stat-value.psc-pass  { color: #16a34a; }
-.profile-stat-value.psc-fail  { color: #dc2626; }
-.profile-stat-value.psc-rate  { color: var(--accent); }
-.profile-stat-value.psc-money { color: #16a34a; font-size: 16px; }
+.profile-stat-value.psc-pass    { color: #16a34a; }
+.profile-stat-value.psc-fail    { color: #dc2626; }
+.profile-stat-value.psc-rate    { color: var(--accent); }
+.profile-stat-value.psc-money   { color: #16a34a; font-size: 16px; }
+.profile-stat-value.psc-gateway { color: #0369a1; font-size: 16px; }
 
 .profile-stat-sub {
   font-size: 10.5px;

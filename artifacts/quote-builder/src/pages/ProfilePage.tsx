@@ -213,12 +213,78 @@ interface QuoteStats {
   failRequestedMonthly: number;
   passRequestedUpfront: number;
   failRequestedUpfront: number;
+  passPaymentsRevMo: number;
+  passGatewayRevMo: number;
+  totalPaymentsRevMo: number;
+  totalGatewayRevMo: number;
+  passTotalSites: number;
+  allTotalSites: number;
 }
 
 function fmtMoney(n: number) {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`;
   return `$${n.toFixed(0)}`;
+}
+
+function PaymentsRevenueStats({ stats, loading }: { stats: QuoteStats | null; loading: boolean }) {
+  if (loading) {
+    return (
+      <div className="profile-stats">
+        <p className="profile-stats-title">Payments Processing</p>
+        <div className="profile-stats-loading"><div className="spinner" /></div>
+      </div>
+    );
+  }
+  if (!stats) return null;
+
+  const passPaymentsPerSite = stats.passTotalSites > 0
+    ? stats.passPaymentsRevMo / stats.passTotalSites : 0;
+  const passGatewayPerSite = stats.passTotalSites > 0
+    ? stats.passGatewayRevMo / stats.passTotalSites : 0;
+  const allPaymentsPerSite = stats.allTotalSites > 0
+    ? stats.totalPaymentsRevMo / stats.allTotalSites : 0;
+  const allGatewayPerSite = stats.allTotalSites > 0
+    ? stats.totalGatewayRevMo / stats.allTotalSites : 0;
+
+  const hasData = stats.totalPaymentsRevMo > 0 || stats.totalGatewayRevMo > 0;
+  if (!hasData) return null;
+
+  return (
+    <div className="profile-stats">
+      <p className="profile-stats-title">Payments Processing</p>
+      <div className="profile-stats-grid">
+        <div className="profile-stat-card">
+          <span className="profile-stat-label">Won Payments Rev</span>
+          <span className="profile-stat-value psc-money">
+            {fmtMoney(stats.passPaymentsRevMo)}<span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-3)" }}>/mo</span>
+          </span>
+          <span className="profile-stat-sub">{fmtMoney(passPaymentsPerSite)}/site · {stats.passTotalSites} site{stats.passTotalSites !== 1 ? "s" : ""}</span>
+        </div>
+        <div className="profile-stat-card">
+          <span className="profile-stat-label">Won Gateway Rev</span>
+          <span className="profile-stat-value psc-gateway">
+            {fmtMoney(stats.passGatewayRevMo)}<span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-3)" }}>/mo</span>
+          </span>
+          <span className="profile-stat-sub">{fmtMoney(passGatewayPerSite)}/site · {stats.passTotalSites} site{stats.passTotalSites !== 1 ? "s" : ""}</span>
+        </div>
+        <div className="profile-stat-card">
+          <span className="profile-stat-label">Pipeline Payments Rev</span>
+          <span className="profile-stat-value psc-money" style={{ opacity: 0.75 }}>
+            {fmtMoney(stats.totalPaymentsRevMo)}<span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-3)" }}>/mo</span>
+          </span>
+          <span className="profile-stat-sub">{fmtMoney(allPaymentsPerSite)}/site · {stats.allTotalSites} site{stats.allTotalSites !== 1 ? "s" : ""}</span>
+        </div>
+        <div className="profile-stat-card">
+          <span className="profile-stat-label">Pipeline Gateway Rev</span>
+          <span className="profile-stat-value psc-gateway" style={{ opacity: 0.75 }}>
+            {fmtMoney(stats.totalGatewayRevMo)}<span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-3)" }}>/mo</span>
+          </span>
+          <span className="profile-stat-sub">{fmtMoney(allGatewayPerSite)}/site · {stats.allTotalSites} site{stats.allTotalSites !== 1 ? "s" : ""}</span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function ProfileStats({ stats, loading }: { stats: QuoteStats | null; loading: boolean }) {
@@ -371,6 +437,7 @@ export default function ProfilePage() {
         </div>
 
         <ProfileStats stats={stats} loading={statsLoading} />
+        <PaymentsRevenueStats stats={stats} loading={statsLoading} />
 
         <div className="profile-actions">
           <button className="btn-ghost" type="button" onClick={() => history.back()}>
