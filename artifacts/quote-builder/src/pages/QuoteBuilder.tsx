@@ -427,6 +427,7 @@ export default function QuoteBuilder() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     quote.meta.id,
+    quote.meta.mcn,
     quote.meta.customerEmail,
     quote.meta.companyName,
     quote.meta.customerName,
@@ -746,6 +747,7 @@ export default function QuoteBuilder() {
   const handleUseCdmRecord = (customer: CustomerProfile) => {
     const updated: QuoteMeta = {
       ...quote.meta,
+      mcn: customer.mcn || quote.meta.mcn,
       companyName: customer.companyName || quote.meta.companyName,
       customerName: customer.customerName || quote.meta.customerName,
       customerEmail: customer.customerEmail || quote.meta.customerEmail,

@@ -77,6 +77,16 @@ export function findBestCdmMatch(
   meta: QuoteMeta,
   customers: CustomerProfile[],
 ): CustomerProfile | null {
+  // MCN exact match is a definitive hit — skip fuzzy scoring
+  const inputMcn = (meta.mcn ?? "").trim();
+  if (inputMcn) {
+    const mcnMatch = customers.find(
+      (c) => (c.mcn ?? "").trim() === inputMcn,
+    );
+    if (mcnMatch) return mcnMatch;
+  }
+
+  // Fuzzy similarity fallback (email / name / phone / address)
   let bestMatch: CustomerProfile | null = null;
   let bestScore = 0;
 
