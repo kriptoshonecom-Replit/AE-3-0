@@ -165,6 +165,7 @@ export default function QuoteBuilder() {
   }, []);
   const [saved, setSaved] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [savingPdf, setSavingPdf] = useState(false);
   const [pdfSaved, setPdfSaved] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -421,7 +422,20 @@ export default function QuoteBuilder() {
 
     const timer = setTimeout(() => {
       const best = findBestCdmMatch(quote.meta, cdmCustomers);
-      if (best) setCdmDuplicateMatch(best);
+      if (best) {
+        // Skip the modal if the quote already has all the identifying data from
+        // this customer (MCN matches + company/name/email are all filled in).
+        // There's nothing new to offer the user in that case.
+        const m = quote.meta;
+        const alreadySynced =
+          best.mcn && m.mcn === best.mcn &&
+          m.companyName && m.customerName && m.customerEmail;
+        if (alreadySynced) {
+          duplicateCheckedIds.current.add(quoteId);
+        } else {
+          setCdmDuplicateMatch(best);
+        }
+      }
     }, 900);
 
     return () => clearTimeout(timer);
@@ -661,7 +675,10 @@ export default function QuoteBuilder() {
         // Write to localStorage immediately (fast cache for form restore on reload).
         saveQuote(updated, userId);
         // Push to server; once confirmed, refresh the sidebar from server.
-        syncQuoteToServer(updated, () => setRefreshTrigger((n) => n + 1));
+        syncQuoteToServer(updated, () => {
+          isDirtyRef.current = false;
+          setRefreshTrigger((n) => n + 1);
+        });
       }
       if (markDirty) isDirtyRef.current = true;
     },
@@ -996,6 +1013,7 @@ export default function QuoteBuilder() {
 
   const executeExportPDF = async () => {
     setExporting(true);
+    setExportError(null);
     try {
       await exportQuoteToPDF(
         quote, pitHourlyRate, stampStatus ?? undefined,
@@ -1003,6 +1021,9 @@ export default function QuoteBuilder() {
         voyixTxnFee, gatewayTxnRate, tieredAdditionalPrice,
         appVersion || undefined,
       );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setExportError(`Export failed: ${msg}`);
     } finally {
       setExporting(false);
     }
@@ -1328,9 +1349,12 @@ export default function QuoteBuilder() {
               className="btn-primary"
               onClick={handleExportPDF}
               disabled={exporting}
+              title={exportError ?? undefined}
             >
               {exporting ? (
                 "Exporting…"
+              ) : exportError ? (
+                <span style={{ color: "#ef4444" }}>⚠ Export failed</span>
               ) : (
                 <>
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
