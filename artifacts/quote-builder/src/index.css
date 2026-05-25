@@ -2350,6 +2350,30 @@ textarea:focus::placeholder {
   padding: 5px 0;
 }
 
+.vp-fixed-rate-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+}
+
+.vp-fixed-rate-input {
+  width: 90px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: var(--bg);
+  color: var(--text);
+  text-align: right;
+}
+
+.vp-fixed-rate-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
 .heatmap-item-price {
   font-size: 12px;
   font-weight: 600;

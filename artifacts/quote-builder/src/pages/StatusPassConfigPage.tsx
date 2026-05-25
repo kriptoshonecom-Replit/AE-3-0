@@ -67,6 +67,10 @@ interface CalcContext {
   productPciSum: number;
   hwmCostMonthly: number;
   ncrPay: boolean;
+  voyixPayYesEnabled: boolean;
+  voyixPayYesRate: string;
+  voyixPayNoEnabled: boolean;
+  voyixPayNoRate: string;
   pitTotal: number;
   productPitTotal: number;
   heatmapTotal: number;
@@ -80,6 +84,8 @@ const EMPTY_CTX: CalcContext = {
   basisPoint: "", voyixPayTransactionFee: "",
   aeCurrentMonthlySpend: "", aeCurrentVoyixPaySpend: "",
   productPciSum: 0, hwmCostMonthly: 0, ncrPay: false,
+  voyixPayYesEnabled: false, voyixPayYesRate: "0.02",
+  voyixPayNoEnabled: false,  voyixPayNoRate: "0.05",
   pitTotal: 0, productPitTotal: 0, heatmapTotal: 0,
   recurringPit: false, costOfBuyOut: "",
 };
@@ -1244,9 +1250,17 @@ export default function StatusPassConfigPage() {
   const currentCat = data?.categories.find((c) => c.id === activeCat);
   const currentModel = currentCat?.models.find((m) => m.id === activeModel);
 
-  const blendedRate = data
+  const tieredBlendedRate = data
     ? computeBlendedRateValue(data.categories, activeCat, calcCtx.numSites, computedTxnCount, rawTxnCount)
     : 0;
+  const _spFixedYesRate = parseFloat(calcCtx.voyixPayYesRate ?? "0");
+  const _spFixedNoRate  = parseFloat(calcCtx.voyixPayNoRate  ?? "0");
+  const _spUseFixed = calcCtx.ncrPay
+    ? ((calcCtx.voyixPayYesEnabled ?? false) && _spFixedYesRate > 0)
+    : ((calcCtx.voyixPayNoEnabled  ?? false) && _spFixedNoRate  > 0);
+  const blendedRate = _spUseFixed
+    ? (calcCtx.ncrPay ? _spFixedYesRate : _spFixedNoRate)
+    : tieredBlendedRate;
 
   return (
     <div className="admin-page">

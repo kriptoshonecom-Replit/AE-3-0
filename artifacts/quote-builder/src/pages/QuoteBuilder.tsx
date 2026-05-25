@@ -289,7 +289,7 @@ export default function QuoteBuilder() {
     type SpCat    = { id: string; models: SpModel[] };
     const spCats  = (spData?.categories ?? []) as SpCat[];
     const spModel = spCats.find((c) => c.id === catId)?.models.find((m) => m.id === modelId);
-    const blendedRate = (() => {
+    const tieredBlendedRate = (() => {
       if (!spModel || computedTxnCount === 0 || rawTxnCount === 0) return 0;
       let remaining = computedTxnCount, fees = 0;
       for (let idx = 0; idx < spModel.tiers.length; idx++) {
@@ -304,6 +304,14 @@ export default function QuoteBuilder() {
       }
       return rawTxnCount > 0 ? fees / rawTxnCount : 0;
     })();
+    const _fixedYesRate = parseFloat(meta.voyixPayYesRate ?? "0");
+    const _fixedNoRate  = parseFloat(meta.voyixPayNoRate  ?? "0");
+    const _useFixed = meta.ncrPay
+      ? ((meta.voyixPayYesEnabled ?? false) && _fixedYesRate > 0)
+      : ((meta.voyixPayNoEnabled  ?? false) && _fixedNoRate  > 0);
+    const blendedRate = _useFixed
+      ? (meta.ncrPay ? _fixedYesRate : _fixedNoRate)
+      : tieredBlendedRate;
     const gatewayRevM1 = txnCount > 0 && blendedRate > 0 ? (txnCount * blendedRate) / 12 : 0;
 
     const revM1         = subM1 + upfrontM1 + paymentsRevM1 + gatewayRevM1;
@@ -691,6 +699,10 @@ export default function QuoteBuilder() {
       productPciSum,
       hwmCostMonthly,
       ncrPay: meta.ncrPay ?? false,
+      voyixPayYesEnabled: meta.voyixPayYesEnabled ?? false,
+      voyixPayYesRate: meta.voyixPayYesRate ?? "0.02",
+      voyixPayNoEnabled: meta.voyixPayNoEnabled ?? false,
+      voyixPayNoRate: meta.voyixPayNoRate ?? "0.05",
       pitTotal,
       productPitTotal,
       heatmapTotal,

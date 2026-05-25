@@ -92,6 +92,10 @@ export interface QuoteMeta {
   basisPoint?: string;
   voyixPayTransactionFee?: string;
   paymentsSpecialist?: string;
+  voyixPayYesEnabled?: boolean;
+  voyixPayYesRate?: string;
+  voyixPayNoEnabled?: boolean;
+  voyixPayNoRate?: string;
   requestedSubscriptionAmount?: string;
   requestedUpfrontAmount?: string;
   creatorName?: string;

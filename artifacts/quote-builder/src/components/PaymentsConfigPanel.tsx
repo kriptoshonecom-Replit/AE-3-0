@@ -104,6 +104,15 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
   );
   const basisPoint = useBpsField(meta.basisPoint ?? "", set("basisPoint"));
 
+  const voyixPayYesRateField = useCurrencyField(
+    meta.voyixPayYesRate ?? "0.02",
+    set("voyixPayYesRate"),
+  );
+  const voyixPayNoRateField = useCurrencyField(
+    meta.voyixPayNoRate ?? "0.05",
+    set("voyixPayNoRate"),
+  );
+
   const toggleBuyOut = () => {
     onChange({ ...meta, contractBuyOut: !meta.contractBuyOut });
   };
@@ -112,8 +121,26 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
     onChange({ ...meta, ncrPay: !meta.ncrPay });
   };
 
+  const toggleVoyixPayYes = () => {
+    onChange({
+      ...meta,
+      voyixPayYesEnabled: !meta.voyixPayYesEnabled,
+      voyixPayYesRate: meta.voyixPayYesRate ?? "0.02",
+    });
+  };
+
+  const toggleVoyixPayNo = () => {
+    onChange({
+      ...meta,
+      voyixPayNoEnabled: !meta.voyixPayNoEnabled,
+      voyixPayNoRate: meta.voyixPayNoRate ?? "0.05",
+    });
+  };
+
   const on = meta.contractBuyOut ?? false;
   const ncrPayOn = meta.ncrPay ?? false;
+  const voyixPayYesOn = meta.voyixPayYesEnabled ?? false;
+  const voyixPayNoOn = meta.voyixPayNoEnabled ?? false;
 
   return (
     <div className="quote-meta-form">
@@ -250,6 +277,62 @@ export default function PaymentsConfigPanel({ meta, onChange }: Props) {
             placeholder="First Name Last"
           />
         </div>
+
+        {/* 11 — Voyix Pay YES fixed rate (visible only when NCR PAY = Yes) */}
+        {ncrPayOn && (
+          <div className="field-group">
+            <label>Voyix Pay YES</label>
+            <div className="vp-fixed-rate-row">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={voyixPayYesOn}
+                className={`pit-toggle-switch ${voyixPayYesOn ? "pit-toggle-on" : "pit-toggle-off"}`}
+                onClick={toggleVoyixPayYes}
+              >
+                <span className="pit-toggle-thumb" />
+              </button>
+              <span className={`pit-yn-state ${voyixPayYesOn ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
+                {voyixPayYesOn ? "Yes" : "No"}
+              </span>
+              <input
+                type="text"
+                className="vp-fixed-rate-input"
+                placeholder="$0.02"
+                style={!voyixPayYesOn ? { opacity: 0.4, cursor: "not-allowed", pointerEvents: "none" } : undefined}
+                {...voyixPayYesRateField}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* 12 — Voyix Pay NO fixed rate (visible only when NCR PAY = No) */}
+        {!ncrPayOn && (
+          <div className="field-group">
+            <label>Voyix Pay NO</label>
+            <div className="vp-fixed-rate-row">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={voyixPayNoOn}
+                className={`pit-toggle-switch ${voyixPayNoOn ? "pit-toggle-on" : "pit-toggle-off"}`}
+                onClick={toggleVoyixPayNo}
+              >
+                <span className="pit-toggle-thumb" />
+              </button>
+              <span className={`pit-yn-state ${voyixPayNoOn ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
+                {voyixPayNoOn ? "Yes" : "No"}
+              </span>
+              <input
+                type="text"
+                className="vp-fixed-rate-input"
+                placeholder="$0.05"
+                style={!voyixPayNoOn ? { opacity: 0.4, cursor: "not-allowed", pointerEvents: "none" } : undefined}
+                {...voyixPayNoRateField}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
