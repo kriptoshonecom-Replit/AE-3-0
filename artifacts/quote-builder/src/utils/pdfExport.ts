@@ -212,7 +212,7 @@ export async function exportQuoteToPDF(
     rightY += 4;
 
     const colW = rightColX - rightLabelStart - 2;
-    doc.setFontSize(8.5);
+    doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...infoValueColor);
     const addrWrapped = doc.splitTextToSize(addrLine, colW) as string[];
