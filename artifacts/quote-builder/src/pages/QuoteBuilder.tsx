@@ -144,7 +144,7 @@ function autoAddLookupProducts(
 export default function QuoteBuilder() {
   const { user } = useAuth();
   const userId = user?.id ?? "";
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
 
   const [quote, setQuote] = useState<Quote>(createNewQuote);
   const [initialized, setInitialized] = useState(false);
@@ -519,6 +519,25 @@ export default function QuoteBuilder() {
   };
 
   const printAreaRef = useRef<HTMLDivElement>(null);
+
+  // When navigating back to "/" while already initialized, consume any pending quote
+  // (e.g. admin clicks "Open in builder" from the Quote Library)
+  useEffect(() => {
+    if (!initialized || !userId) return;
+    const pending = consumePendingOpenQuote();
+    if (!pending) return;
+    const { quote: pq, ownerId } = pending;
+    if (ownerId !== userId) {
+      const taggedMeta = { ...pq.meta, _adminOwnerId: ownerId } as typeof pq.meta;
+      handleSelectQuote({ ...pq, meta: taggedMeta });
+    } else {
+      setQuote(pq);
+      if (pq.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...pq.meta.yesNoToggles });
+      setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(pq.meta.optionalProgramToggles ?? {}) });
+      setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(pq.meta.heatmapToggles ?? {}) });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location]);
 
   // Load the correct quote once we know who the user is
   useEffect(() => {
