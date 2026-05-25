@@ -16,6 +16,9 @@ import PaymentsConfigPanel from "../components/PaymentsConfigPanel";
 
 import UnsavedChangesModal from "../components/UnsavedChangesModal";
 import LicenseSyncModal from "../components/LicenseSyncModal";
+import CdmDuplicateModal from "../components/CdmDuplicateModal";
+import type { CustomerProfile } from "./CDMPage";
+import { findBestCdmMatch } from "../utils/cdmSimilarity";
 import {
   lookupQtyChanged,
   lookupProductSelected,
@@ -167,6 +170,11 @@ export default function QuoteBuilder() {
   const [heatmapToggles, setHeatmapToggles] = useState<Record<string, boolean>>(DEFAULT_HEATMAP_TOGGLES);
   const isDirtyRef = useRef(false);
   const groupDragSrc = useRef<number | null>(null);
+
+  // ── CDM duplicate detection ───────────────────────────────────
+  const [cdmCustomers, setCdmCustomers] = useState<CustomerProfile[]>([]);
+  const [cdmDuplicateMatch, setCdmDuplicateMatch] = useState<CustomerProfile | null>(null);
+  const duplicateCheckedIds = useRef<Set<string>>(new Set());
   const [groupDragOver, setGroupDragOver] = useState<number | null>(null);
   const [pendingAction, setPendingAction] = useState<null | "export" | "new">(null);
   // Tracks the original owner's userId when admin is editing another user's quote
@@ -382,6 +390,41 @@ export default function QuoteBuilder() {
       })
       .catch(() => {});
   }, []);
+  // ── CDM customers for duplicate detection ────────────────────────────────
+  useEffect(() => {
+    if (!userId) return;
+    fetch(`${API_BASE}/api/customers`, { credentials: "include" })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: unknown) => {
+        if (Array.isArray(data)) setCdmCustomers(data as CustomerProfile[]);
+      })
+      .catch(() => {});
+  }, [userId]);
+
+  // ── CDM similarity check (debounced 900 ms) ──────────────────────────────
+  useEffect(() => {
+    const quoteId = quote.meta.id;
+    if (duplicateCheckedIds.current.has(quoteId)) return;
+    if (cdmCustomers.length === 0) return;
+
+    const timer = setTimeout(() => {
+      const best = findBestCdmMatch(quote.meta, cdmCustomers);
+      if (best) setCdmDuplicateMatch(best);
+    }, 900);
+
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    quote.meta.id,
+    quote.meta.customerEmail,
+    quote.meta.companyName,
+    quote.meta.customerName,
+    quote.meta.customerPhone,
+    quote.meta.zipCode,
+    quote.meta.addressName,
+    cdmCustomers,
+  ]);
+
   // ── Dynamic alert configs loaded from DB ─────────────────────────────────
   interface AlertConfigRuntime {
     id: string;
@@ -662,6 +705,30 @@ export default function QuoteBuilder() {
     autosave(updated);
   };
 
+  const handleUseCdmRecord = (customer: CustomerProfile) => {
+    const updated: QuoteMeta = {
+      ...quote.meta,
+      companyName: customer.companyName || quote.meta.companyName,
+      customerName: customer.customerName || quote.meta.customerName,
+      customerEmail: customer.customerEmail || quote.meta.customerEmail,
+      customerPhone: customer.customerPhone || quote.meta.customerPhone,
+      addressName: customer.address?.name || quote.meta.addressName,
+      addressNumber: customer.address?.number || quote.meta.addressNumber,
+      addressCity: customer.address?.city || quote.meta.addressCity,
+      addressState: customer.address?.state || quote.meta.addressState,
+      zipCode: customer.address?.zip || quote.meta.zipCode,
+      addressCountry: customer.address?.country || quote.meta.addressCountry,
+    };
+    handleMetaChange(updated);
+    duplicateCheckedIds.current.add(quote.meta.id);
+    setCdmDuplicateMatch(null);
+  };
+
+  const handleDismissCdmDuplicate = () => {
+    duplicateCheckedIds.current.add(quote.meta.id);
+    setCdmDuplicateMatch(null);
+  };
+
   const handlePitTypeChange = (pitType: string) => {
     const updated = { ...quote, meta: { ...quote.meta, pitType } };
     setQuote(updated);
@@ -865,6 +932,7 @@ export default function QuoteBuilder() {
 
   const executeNewQuote = () => {
     const newQ = createNewQuote();
+    setCdmDuplicateMatch(null);
     setQuote(newQ);
     setYesNoToggles(DEFAULT_YES_NO);
     setOptionalProgramToggles(DEFAULT_OPT_PROGRAMS);
@@ -1076,6 +1144,15 @@ export default function QuoteBuilder() {
       {/* Unsaved changes modal */}
       {pendingAction && (
         <UnsavedChangesModal onYes={handleUnsavedYes} onNo={handleUnsavedNo} />
+      )}
+
+      {/* CDM duplicate detection modal */}
+      {cdmDuplicateMatch && (
+        <CdmDuplicateModal
+          match={cdmDuplicateMatch}
+          onUseRecord={handleUseCdmRecord}
+          onKeepGoing={handleDismissCdmDuplicate}
+        />
       )}
 
       {/* Dynamic DB-configured alert modal */}
