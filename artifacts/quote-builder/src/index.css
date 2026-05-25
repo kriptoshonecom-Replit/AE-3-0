@@ -6851,6 +6851,120 @@ tr:hover .drag-handle { opacity: 1; }
 .cdm-select {
   cursor: pointer;
 }
+
+/* ── PDF attachment custom dropdown ─────────────────────────────────── */
+.cdm-attach-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s;
+}
+.cdm-attach-trigger:hover {
+  border-color: var(--accent, #7c3aed);
+}
+.cdm-attach-trigger-content {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  flex: 1;
+}
+.cdm-attach-trigger-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cdm-attach-chevron {
+  flex-shrink: 0;
+  color: var(--text-muted, #94a3b8);
+}
+.cdm-attach-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+}
+.cdm-attach-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.13);
+  overflow: hidden;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.cdm-attach-group-label {
+  padding: 6px 12px 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #94a3b8);
+  text-transform: uppercase;
+}
+.cdm-attach-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.1s;
+}
+.cdm-attach-item:hover {
+  background: var(--surface-hover, #f1f5f9);
+}
+.cdm-attach-item--selected {
+  background: var(--accent-subtle, #ede9fe);
+  color: var(--accent, #7c3aed);
+  font-weight: 500;
+}
+.cdm-attach-item-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cdm-attach-no-pdf {
+  color: var(--text-muted, #94a3b8);
+  font-size: 11px;
+}
+
+/* PDF icon badge */
+.cdm-pdf-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 20px;
+  border-radius: 3px;
+  background: #e53935;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  font-family: inherit;
+}
+.cdm-pdf-badge--empty {
+  background: #d1d5db;
+  color: #9ca3af;
+}
+
 .cdm-form-actions {
   display: flex;
   gap: 8px;

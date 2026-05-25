@@ -149,6 +149,7 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
   const [mailSubject, setMailSubject] = useState("");
   const [mailBody, setMailBody] = useState("");
   const [mailRef, setMailRef] = useState("");
+  const [mailAttachOpen, setMailAttachOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<"sent" | "error" | null>(null);
 
@@ -668,56 +669,110 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                     placeholder="Subject…"
                   />
                 </div>
-                {(customer.quotes.length > 0 || amendments.length > 0) && (
-                  <div className="cdm-form-field">
-                    <label>Attach PDF</label>
-                    <select
-                      value={mailRef}
-                      onChange={e => setMailRef(e.target.value)}
-                      className="cdm-select"
-                    >
-                      <option value="">None</option>
-                      {customer.quotes.length > 0 && (
-                        <optgroup label="Quotes">
-                          {customer.quotes.map(q => (
-                            <option key={q.id} value={`quote:${q.id}`}>
-                              {q.pdfSavedAt ? "📎 " : ""}
-                              {q.quoteNumber || "Untitled"} — {q.passStatus ? q.passStatus.toUpperCase() : "No Status"}
-                              {!q.pdfSavedAt ? " (no PDF saved)" : ""}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                      {amendments.length > 0 && (
-                        <optgroup label="Amendments">
-                          {amendments.map(a => {
-                            const origBase = (a.originalQuoteNumber ?? "").replace(/^[Qq]-?/, "");
-                            const paddedNum = String(a.amendmentNumber).padStart(3, "0");
-                            const label = `AQ-${origBase || "AMEND"}_${paddedNum}`;
-                            return (
-                              <option key={a.id} value={`amendment:${a.id}`}>
-                                {a.pdfSavedAt ? "📎 " : ""}
-                                {label}
-                                {!a.pdfSavedAt ? " (no PDF saved)" : ""}
-                              </option>
-                            );
-                          })}
-                        </optgroup>
-                      )}
-                    </select>
-                    {mailRef && !mailRef.split(":")[0].length ? null : mailRef ? (() => {
-                      const [rType, rId] = mailRef.split(":");
-                      const hasPdf = rType === "quote"
-                        ? customer.quotes.find(q => q.id === rId)?.pdfSavedAt
-                        : amendments.find(a => a.id === rId)?.pdfSavedAt;
-                      return !hasPdf ? (
-                        <p style={{ fontSize: 11, color: "#f59e0b", marginTop: 4 }}>
-                          No PDF saved for this item — save it first using "Save PDF" in the quote or amendment.
-                        </p>
-                      ) : null;
-                    })() : null}
-                  </div>
-                )}
+                {(customer.quotes.length > 0 || amendments.length > 0) && (() => {
+                  // Build flat option list for lookup
+                  type AttachOption = { value: string; label: string; hasPdf: boolean; group: string };
+                  const options: AttachOption[] = [
+                    { value: "", label: "None", hasPdf: false, group: "" },
+                    ...customer.quotes.map(q => ({
+                      value: `quote:${q.id}`,
+                      label: `${q.quoteNumber || "Untitled"} — ${q.passStatus ? q.passStatus.toUpperCase() : "No Status"}`,
+                      hasPdf: !!q.pdfSavedAt,
+                      group: "Quotes",
+                    })),
+                    ...amendments.map(a => {
+                      const origBase = (a.originalQuoteNumber ?? "").replace(/^[Qq]-?/, "");
+                      const paddedNum = String(a.amendmentNumber).padStart(3, "0");
+                      return {
+                        value: `amendment:${a.id}`,
+                        label: `AQ-${origBase || "AMEND"}_${paddedNum}`,
+                        hasPdf: !!a.pdfSavedAt,
+                        group: "Amendments",
+                      };
+                    }),
+                  ];
+                  const selected = options.find(o => o.value === mailRef) ?? options[0];
+                  const groups = ["Quotes", "Amendments"].filter(g => options.some(o => o.group === g));
+
+                  return (
+                    <div className="cdm-form-field">
+                      <label>Attach PDF</label>
+                      <div className="cdm-attach-dropdown" style={{ position: "relative" }}>
+                        {/* Trigger */}
+                        <button
+                          type="button"
+                          className="cdm-attach-trigger"
+                          onClick={() => setMailAttachOpen(v => !v)}
+                        >
+                          <span className="cdm-attach-trigger-content">
+                            {selected.value && selected.hasPdf && (
+                              <span className="cdm-pdf-badge">PDF</span>
+                            )}
+                            <span className="cdm-attach-trigger-label">
+                              {selected.value ? selected.label : "None"}
+                              {selected.value && !selected.hasPdf && (
+                                <span className="cdm-attach-no-pdf"> (no PDF saved)</span>
+                              )}
+                            </span>
+                          </span>
+                          <svg className="cdm-attach-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+
+                        {/* Dropdown panel */}
+                        {mailAttachOpen && (
+                          <>
+                            <div className="cdm-attach-backdrop" onClick={() => setMailAttachOpen(false)} />
+                            <div className="cdm-attach-panel">
+                              {/* None option */}
+                              <div
+                                className={`cdm-attach-item${mailRef === "" ? " cdm-attach-item--selected" : ""}`}
+                                onClick={() => { setMailRef(""); setMailAttachOpen(false); }}
+                              >
+                                <span className="cdm-attach-item-label">None</span>
+                              </div>
+
+                              {groups.map(g => (
+                                <div key={g}>
+                                  <div className="cdm-attach-group-label">{g}</div>
+                                  {options.filter(o => o.group === g).map(o => (
+                                    <div
+                                      key={o.value}
+                                      className={`cdm-attach-item${mailRef === o.value ? " cdm-attach-item--selected" : ""}`}
+                                      onClick={() => { setMailRef(o.value); setMailAttachOpen(false); }}
+                                    >
+                                      {o.hasPdf
+                                        ? <span className="cdm-pdf-badge">PDF</span>
+                                        : <span className="cdm-pdf-badge cdm-pdf-badge--empty">PDF</span>
+                                      }
+                                      <span className="cdm-attach-item-label">
+                                        {o.label}
+                                        {!o.hasPdf && <span className="cdm-attach-no-pdf"> (no PDF saved)</span>}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {mailRef && (() => {
+                        const [rType, rId] = mailRef.split(":");
+                        const hasPdf = rType === "quote"
+                          ? customer.quotes.find(q => q.id === rId)?.pdfSavedAt
+                          : amendments.find(a => a.id === rId)?.pdfSavedAt;
+                        return !hasPdf ? (
+                          <p style={{ fontSize: 11, color: "#f59e0b", marginTop: 4 }}>
+                            No PDF saved — save it first using "Save PDF" in the quote or amendment.
+                          </p>
+                        ) : null;
+                      })()}
+                    </div>
+                  );
+                })()}
                 <div className="cdm-form-field">
                   <label>Message</label>
                   <textarea
