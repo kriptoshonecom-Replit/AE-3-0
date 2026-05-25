@@ -1044,6 +1044,7 @@ export default function QuoteBuilder() {
   const collectMismatches = (groups: QuoteGroup[]): AlertEntry[] => {
     const result: AlertEntry[] = [];
     for (const cfg of alertConfigs) {
+      if (cfg.infoOnly) continue; // info-only alerts fire on product add, never on export/new
       const subject = findSubjectItem(groups, cfg.subjectProductId);
       if (!subject) continue;
       const count = computeLookupCount(groups, cfg.lookupProductIds);
