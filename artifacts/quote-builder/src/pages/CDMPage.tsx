@@ -32,6 +32,7 @@ export interface CustomerProfile {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  mcn?: string | null;
   address: AddressBlock | null;
   billingAddress: AddressBlock | null;
   quotes: CustomerQuote[];

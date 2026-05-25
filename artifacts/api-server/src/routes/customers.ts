@@ -36,6 +36,7 @@ function buildCustomers(rows: QuoteRow[]) {
     customerName: string;
     customerEmail: string;
     customerPhone: string;
+    mcn: string | null;
     address: Record<string, string> | null;
     billingAddress: Record<string, string> | null;
     quotes: Array<{
@@ -70,6 +71,7 @@ function buildCustomers(rows: QuoteRow[]) {
         customerPhone: meta.customerPhone || "",
         address: null,
         billingAddress: null,
+        mcn: meta.mcn || null,
         quotes: [],
         passCount: 0,
         failCount: 0,

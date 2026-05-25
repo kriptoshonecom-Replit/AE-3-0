@@ -422,6 +422,12 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                       <span className="cdm-contact-label">Phone</span>
                       <span className="cdm-contact-value">{customer.customerPhone || "—"}</span>
                     </div>
+                    {customer.mcn && (
+                      <div className="cdm-contact-item">
+                        <span className="cdm-contact-label">MCN</span>
+                        <span className="cdm-contact-value">{customer.mcn}</span>
+                      </div>
+                    )}
                   </div>
 
                   {(customer.address || customer.billingAddress) && (
