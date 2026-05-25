@@ -536,6 +536,8 @@ export default function QuoteBuilder() {
       setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(pq.meta.optionalProgramToggles ?? {}) });
       setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(pq.meta.heatmapToggles ?? {}) });
     }
+    // Prevent the server-sync startup effect from overwriting this quote
+    isDirtyRef.current = true;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
 
@@ -557,6 +559,8 @@ export default function QuoteBuilder() {
         setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(pq.meta.optionalProgramToggles ?? {}) });
         setHeatmapToggles({ ...DEFAULT_HEATMAP_TOGGLES, ...(pq.meta.heatmapToggles ?? {}) });
       }
+      // Prevent the server-sync startup effect from overwriting this quote
+      isDirtyRef.current = true;
       setInitialized(true);
       return;
     }
