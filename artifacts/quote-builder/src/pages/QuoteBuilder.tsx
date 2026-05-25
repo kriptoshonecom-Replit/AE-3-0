@@ -164,10 +164,9 @@ export default function QuoteBuilder() {
       .catch(() => {});
   }, []);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
-  const [savingPdf, setSavingPdf] = useState(false);
-  const [pdfSaved, setPdfSaved] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [yesNoToggles, setYesNoToggles] = useState<Record<string, boolean>>(DEFAULT_YES_NO);
   const [optionalProgramToggles, setOptionalProgramToggles] = useState<Record<string, boolean>>(DEFAULT_OPT_PROGRAMS);
@@ -451,17 +450,7 @@ export default function QuoteBuilder() {
 
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    quote.meta.id,
-    quote.meta.mcn,
-    quote.meta.customerEmail,
-    quote.meta.companyName,
-    quote.meta.customerName,
-    quote.meta.customerPhone,
-    quote.meta.zipCode,
-    quote.meta.addressName,
-    cdmCustomers,
-  ]);
+  }, [quote.meta.id, quote.meta.mcn, cdmCustomers]);
 
   // ── Dynamic alert configs loaded from DB ─────────────────────────────────
   interface AlertConfigRuntime {
@@ -988,15 +977,10 @@ export default function QuoteBuilder() {
     autosave(updated);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setSaving(true);
     autosave(quote, false);
     isDirtyRef.current = false;
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
-
-  const handleSavePDF = async () => {
-    setSavingPdf(true);
     try {
       const base64 = await exportQuoteToPDF(
         quote, pitHourlyRate, stampStatus ?? undefined,
@@ -1005,21 +989,21 @@ export default function QuoteBuilder() {
         appVersion || undefined,
         "base64",
       );
-      if (!base64) throw new Error("No PDF data");
-      const res = await fetch(`${API_BASE}/api/quotes/${quote.meta.id}/save-pdf`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ pdfBase64: base64 }),
-      });
-      if (!res.ok) throw new Error("Save failed");
-      setPdfSaved(true);
-      setTimeout(() => setPdfSaved(false), 3000);
+      if (base64) {
+        await fetch(`${API_BASE}/api/quotes/${quote.meta.id}/save-pdf`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ pdfBase64: base64 }),
+        });
+      }
     } catch {
-      // silently ignore — user can retry
+      // silently ignore PDF errors — quote data is already saved
     } finally {
-      setSavingPdf(false);
+      setSaving(false);
     }
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
   };
 
   const executeExportPDF = async () => {
@@ -1105,7 +1089,6 @@ export default function QuoteBuilder() {
   };
 
   const handleExportPDF = () => {
-    if (isDirtyRef.current) { setPendingAction("export"); return; }
     runPreflightCheck("export");
   };
 
@@ -1130,7 +1113,7 @@ export default function QuoteBuilder() {
   };
 
   const handleUnsavedYes = () => {
-    handleSave();
+    void handleSave();
     const action = pendingAction;
     setPendingAction(null);
     if (action) runPreflightCheck(action);
@@ -1312,7 +1295,13 @@ export default function QuoteBuilder() {
             <span className="topbar-brand">Aloha Essential CPQ 3.0</span>
           </div>
           <div className="topbar-actions">
-            <button type="button" className="btn-ghost" onClick={handleSave}>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => void handleSave()}
+              disabled={saving}
+              title="Save quote and PDF to cloud"
+            >
               {saved ? (
                 <>
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -1320,6 +1309,8 @@ export default function QuoteBuilder() {
                   </svg>
                   Saved
                 </>
+              ) : saving ? (
+                "Saving…"
               ) : (
                 <>
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -1328,30 +1319,6 @@ export default function QuoteBuilder() {
                     <path d="M5 2v3h4V2" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
                   </svg>
                   Save
-                </>
-              )}
-            </button>
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={() => void handleSavePDF()}
-              disabled={savingPdf || exporting}
-              title="Save PDF to cloud for email attachments"
-            >
-              {pdfSaved ? (
-                <>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M2 7l3.5 3.5L12 3" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <span style={{ color: "#10b981" }}>PDF Saved</span>
-                </>
-              ) : (
-                <>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M11 2H4L2 4v8h10V3l-1-1z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-                    <path d="M7 5v4M5 7l2 2 2-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  {savingPdf ? "Saving…" : "Save PDF"}
                 </>
               )}
             </button>
