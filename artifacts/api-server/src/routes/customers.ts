@@ -90,8 +90,9 @@ function buildCustomers(rows: QuoteRow[]) {
       c.customerPhone = meta.customerPhone;
     }
 
-    if ((meta.addressCity || meta.addressName) && !c.address) {
+    if ((meta.addressLine || meta.addressCity || meta.addressName) && !c.address) {
       c.address = {
+        line: meta.addressLine || "",
         name: meta.addressName || "",
         number: meta.addressNumber || "",
         city: meta.addressCity || "",
@@ -101,8 +102,9 @@ function buildCustomers(rows: QuoteRow[]) {
       };
     }
 
-    if (!meta.sameForBilling && (meta.billingAddressCity || meta.billingAddressName) && !c.billingAddress) {
+    if (!meta.sameForBilling && (meta.billingAddressLine || meta.billingAddressCity || meta.billingAddressName) && !c.billingAddress) {
       c.billingAddress = {
+        line: meta.billingAddressLine || "",
         name: meta.billingAddressName || "",
         number: meta.billingAddressNumber || "",
         city: meta.billingAddressCity || "",

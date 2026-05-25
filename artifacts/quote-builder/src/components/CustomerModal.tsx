@@ -44,8 +44,9 @@ function fmtDate(s: string | null | undefined) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-function fmtAddr(addr: { name?: string; number?: string; city?: string; state?: string; zip?: string; country?: string } | null) {
+function fmtAddr(addr: { line?: string; name?: string; number?: string; city?: string; state?: string; zip?: string; country?: string } | null) {
   if (!addr) return null;
+  if (addr.line) return addr.line;
   const parts = [
     addr.name,
     addr.number,

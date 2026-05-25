@@ -17,6 +17,7 @@ export interface CustomerQuote {
 }
 
 export interface AddressBlock {
+  line?: string;
   name: string;
   number: string;
   city: string;
