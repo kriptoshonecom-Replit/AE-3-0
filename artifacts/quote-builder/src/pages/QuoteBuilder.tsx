@@ -407,7 +407,8 @@ export default function QuoteBuilder() {
     fetch(`${API_BASE}/api/customers`, { credentials: "include" })
       .then((r) => r.ok ? r.json() : null)
       .then((data: unknown) => {
-        if (Array.isArray(data)) setCdmCustomers(data as CustomerProfile[]);
+        const list = (data as { customers?: CustomerProfile[] })?.customers;
+        if (Array.isArray(list)) setCdmCustomers(list);
       })
       .catch(() => {});
   }, [userId]);

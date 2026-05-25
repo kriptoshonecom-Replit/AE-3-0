@@ -6,7 +6,7 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { serveProductImage } from "./lib/productImages";
-import { migrateFilesystemImages } from "./lib/startupMigration";
+import { migrateFilesystemImages, backfillCustomers } from "./lib/startupMigration";
 import { pool } from "@workspace/db";
 
 const app: Express = express();
@@ -84,6 +84,9 @@ pool.query(`
 // Run filesystem-to-GCS migration in background on startup (idempotent — safe to re-run)
 migrateFilesystemImages(process.cwd()).catch((err) =>
   logger.warn(err, "startup-migration failed")
+);
+backfillCustomers().catch((err) =>
+  logger.warn(err, "customer-backfill failed")
 );
 
 export default app;

@@ -268,7 +268,8 @@ router.post("/quotes/sync", requireAuth, async (req, res) => {
     const mcn = String(meta.mcn ?? "").trim();
     const email = String(meta.customerEmail ?? "").trim().toLowerCase();
     const cKey = mcn || email || `${String(meta.companyName ?? "").trim()}___${String(meta.customerName ?? "").trim()}`;
-    if (cKey && cKey !== "___") {
+    const hasIdentifyingInfo = !!(String(meta.companyName ?? "").trim() || String(meta.customerName ?? "").trim() || email);
+    if (cKey && cKey !== "___" && hasIdentifyingInfo) {
       const addrLine = String(meta.addressLine ?? "");
       const addrCity = String(meta.addressCity ?? "");
       const addrName = String(meta.addressName ?? "");
