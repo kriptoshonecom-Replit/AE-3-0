@@ -94,6 +94,7 @@ export default function CDMPage() {
     const q = search.toLowerCase();
     return (
       c.companyName.toLowerCase().includes(q) ||
+      (c.mcn ?? "").toLowerCase().includes(q) ||
       c.customerName.toLowerCase().includes(q) ||
       c.customerEmail.toLowerCase().includes(q) ||
       c.customerPhone.toLowerCase().includes(q)
@@ -179,6 +180,7 @@ export default function CDMPage() {
               <thead>
                 <tr>
                   <th>Company</th>
+                  <th>MCN</th>
                   <th>Customer</th>
                   <th>Email</th>
                   <th>Phone</th>
@@ -192,7 +194,7 @@ export default function CDMPage() {
               <tbody>
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={isAdmin ? 9 : 8} className="admin-table-empty">
+                    <td colSpan={isAdmin ? 10 : 9} className="admin-table-empty">
                       {search
                         ? `No customers match "${search}"`
                         : "No customer data found — sync quotes to populate this list."}
@@ -207,6 +209,9 @@ export default function CDMPage() {
                   >
                     <td className="admin-td-bold">
                       {c.companyName || <span style={{ color: "var(--text-3)" }}>—</span>}
+                    </td>
+                    <td style={{ fontSize: 12, color: "var(--text-2)" }}>
+                      {c.mcn || <span style={{ color: "var(--text-3)" }}>—</span>}
                     </td>
                     <td>
                       {c.customerName || <span style={{ color: "var(--text-3)" }}>—</span>}
