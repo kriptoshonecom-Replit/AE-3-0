@@ -304,6 +304,7 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
               (meta.passStatus as string | undefined) ??
               null,
             updatedAt: (r.updatedAt ?? r.createdAt ?? new Date()).toISOString(),
+            addressCity: (meta.addressCity as string) ?? null,
             addressState: (meta.addressState as string) ?? null,
             addressCountry: (meta.addressCountry as string) ?? null,
           };

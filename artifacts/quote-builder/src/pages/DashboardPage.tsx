@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
-import GeoMapCard, { type GeoPoint } from "@/components/GeoMapCard";
+import LocationCardsPanel, { type GeoPoint } from "@/components/LocationCardsPanel";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -65,6 +65,7 @@ interface RecentQuote {
   value: number;
   passStatus: string | null;
   updatedAt: string;
+  addressCity: string | null;
   addressState: string | null;
   addressCountry: string | null;
 }
@@ -367,8 +368,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Right: Geo map with region cards */}
-          <GeoMapCard
+          {/* Right: Per-location cards */}
+          <LocationCardsPanel
             byState={geoDistribution?.byState ?? []}
             byCountry={geoDistribution?.byCountry ?? []}
           />
@@ -404,7 +405,9 @@ export default function DashboardPage() {
                   ) : (
                     recentQuotes.map((q) => {
                       const st = q.passStatus?.toLowerCase();
-                      const location = [q.addressState, q.addressCountry].filter(Boolean).join(", ") || "—";
+                      const location = [q.addressCity, q.addressState].filter(Boolean).join(", ")
+                        || [q.addressState, q.addressCountry].filter(Boolean).join(", ")
+                        || "—";
                       return (
                         <tr key={q.id}>
                           <td style={{ fontWeight: 600, color: "var(--accent)" }}>{q.quoteNumber}</td>
