@@ -34,7 +34,7 @@ import QuoteSummary from "../components/QuoteSummary";
 import QuoteList from "../components/QuoteList";
 import AddGroupModal from "../components/AddGroupModal";
 import AmendModal from "../components/AmendModal";
-import { saveQuote, loadAllQuotes, getActiveQuoteId, loadQuote, consumePendingOpenQuote } from "../utils/storage";
+import { saveQuote, loadAllQuotes, getActiveQuoteId, loadQuote, consumePendingOpenQuote, getSyncedQuoteIds, markQuotesSynced, pruneSyncedIds, deleteQuote } from "../utils/storage";
 import { syncQuoteToServer, saveQuoteToServerNow, adminSaveQuoteToServer, fetchServerQuotes, bulkUploadQuotesToServer } from "../utils/serverSync";
 import { exportQuoteToPDF } from "../utils/pdfExport";
 import { generateId, todayString, thirtyDaysOut, quoteTotal } from "../utils/calculations";
@@ -631,11 +631,28 @@ export default function QuoteBuilder() {
       const localAll = loadAllQuotes(userId);
       const serverIds = new Set(serverQuotes.map((q) => q.meta.id));
 
-      // Upload any quotes that exist only in localStorage (migration for quotes
-      // created before server sync was in place, or on first production visit).
+      // Every quote the server returned is definitively synced — record them.
+      // This populates the registry on first use and keeps it current.
+      markQuotesSynced(userId, serverQuotes.map((q) => q.meta.id));
+
+      const syncedIds = getSyncedQuoteIds(userId);
       const localOnly = localAll.filter((q) => !serverIds.has(q.meta.id));
-      if (localOnly.length > 0) {
-        await bulkUploadQuotesToServer(localOnly);
+
+      // (A) Previously confirmed by the server but now missing = deleted by an
+      //     admin on another device.  Remove them from localStorage so they
+      //     don't re-appear or get re-uploaded.
+      const deletedOnServer = localOnly.filter((q) => syncedIds.has(q.meta.id));
+      for (const q of deletedOnServer) deleteQuote(q.meta.id, userId);
+      if (deletedOnServer.length > 0) {
+        pruneSyncedIds(userId, deletedOnServer.map((q) => q.meta.id));
+      }
+
+      // (B) Never confirmed by the server = genuinely unsynced quote (created
+      //     offline or before server-sync was introduced).  Upload it now.
+      const neverSynced = localOnly.filter((q) => !syncedIds.has(q.meta.id));
+      if (neverSynced.length > 0) {
+        const uploadedIds = await bulkUploadQuotesToServer(neverSynced);
+        markQuotesSynced(userId, uploadedIds);
       }
 
       // Signal the sidebar to re-fetch its list from the server.
@@ -695,6 +712,7 @@ export default function QuoteBuilder() {
           syncQuoteToServer(updated, () => {
             isDirtyRef.current = false;
             setRefreshTrigger((n) => n + 1);
+            markQuotesSynced(userId, [updated.meta.id]);
           });
         }
       }

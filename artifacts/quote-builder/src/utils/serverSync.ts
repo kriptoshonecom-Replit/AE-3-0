@@ -69,22 +69,27 @@ export function adminSaveQuoteToServer(quoteId: string, quote: Quote): void {
 
 /**
  * Uploads an array of quotes to the server sequentially.
- * Used at startup to migrate local-only quotes (created before server sync
- * was in place) so they appear in the server and the sidebar.
+ * Returns the IDs that were successfully confirmed by the server so the
+ * caller can mark them in the synced-IDs registry.
+ * Used at startup to upload quotes that have never been confirmed by the
+ * server (offline creation, pre-server-sync migration).
  */
-export async function bulkUploadQuotesToServer(quotes: Quote[]): Promise<void> {
+export async function bulkUploadQuotesToServer(quotes: Quote[]): Promise<string[]> {
+  const synced: string[] = [];
   for (const quote of quotes) {
     try {
-      await fetch(`${API_BASE}/api/quotes/sync`, {
+      const res = await fetch(`${API_BASE}/api/quotes/sync`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ quote }),
       });
+      if (res.ok) synced.push(quote.meta.id);
     } catch {
       /* ignore individual failures */
     }
   }
+  return synced;
 }
 
 /**
