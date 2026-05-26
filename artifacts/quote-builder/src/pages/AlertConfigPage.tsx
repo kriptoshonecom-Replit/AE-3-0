@@ -483,7 +483,7 @@ export default function AlertConfigPage() {
                     <code className="admin-code">{cfg.subjectProductId}</code>
                   </td>
                   <td style={{ maxWidth: 220 }}>
-                    <div style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5, fontStyle: "italic", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                    <div className="alert-rule-clamp">
                       "{lookupSummary(cfg)}"
                     </div>
                   </td>
