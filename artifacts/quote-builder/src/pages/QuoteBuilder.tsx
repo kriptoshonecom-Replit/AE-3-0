@@ -34,8 +34,8 @@ import QuoteSummary from "../components/QuoteSummary";
 import QuoteList from "../components/QuoteList";
 import AddGroupModal from "../components/AddGroupModal";
 import AmendModal from "../components/AmendModal";
-import { saveQuote, loadAllQuotes, getActiveQuoteId, loadQuote, consumePendingOpenQuote, getSyncedQuoteIds, markQuotesSynced, pruneSyncedIds, deleteQuote } from "../utils/storage";
-import { syncQuoteToServer, saveQuoteToServerNow, adminSaveQuoteToServer, fetchServerQuotes, bulkUploadQuotesToServer } from "../utils/serverSync";
+import { saveQuote, loadAllQuotes, getActiveQuoteId, loadQuote, consumePendingOpenQuote, markQuotesSynced, pruneSyncedIds, deleteQuote } from "../utils/storage";
+import { syncQuoteToServer, adminSaveQuoteToServer, fetchServerQuotes } from "../utils/serverSync";
 import { exportQuoteToPDF } from "../utils/pdfExport";
 import { generateId, todayString, thirtyDaysOut, quoteTotal } from "../utils/calculations";
 
@@ -631,28 +631,20 @@ export default function QuoteBuilder() {
       const localAll = loadAllQuotes(userId);
       const serverIds = new Set(serverQuotes.map((q) => q.meta.id));
 
-      // Every quote the server returned is definitively synced — record them.
-      // This populates the registry on first use and keeps it current.
+      // Record every server-confirmed quote in the sync registry so the
+      // autosave callback can keep it current going forward.
       markQuotesSynced(userId, serverQuotes.map((q) => q.meta.id));
 
-      const syncedIds = getSyncedQuoteIds(userId);
+      // Server is the absolute source of truth.
+      // Any quote in localStorage that the server doesn't know about was
+      // either deleted by an admin on another device, or lost in a silent
+      // sync failure.  Remove it — never re-upload stale local data.
+      // This is safe because isUnsavedNew already ensures a new quote is
+      // only written to localStorage AFTER the server has confirmed it.
       const localOnly = localAll.filter((q) => !serverIds.has(q.meta.id));
-
-      // (A) Previously confirmed by the server but now missing = deleted by an
-      //     admin on another device.  Remove them from localStorage so they
-      //     don't re-appear or get re-uploaded.
-      const deletedOnServer = localOnly.filter((q) => syncedIds.has(q.meta.id));
-      for (const q of deletedOnServer) deleteQuote(q.meta.id, userId);
-      if (deletedOnServer.length > 0) {
-        pruneSyncedIds(userId, deletedOnServer.map((q) => q.meta.id));
-      }
-
-      // (B) Never confirmed by the server = genuinely unsynced quote (created
-      //     offline or before server-sync was introduced).  Upload it now.
-      const neverSynced = localOnly.filter((q) => !syncedIds.has(q.meta.id));
-      if (neverSynced.length > 0) {
-        const uploadedIds = await bulkUploadQuotesToServer(neverSynced);
-        markQuotesSynced(userId, uploadedIds);
+      for (const q of localOnly) deleteQuote(q.meta.id, userId);
+      if (localOnly.length > 0) {
+        pruneSyncedIds(userId, localOnly.map((q) => q.meta.id));
       }
 
       // Signal the sidebar to re-fetch its list from the server.
