@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 import CustomerModal from "@/components/CustomerModal";
+import AddCustomerModal from "@/components/AddCustomerModal";
 import type { Quote } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
@@ -71,6 +72,7 @@ export default function CDMPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<CustomerProfile | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -126,6 +128,13 @@ export default function CDMPage() {
     setSelected(updated);
   };
 
+  const handleCreated = (created: CustomerProfile) => {
+    setCustomers(prev => {
+      const exists = prev.find(c => c.key === created.key);
+      return exists ? prev.map(c => c.key === created.key ? created : c) : [...prev, created];
+    });
+  };
+
   return (
     <div className="admin-page">
       <div className="admin-topbar">
@@ -133,6 +142,18 @@ export default function CDMPage() {
         <h1 className="admin-page-title">Customer Data Management</h1>
         <div className="admin-topbar-right">
           <span className="admin-badge">{customers.length} customer{customers.length !== 1 ? "s" : ""}</span>
+          {isAdmin && (
+            <button
+              className="admin-btn-add"
+              onClick={() => setShowAddModal(true)}
+              title="Add new customer"
+            >
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" style={{ marginRight: 2 }}>
+                <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
+              </svg>
+              Add Customer
+            </button>
+          )}
           <button
             className="admin-btn-add-secondary"
             onClick={() => void load()}
@@ -276,6 +297,13 @@ export default function CDMPage() {
           </div>
         )}
       </div>
+
+      {showAddModal && (
+        <AddCustomerModal
+          onClose={() => setShowAddModal(false)}
+          onCreated={handleCreated}
+        />
+      )}
 
       {selected && (
         <CustomerModal

@@ -7444,3 +7444,32 @@ tr:hover .drag-handle { opacity: 1; }
 .rte-display h1 { font-size: 15px; font-weight: 700; margin: 0 0 4px; }
 .rte-display ul { padding-left: 16px; margin: 0 0 3px; }
 .rte-display li { margin-bottom: 2px; }
+
+/* ── Admin btn-add (primary purple) ────────────────────────────────────── */
+.admin-btn-add {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--accent, #7c3aed);
+  border: 1px solid var(--accent, #7c3aed);
+  border-radius: var(--radius);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.admin-btn-add:hover { opacity: 0.88; }
+.admin-btn-add:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Edit section label ─────────────────────────────────────────────────── */
+.edit-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3, #9ca3af);
+  margin-bottom: 10px;
+}

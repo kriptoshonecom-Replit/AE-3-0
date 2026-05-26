@@ -119,6 +119,7 @@ export interface QuoteMeta {
   billingAddressState?: string;
   billingZipCode?: string;
   billingAddressCountry?: string;
+  businessOperation?: string;
 }
 
 export interface PitLineItem {

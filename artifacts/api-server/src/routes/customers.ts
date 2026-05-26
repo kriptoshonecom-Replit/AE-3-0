@@ -297,6 +297,122 @@ router.delete("/admin/customers/:key", requireAdmin, async (req, res) => {
   }
 });
 
+router.post("/admin/customers/create", requireAdmin, async (req, res) => {
+  const {
+    companyName, customerName, customerEmail, customerPhone,
+    mcn, salesRep, fua, dba, businessOperation, validUntil,
+    address, billingAddress,
+  } = req.body as {
+    companyName?: string; customerName?: string; customerEmail?: string;
+    customerPhone?: string; mcn?: string; salesRep?: string;
+    fua?: number; dba?: string; businessOperation?: string; validUntil?: string;
+    address?: Record<string, string> | null;
+    billingAddress?: Record<string, string> | null;
+  };
+
+  const email = (customerEmail ?? "").trim().toLowerCase();
+  const mcnTrim = (mcn ?? "").trim();
+  const compTrim = (companyName ?? "").trim();
+  const nameTrim = (customerName ?? "").trim();
+  const key = mcnTrim || email || `${compTrim}___${nameTrim}`;
+
+  if (!key || key === "___") {
+    res.status(400).json({ error: "Provide at least one of: MCN, email, company name, or customer name." });
+    return;
+  }
+
+  try {
+    const { userId: adminUserId } = req.auth!;
+    await db
+      .insert(customersTable)
+      .values({
+        id: key,
+        companyName: companyName ?? null,
+        customerName: customerName ?? null,
+        customerEmail: email || null,
+        customerPhone: customerPhone ?? null,
+        mcn: mcnTrim || null,
+        address: address ?? null,
+        billingAddress: billingAddress ?? null,
+        creatorUserId: adminUserId ?? null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: customersTable.id,
+        set: {
+          companyName: companyName ?? null,
+          customerName: customerName ?? null,
+          customerEmail: email || null,
+          customerPhone: customerPhone ?? null,
+          mcn: mcnTrim || null,
+          ...(address !== undefined && { address }),
+          ...(billingAddress !== undefined && { billingAddress }),
+          updatedAt: new Date(),
+        },
+      });
+
+    // Build a minimal stub quote so the customer appears with metadata
+    const quoteId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const meta: Record<string, unknown> = {
+      id: quoteId,
+      companyName: companyName ?? "",
+      customerName: customerName ?? "",
+      customerEmail: email,
+      customerPhone: customerPhone ?? "",
+      mcn: mcnTrim || undefined,
+      salesRep: salesRep ?? "",
+      fua: fua ?? undefined,
+      dba: dba ?? undefined,
+      businessOperation: businessOperation ?? undefined,
+      validUntil: validUntil ?? "",
+      quoteNumber: "",
+      oppNumber: "",
+      discount: 0,
+      tax: 0,
+      notes: "",
+      createdAt: now,
+      updatedAt: now,
+      ...(address && {
+        addressName: address.name,
+        addressNumber: address.number,
+        addressLine: address.line,
+        addressCity: address.city,
+        addressState: address.state,
+        zipCode: address.zip,
+        addressCountry: address.country,
+      }),
+      ...(billingAddress && {
+        billingAddressName: billingAddress.name,
+        billingAddressNumber: billingAddress.number,
+        billingAddressLine: billingAddress.line,
+        billingAddressCity: billingAddress.city,
+        billingAddressState: billingAddress.state,
+        billingZipCode: billingAddress.zip,
+        billingAddressCountry: billingAddress.country,
+      }),
+    };
+
+    await db.insert(quotesTable).values({
+      id: quoteId,
+      userId: adminUserId,
+      companyName: companyName ?? null,
+      customerName: customerName ?? null,
+      data: { meta, groups: [] },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const customers = await fetchCustomers();
+    const created = customers.find(c => c.key === key);
+    res.status(201).json({ customer: created ?? { key } });
+  } catch (err) {
+    logger.error(err, "POST /admin/customers/create error");
+    res.status(500).json({ error: "Failed to create customer" });
+  }
+});
+
 router.post("/customers/send-email", requireAuth, async (req, res) => {
   const { to, subject, body, attachments } = req.body as {
     to: string;
