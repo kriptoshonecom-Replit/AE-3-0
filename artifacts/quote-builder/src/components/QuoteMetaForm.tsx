@@ -65,13 +65,10 @@ export default function QuoteMetaForm({ meta, onChange, pspmDiscountPct, upfront
         <div className="field-group">
           <label>FUA</label>
           <input
-            type="number"
-            inputMode="numeric"
+            type="text"
             value={meta.fua ?? ""}
             onChange={(e) => onChange({ ...meta, fua: e.target.value === "" ? undefined : Number(e.target.value) })}
             placeholder="0"
-            min="0"
-            className="no-spin"
           />
         </div>
 
