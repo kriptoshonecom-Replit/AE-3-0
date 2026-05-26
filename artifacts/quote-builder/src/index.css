@@ -5784,15 +5784,24 @@ tr:hover .drag-handle { opacity: 1; }
 }
 
 .db-month-trigger {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 500;
+  font-family: inherit;
+  padding: 7px 13px;
   cursor: pointer;
   user-select: none;
-  transition: background 0.12s, color 0.12s;
+  transition: all 0.15s;
 }
 
 .db-month-trigger:hover {
-  background: var(--accent-subtle);
+  border-color: var(--accent);
   color: var(--accent);
 }
 

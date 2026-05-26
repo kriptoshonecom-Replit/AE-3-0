@@ -243,11 +243,20 @@ export default function DashboardPage() {
           <div className="db-month-picker" ref={pickerRef}>
             <button
               type="button"
-              className="admin-badge db-month-trigger"
+              className="db-month-trigger"
               onClick={() => setPickerOpen((o) => !o)}
             >
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ opacity: 0.7 }}>
+                <rect x="1.5" y="2.5" width="13" height="12" rx="2" stroke="currentColor" strokeWidth="1.4" />
+                <path d="M5 1v3M11 1v3M1.5 6h13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                <rect x="4" y="8.5" width="2" height="2" rx="0.4" fill="currentColor" />
+                <rect x="7" y="8.5" width="2" height="2" rx="0.4" fill="currentColor" />
+                <rect x="10" y="8.5" width="2" height="2" rx="0.4" fill="currentColor" />
+                <rect x="4" y="11.5" width="2" height="2" rx="0.4" fill="currentColor" />
+                <rect x="7" y="11.5" width="2" height="2" rx="0.4" fill="currentColor" />
+              </svg>
               {selectedLabel}
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ marginLeft: 5, opacity: 0.6 }}>
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ opacity: 0.5 }}>
                 <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
