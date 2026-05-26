@@ -71,6 +71,7 @@ export default function QuoteMetaForm({ meta, onChange, pspmDiscountPct, upfront
             onChange={(e) => onChange({ ...meta, fua: e.target.value === "" ? undefined : Number(e.target.value) })}
             placeholder="0"
             min="0"
+            className="no-spin"
           />
         </div>
 
