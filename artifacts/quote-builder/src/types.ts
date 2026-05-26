@@ -62,6 +62,8 @@ export interface QuoteMeta {
   quoteNumber: string;
   oppNumber: string;
   mcn?: string;
+  fua?: number;
+  dba?: string;
   salesRep: string;
   companyName: string;
   customerName: string;

@@ -63,6 +63,8 @@ function createNewQuote(): Quote {
       quoteNumber: "",
       oppNumber: "",
       mcn: "",
+      fua: undefined,
+      dba: "",
       salesRep: "",
       companyName: "",
       customerName: "",
