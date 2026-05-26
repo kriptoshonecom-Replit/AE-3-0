@@ -510,60 +510,24 @@ button {
   background: rgb(255, 255, 255,1);
 }
 
-/* ── Rotating border animation for Add Item button ──────── */
-@property --btn-spin {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
-
-@keyframes btn-border-spin {
-  to { --btn-spin: 360deg; }
-}
-
 .btn-add-line {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 7px 12px;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius);
   color: var(--text-2);
   font-size: 12px;
-  border-radius: var(--radius);
   margin-top: 6px;
-  transition: color 0.12s;
-  position: relative;
-  isolation: isolate;
+  transition: all 0.15s;
   background: transparent;
 }
 
-.btn-add-line::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: calc(var(--radius) + 1px);
-  background: conic-gradient(
-    from var(--btn-spin),
-    #7c3aed 0%,
-    #ffffff 35%,
-    #7c3aed 65%,
-    #ffffff 82%,
-    #7c3aed 100%
-  );
-  z-index: -1;
-  animation: btn-border-spin 2.5s linear infinite;
-}
-
-.btn-add-line::after {
-  content: '';
-  position: absolute;
-  inset: 1px;
-  border-radius: var(--radius);
-  background: var(--surface);
-  z-index: -1;
-}
-
 .btn-add-line:hover {
+  border-color: var(--accent);
   color: var(--accent);
+  background: rgb(255, 255, 255, 1);
 }
 
 /* ── Quote Meta Form ─────────────────────────────────── */
