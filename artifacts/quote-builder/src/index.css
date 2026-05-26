@@ -539,8 +539,8 @@ button {
 .btn-add-line::before {
   content: '';
   position: absolute;
-  inset: -1.5px;
-  border-radius: calc(var(--radius) + 1.5px);
+  inset: -1px;
+  border-radius: calc(var(--radius) + 1px);
   background: conic-gradient(
     from var(--btn-spin),
     #7c3aed 0%,
@@ -556,8 +556,8 @@ button {
 .btn-add-line::after {
   content: '';
   position: absolute;
-  inset: 1.5px;
-  border-radius: calc(var(--radius) - 1px);
+  inset: 1px;
+  border-radius: var(--radius);
   background: var(--surface);
   z-index: -1;
 }
