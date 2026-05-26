@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { RichTextDisplay } from "./RichTextEditor";
 
 interface Props {
   deviceCount: number;
@@ -45,9 +46,11 @@ export default function LicenseSyncModal({
             Information
           </div>
 
-          <p className="unsaved-modal-text" style={{ marginTop: 12, whiteSpace: "pre-wrap" }}>
-            {displayMessage || `${licenseProductName} is selected in this quote.`}
-          </p>
+          <div className="unsaved-modal-text" style={{ marginTop: 12 }}>
+            {displayMessage
+              ? <RichTextDisplay html={displayMessage} />
+              : `${licenseProductName} is selected in this quote.`}
+          </div>
 
           <div className="unsaved-modal-actions">
             <button type="button" className="unsaved-btn-yes" onClick={onKeep}>
@@ -78,30 +81,25 @@ export default function LicenseSyncModal({
           License Quantity Mismatch
         </div>
 
-        <p className="unsaved-modal-text" style={{ marginTop: 12 }}>
-          {displayMessage ? (
-            <>
-              {displayMessage}
-              <br />
-              <br />
-              Auto-adjust <strong>{licenseProductName}</strong> to{" "}
-              <strong>{deviceCount}</strong>, or keep the current value?
-            </>
-          ) : (
-            <>
-              You now have{" "}
-              <strong>
-                {deviceCount} device{deviceCount !== 1 ? "s" : ""}
-              </strong>{" "}
-              (terminals&nbsp;+&nbsp;tablets), but your{" "}
-              <strong>{licenseProductName}</strong> quantity doesn't match.
-              <br />
-              <br />
-              Auto-adjust it to <strong>{deviceCount}</strong>, or keep the
-              current value?
-            </>
-          )}
-        </p>
+        <div className="unsaved-modal-text" style={{ marginTop: 12 }}>
+          {displayMessage && <RichTextDisplay html={displayMessage} />}
+          {displayMessage
+            ? (
+              <p style={{ marginTop: 8 }}>
+                Auto-adjust <strong>{licenseProductName}</strong> to{" "}
+                <strong>{deviceCount}</strong>, or keep the current value?
+              </p>
+            ) : (
+              <p>
+                You now have{" "}
+                <strong>{deviceCount} device{deviceCount !== 1 ? "s" : ""}</strong>{" "}
+                (terminals&nbsp;+&nbsp;tablets), but your{" "}
+                <strong>{licenseProductName}</strong> quantity doesn't match.
+                <br /><br />
+                Auto-adjust it to <strong>{deviceCount}</strong>, or keep the current value?
+              </p>
+            )}
+        </div>
 
         <div className="unsaved-modal-actions">
           <button type="button" className="unsaved-btn-no" onClick={onKeep}>
