@@ -626,6 +626,18 @@ export default function QuoteBuilder() {
         await bulkUploadQuotesToServer(localOnly);
       }
 
+      // Brand-new user with no quotes anywhere — persist the in-memory blank
+      // quote immediately so it appears in the sidebar right away, rather than
+      // leaving the sidebar empty while the form already shows content.
+      if (serverQuotes.length === 0 && localAll.length === 0) {
+        setQuote((current) => {
+          saveQuote(current, userId);
+          void saveQuoteToServerNow(current).then(() => setRefreshTrigger((n) => n + 1));
+          return current;
+        });
+        return;
+      }
+
       // Signal the sidebar to re-fetch its list from the server.
       setRefreshTrigger((n) => n + 1);
 
