@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import type { QuoteGroup as QuoteGroupType, ProductCategory, QuoteLineItem } from "../types";
 import { groupSubtotal, formatCurrency, generateId } from "../utils/calculations";
 import { getAdditionalExcludedIds, computeLineItemTotal, isTieredItem } from "../utils/quoteLogic";
+import { RichTextDisplay } from "./RichTextEditor";
 
 interface Props {
   group: QuoteGroupType;
@@ -319,7 +320,7 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
                       />
                       <span>{infoEntry.type === "warning" ? "Warning" : infoEntry.type === "product" ? "Product" : "Info"}</span>
                     </div>
-                    <p className="info-modal-text">{infoEntry.text}</p>
+                    <RichTextDisplay html={infoEntry.text} className="info-modal-text" />
                     <button
                       type="button"
                       className="info-modal-close"
