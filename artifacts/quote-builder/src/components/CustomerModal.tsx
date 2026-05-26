@@ -450,26 +450,39 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                     </div>
                   )}
 
-                  {(customer.creatorName || customer.creatorEmail) && (
-                    <div className="cdm-contact-grid" style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
-                      {customer.creatorName && (
-                        <div className="cdm-contact-item">
-                          <span className="cdm-contact-label">Account Rep</span>
-                          <span className="cdm-contact-value">{customer.creatorName}</span>
-                        </div>
-                      )}
-                      {customer.creatorEmail && (
-                        <div className="cdm-contact-item">
-                          <span className="cdm-contact-label">Rep Email</span>
-                          <span className="cdm-contact-value" style={{ fontSize: 12 }}>
-                            <a href={`mailto:${customer.creatorEmail}`} style={{ color: "var(--accent)" }}>
-                              {customer.creatorEmail}
-                            </a>
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {(() => {
+                    const salesRep = customer.quotes
+                      .slice()
+                      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+                      .map((q) => q.data?.meta?.salesRep)
+                      .find((s) => s && s.trim());
+                    return (customer.creatorName || customer.creatorEmail || salesRep) ? (
+                      <div className="cdm-contact-grid" style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+                        {customer.creatorName && (
+                          <div className="cdm-contact-item">
+                            <span className="cdm-contact-label">Account Rep</span>
+                            <span className="cdm-contact-value">{customer.creatorName}</span>
+                          </div>
+                        )}
+                        {salesRep && (
+                          <div className="cdm-contact-item">
+                            <span className="cdm-contact-label">Sales Rep</span>
+                            <span className="cdm-contact-value">{salesRep}</span>
+                          </div>
+                        )}
+                        {customer.creatorEmail && (
+                          <div className="cdm-contact-item">
+                            <span className="cdm-contact-label">Rep Email</span>
+                            <span className="cdm-contact-value" style={{ fontSize: 12 }}>
+                              <a href={`mailto:${customer.creatorEmail}`} style={{ color: "var(--accent)" }}>
+                                {customer.creatorEmail}
+                              </a>
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ) : null;
+                  })()}
 
                   {isAdmin && (
                     <div style={{ marginTop: 24 }}>
