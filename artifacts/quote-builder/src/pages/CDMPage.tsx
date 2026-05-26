@@ -247,7 +247,7 @@ export default function CDMPage() {
                     >
                       <div className="admin-actions">
                         <button
-                          className="admin-btn-view"
+                          className="btn-icon"
                           onClick={() => setSelected(c)}
                           title="View customer"
                         >
@@ -258,7 +258,7 @@ export default function CDMPage() {
                         </button>
                         {isAdmin && (
                           <button
-                            className="admin-btn-delete"
+                            className="btn-icon danger"
                             onClick={() => { setDeleteConfirm(c); setDeleteError(""); }}
                             title="Delete customer"
                           >
