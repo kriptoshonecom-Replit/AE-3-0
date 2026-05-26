@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useLocation } from "wouter";
 import MediaPickerModal from "@/components/MediaPickerModal";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
+import { RichTextEditor } from "@/components/RichTextEditor";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -346,7 +347,12 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
 
           <div className="edit-field-group">
             <label>Description / Text</label>
-            <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Short description shown to users" rows={3} />
+            <RichTextEditor
+              value={text}
+              onChange={setText}
+              placeholder="Short description shown to users"
+              minHeight={80}
+            />
           </div>
 
           {showMediaPicker && (
