@@ -686,11 +686,12 @@ export default function QuoteBuilder() {
         // Do NOT save to localStorage (it belongs to the original owner, not admin).
         adminSaveQuoteToServer(updated.meta.id, updated);
       } else {
-        // Write to localStorage immediately (crash recovery even before explicit save).
-        saveQuote(updated, userId);
-        // Only push to server (and therefore sidebar) once the user has explicitly
-        // saved. While the quote is brand-new and unsaved, keep it local only.
+        // While the quote is brand-new and unsaved, keep it out of both
+        // localStorage and the server. Writing to localStorage would cause
+        // bulkUploadQuotesToServer to push it to the server on next page load,
+        // making it appear in the sidebar before the user ever clicks Save.
         if (!isUnsavedNewRef.current) {
+          saveQuote(updated, userId);
           syncQuoteToServer(updated, () => {
             isDirtyRef.current = false;
             setRefreshTrigger((n) => n + 1);
@@ -1050,10 +1051,8 @@ export default function QuoteBuilder() {
     setYesNoToggles(DEFAULT_YES_NO);
     setOptionalProgramToggles(DEFAULT_OPT_PROGRAMS);
     setHeatmapToggles(DEFAULT_HEATMAP_TOGGLES);
-    // Save to localStorage immediately (form cache / crash recovery).
-    saveQuote(newQ, userId!);
     isDirtyRef.current = false;
-    // New quote: keep out of the sidebar until the user explicitly saves.
+    // New quote: keep out of localStorage and sidebar until the user saves.
     markUnsavedNew();
     setSidebarOpen(false);
   };

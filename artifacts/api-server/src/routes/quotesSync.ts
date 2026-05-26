@@ -155,9 +155,21 @@ router.get("/quotes", requireAuth, async (req, res) => {
       .select()
       .from(quotesTable)
       .where(eq(quotesTable.userId, userId));
-    res.json({ quotes: rows.map((r) => r.data) });
+
+    // Exclude phantom blank quotes — rows with no identifying header fields
+    // AND no line items. These are auto-created drafts that were never saved
+    // by the user and should not appear in the sidebar.
+    const visible = rows.filter((r) => {
+      const hasHeader = r.quoteNumber || r.companyName || r.customerName;
+      if (hasHeader) return true;
+      const data = r.data as Record<string, unknown>;
+      const groups = (data?.groups as unknown[]) ?? [];
+      return groups.length > 0;
+    });
+
+    res.json({ quotes: visible.map((r) => r.data) });
   } catch (err) {
-    console.error("GET /quotes error:", err);
+    req.log.error(err, "GET /quotes error");
     res.status(500).json({ error: "Failed to load quotes" });
   }
 });
