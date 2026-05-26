@@ -9,62 +9,6 @@ interface Props {
   onCreated: (customer: CustomerProfile) => void;
 }
 
-interface AddrFields {
-  name: string;
-  number: string;
-  line: string;
-  city: string;
-  state: string;
-  zip: string;
-  country: string;
-}
-
-const emptyAddr = (): AddrFields => ({ name: "", number: "", line: "", city: "", state: "", zip: "", country: "United States" });
-
-function AddressSection({ title, value, onChange }: {
-  title: string;
-  value: AddrFields;
-  onChange: (v: AddrFields) => void;
-}) {
-  const set = (k: keyof AddrFields) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    onChange({ ...value, [k]: e.target.value });
-  return (
-    <div>
-      <div className="edit-section-label">{title}</div>
-      <div className="meta-grid">
-        <div className="field-group">
-          <label>Name</label>
-          <input type="text" value={value.name} onChange={set("name")} placeholder="Business or contact name" />
-        </div>
-        <div className="field-group">
-          <label>Street Number</label>
-          <input type="text" value={value.number} onChange={set("number")} placeholder="123" />
-        </div>
-        <div className="field-group" style={{ gridColumn: "span 2" }}>
-          <label>Street Line</label>
-          <input type="text" value={value.line} onChange={set("line")} placeholder="Main Street" />
-        </div>
-        <div className="field-group">
-          <label>City</label>
-          <input type="text" value={value.city} onChange={set("city")} placeholder="City" />
-        </div>
-        <div className="field-group">
-          <label>State</label>
-          <input type="text" value={value.state} onChange={set("state")} placeholder="State" />
-        </div>
-        <div className="field-group">
-          <label>Zip Code</label>
-          <input type="text" value={value.zip} onChange={set("zip")} placeholder="00000" />
-        </div>
-        <div className="field-group">
-          <label>Country</label>
-          <input type="text" value={value.country} onChange={set("country")} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function AddCustomerModal({ onClose, onCreated }: Props) {
   const [companyName, setCompanyName] = useState("");
   const [customerName, setCustomerName] = useState("");
@@ -75,10 +19,9 @@ export default function AddCustomerModal({ onClose, onCreated }: Props) {
   const [dba, setDba] = useState("");
   const [salesRep, setSalesRep] = useState("");
   const [businessOperation, setBusinessOperation] = useState("");
-  const [validUntil, setValidUntil] = useState("");
-  const [address, setAddress] = useState<AddrFields>(emptyAddr());
-  const [billTo, setBillTo] = useState<AddrFields>(emptyAddr());
-  const [sameAsBusiness, setSameAsBusiness] = useState(false);
+  const [addressLine, setAddressLine] = useState("");
+  const [sameForBilling, setSameForBilling] = useState(true);
+  const [billingAddressLine, setBillingAddressLine] = useState("");
 
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -92,8 +35,14 @@ export default function AddCustomerModal({ onClose, onCreated }: Props) {
       return;
     }
 
-    const hasAddress = address.city || address.name || address.number;
-    const hasBilling = !sameAsBusiness && (billTo.city || billTo.name || billTo.number);
+    const addr = addressLine.trim()
+      ? { line: addressLine.trim(), name: "", number: "", city: "", state: "", zip: "", country: "" }
+      : null;
+    const billing = sameForBilling
+      ? addr
+      : billingAddressLine.trim()
+        ? { line: billingAddressLine.trim(), name: "", number: "", city: "", state: "", zip: "", country: "" }
+        : null;
 
     setSaving(true);
     try {
@@ -111,9 +60,8 @@ export default function AddCustomerModal({ onClose, onCreated }: Props) {
           fua: fua ? Number(fua) : undefined,
           dba: dba.trim() || undefined,
           businessOperation: businessOperation.trim() || undefined,
-          validUntil: validUntil || undefined,
-          address: hasAddress ? address : null,
-          billingAddress: sameAsBusiness ? address : hasBilling ? billTo : null,
+          address: addr,
+          billingAddress: billing,
         }),
       });
       const data = await res.json() as { customer?: CustomerProfile; error?: string };
@@ -129,7 +77,7 @@ export default function AddCustomerModal({ onClose, onCreated }: Props) {
 
   return (
     <div className="admin-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="admin-modal" style={{ maxWidth: 680, width: "95vw", maxHeight: "90vh", overflowY: "auto" }}>
+      <div className="admin-modal" style={{ maxWidth: 620, width: "95vw", maxHeight: "90vh", overflowY: "auto" }}>
         <div className="admin-modal-header">
           <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>Add Customer</h3>
           <button type="button" className="btn-icon" onClick={onClose} style={{ marginLeft: "auto" }}>
@@ -143,8 +91,7 @@ export default function AddCustomerModal({ onClose, onCreated }: Props) {
           <div className="admin-modal-body" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
             {/* Customer Info */}
-            <div>
-              <div className="edit-section-label">Customer Info</div>
+            <div className="quote-meta-form">
               <div className="meta-grid">
                 <div className="field-group">
                   <label>MCN</label>
@@ -182,32 +129,43 @@ export default function AddCustomerModal({ onClose, onCreated }: Props) {
                   <label>Customer Phone</label>
                   <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(formatPhoneUS(e.target.value))} placeholder="+1 (555) 000-0000" />
                 </div>
-                <div className="field-group">
-                  <label>Valid Until</label>
-                  <input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)} />
-                </div>
               </div>
             </div>
 
-            {/* Business Address */}
-            <AddressSection title="Business Address" value={address} onChange={setAddress} />
-
-            {/* Bill To Address */}
-            <div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                <div className="edit-section-label" style={{ margin: 0 }}>Bill To Address</div>
-                <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-2)", cursor: "pointer", fontWeight: 500 }}>
-                  <input
-                    type="checkbox"
-                    checked={sameAsBusiness}
-                    onChange={e => setSameAsBusiness(e.target.checked)}
-                    style={{ accentColor: "var(--accent)" }}
-                  />
-                  Same as business address
-                </label>
+            {/* Address — same single-line style as quote builder */}
+            <div className="address-section">
+              <div className="field-group">
+                <label>Address</label>
+                <input
+                  type="text"
+                  value={addressLine}
+                  onChange={e => setAddressLine(e.target.value)}
+                  placeholder="e.g. 123 Main St, Atlanta, GA 30301"
+                />
               </div>
-              {!sameAsBusiness && (
-                <AddressSection title="" value={billTo} onChange={setBillTo} />
+
+              <label className="address-billing-toggle">
+                <input
+                  type="checkbox"
+                  checked={sameForBilling}
+                  onChange={e => setSameForBilling(e.target.checked)}
+                />
+                <span>Same for Billing</span>
+              </label>
+
+              {!sameForBilling && (
+                <div className="address-billing-section">
+                  <div className="address-billing-title">Billing Operation Address</div>
+                  <div className="field-group">
+                    <label>Billing Address</label>
+                    <input
+                      type="text"
+                      value={billingAddressLine}
+                      onChange={e => setBillingAddressLine(e.target.value)}
+                      placeholder="e.g. 456 Oak Ave, Atlanta, GA 30301"
+                    />
+                  </div>
+                </div>
               )}
             </div>
 
