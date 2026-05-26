@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 import LocationCardsPanel, { type GeoPoint } from "@/components/LocationCardsPanel";
@@ -107,11 +107,33 @@ const PIT_COLORS: Record<string, string> = {
   None: "#cbd5e1",
 };
 
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS_FULL = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [, setLocation] = useLocation();
+
+  const now = new Date();
+  const [pickerYear, setPickerYear] = useState(now.getFullYear());
+  const [pickerMonth, setPickerMonth] = useState(now.getMonth());
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!pickerOpen) return;
+    function handleOutside(e: MouseEvent) {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setPickerOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, [pickerOpen]);
+
+  const selectedLabel = `${MONTHS_FULL[pickerMonth]} ${pickerYear}`;
 
   function load() {
     setLoading(true);
@@ -218,9 +240,39 @@ export default function DashboardPage() {
         <GlobalNavTrigger />
         <h1 className="admin-page-title">Dashboard</h1>
         <div className="admin-topbar-right">
-          <span className="admin-badge">
-            {new Date().toLocaleString("en-US", { month: "long", year: "numeric" })}
-          </span>
+          <div className="db-month-picker" ref={pickerRef}>
+            <button
+              type="button"
+              className="admin-badge db-month-trigger"
+              onClick={() => setPickerOpen((o) => !o)}
+            >
+              {selectedLabel}
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ marginLeft: 5, opacity: 0.6 }}>
+                <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            {pickerOpen && (
+              <div className="db-month-dropdown">
+                <div className="db-month-year-nav">
+                  <button type="button" className="db-month-nav-btn" onClick={() => setPickerYear((y) => y - 1)}>‹</button>
+                  <span className="db-month-year-label">{pickerYear}</span>
+                  <button type="button" className="db-month-nav-btn" onClick={() => setPickerYear((y) => y + 1)}>›</button>
+                </div>
+                <div className="db-month-grid">
+                  {MONTHS.map((m, i) => (
+                    <button
+                      key={m}
+                      type="button"
+                      className={`db-month-btn${i === pickerMonth ? " db-month-btn-active" : ""}`}
+                      onClick={() => { setPickerMonth(i); setPickerOpen(false); }}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           <button
             type="button"
             className="admin-btn-add-secondary"

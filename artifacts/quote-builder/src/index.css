@@ -5774,6 +5774,96 @@ tr:hover .drag-handle { opacity: 1; }
 }
 
 /* Legacy grid kept for profile page compat */
+/* ── Dashboard month/year picker ─────────────────────────── */
+.db-month-picker {
+  position: relative;
+}
+
+.db-month-trigger {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s, color 0.12s;
+}
+
+.db-month-trigger:hover {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.db-month-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 200;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 12px;
+  width: 220px;
+}
+
+.db-month-year-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.db-month-year-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.db-month-nav-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  font-size: 16px;
+  color: var(--text-2);
+  background: transparent;
+  transition: background 0.12s, color 0.12s;
+}
+
+.db-month-nav-btn:hover {
+  background: var(--surface-subtle);
+  color: var(--text);
+}
+
+.db-month-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.db-month-btn {
+  padding: 7px 4px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  background: transparent;
+  text-align: center;
+  transition: background 0.12s, color 0.12s;
+}
+
+.db-month-btn:hover {
+  background: var(--surface-subtle);
+  color: var(--text);
+}
+
+.db-month-btn-active {
+  background: var(--accent) !important;
+  color: #fff !important;
+}
+
+/* Legacy grid kept for profile page compat */
 .db-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
