@@ -6,13 +6,16 @@
   "scripts": {
     "hello": "tsx ./src/hello.ts",
     "backup-product-images": "tsx ./src/backup-product-images.ts",
+    "sync-prod-to-dev": "tsx ./src/sync-prod-to-dev.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@google-cloud/storage": "^7.19.0"
+    "@google-cloud/storage": "^7.19.0",
+    "pg": "^8.20.0"
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "@types/pg": "^8.18.0",
     "tsx": "catalog:"
   }
 }

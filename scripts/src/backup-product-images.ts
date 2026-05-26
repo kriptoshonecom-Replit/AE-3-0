@@ -1,4 +1,4 @@
-import { Storage } from "@google-cloud/storage";
+import { Storage, type StorageOptions } from "@google-cloud/storage";
 import { createWriteStream, mkdirSync } from "fs";
 import { pipeline } from "stream/promises";
 import path from "path";
@@ -24,7 +24,7 @@ const gcs = new Storage({
       format: { type: "json", subject_token_field_name: "access_token" },
     },
     universe_domain: "googleapis.com",
-  } as Parameters<typeof Storage>[0]["credentials"],
+  } as StorageOptions["credentials"],
   projectId: "",
 });
 
