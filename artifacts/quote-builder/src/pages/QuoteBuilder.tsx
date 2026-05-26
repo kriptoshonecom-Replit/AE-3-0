@@ -764,7 +764,7 @@ export default function QuoteBuilder() {
 
     sessionStorage.setItem("cpq_sp_context", JSON.stringify({
       quoteId: meta.id ?? "",
-      quoteName: meta.companyName || meta.customerName || meta.quoteNumber || "Untitled Quote",
+      quoteName: meta.quoteNumber || meta.companyName || meta.customerName || "Untitled Quote",
       annualRevenue: meta.annualStoreRevenue ?? "",
       avgTicket: meta.averageTicketAmount ?? "",
       numSites: meta.numberOfSites ?? "",
