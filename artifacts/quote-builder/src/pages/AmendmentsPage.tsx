@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 import { formatCurrency } from "../utils/calculations";
-import AmendModal from "../components/AmendModal";
+import AmendModal, { type AddedItem } from "../components/AmendModal";
 import AmendViewModal from "../components/AmendViewModal";
 import { useAuth } from "@/context/AuthContext";
 import type { Quote } from "../types";
@@ -70,6 +70,7 @@ interface EditModeState {
   row: AmendmentRow;
   quote: Quote;
   initialAmendedQty: Record<string, number>;
+  initialAdditions: AddedItem[];
 }
 
 function fmtDate(s: string | null | undefined) {
@@ -99,24 +100,47 @@ function MrrDeltaBadge({ value }: { value: number | undefined }) {
 function buildEditState(row: AmendmentRow): EditModeState {
   const deltaGroups = row.data?.deltaGroups ?? [];
   const initialAmendedQty: Record<string, number> = {};
+  const initialAdditions: AddedItem[] = [];
 
-  const groups = deltaGroups.map((dg, gi) => ({
-    id: `edit-g-${gi}`,
-    categoryId: dg.categoryId,
-    categoryName: dg.categoryName,
-    isOpen: true,
-    lineItems: dg.lineItems.map((li, lii) => {
-      const id = `edit-li-${gi}-${lii}`;
-      initialAmendedQty[id] = li.amendedQty;
-      return {
-        id,
-        productId: li.productId,
-        productName: li.productName,
-        unitPrice: li.unitPrice,
-        quantity: li.originalQty,
-      };
-    }),
-  }));
+  // Separate qty-change items (originalQty > 0) from net-new additions (originalQty === 0)
+  const groups = deltaGroups
+    .map((dg, gi) => ({
+      id: `edit-g-${gi}`,
+      categoryId: dg.categoryId,
+      categoryName: dg.categoryName,
+      isOpen: true,
+      lineItems: dg.lineItems
+        .filter((li) => li.originalQty > 0)
+        .map((li, lii) => {
+          const id = `edit-li-${gi}-${lii}`;
+          initialAmendedQty[id] = li.amendedQty;
+          return {
+            id,
+            productId: li.productId,
+            productName: li.productName,
+            unitPrice: li.unitPrice,
+            quantity: li.originalQty,
+          };
+        }),
+    }))
+    .filter((g) => g.lineItems.length > 0);
+
+  // Restore net-new additions
+  for (const dg of deltaGroups) {
+    for (const li of dg.lineItems) {
+      if (li.originalQty === 0 && li.amendedQty > 0) {
+        initialAdditions.push({
+          id: `init-add-${initialAdditions.length}`,
+          productId: li.productId,
+          productName: li.productName,
+          categoryId: dg.categoryId,
+          categoryName: dg.categoryName,
+          unitPrice: li.unitPrice,
+          qty: li.amendedQty,
+        });
+      }
+    }
+  }
 
   const d = row.data as Record<string, unknown> ?? {};
   const quote: Quote = {
@@ -146,7 +170,7 @@ function buildEditState(row: AmendmentRow): EditModeState {
     groups,
   };
 
-  return { row, quote, initialAmendedQty };
+  return { row, quote, initialAmendedQty, initialAdditions };
 }
 
 /* ── Main Page ────────────────────────────────────────────── */
@@ -491,6 +515,7 @@ export default function AmendmentsPage() {
           editAmendmentId={editState.row.id}
           editAmendmentNumber={editState.row.amendmentNumber}
           initialAmendedQty={editState.initialAmendedQty}
+          initialAdditions={editState.initialAdditions}
           initialQuoteNumber={editState.row.quoteNumber ?? ""}
           initialNotes={(editState.row.data?.notes as string) ?? ""}
           onClose={() => setEditState(null)}

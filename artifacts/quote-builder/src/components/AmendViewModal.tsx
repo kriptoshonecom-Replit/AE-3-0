@@ -204,7 +204,7 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
         <div className="amend-modal-body">
           {changedGroups.length === 0 && (
             <p style={{ color: "var(--text-3)", fontSize: 13, textAlign: "center", padding: "24px 0" }}>
-              No quantity changes recorded for this amendment.
+              No changes recorded for this amendment.
             </p>
           )}
           {changedGroups.map((group) => (
@@ -224,6 +224,7 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
                   </thead>
                   <tbody>
                     {group.lineItems.map((li, i) => {
+                      const isNew = li.originalQty === 0 && li.amendedQty > 0;
                       const delta = li.amendedQty - li.originalQty;
                       const origVal = computeLineItemTotalLocal(li.productId, li.unitPrice, li.originalQty);
                       const amendVal = computeLineItemTotalLocal(li.productId, li.unitPrice, li.amendedQty);
@@ -231,13 +232,14 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
                       return (
                         <tr key={i} className={delta !== 0 ? "amend-row-changed" : ""}>
                           <td className="amend-td-name" style={delta === 0 ? { color: "var(--text-3)" } : undefined}>
+                            {isNew && <span className="amend-badge-new">NEW</span>}
                             {li.productName}
                           </td>
                           <td className="amend-td-num" style={delta === 0 ? { color: "var(--text-3)" } : undefined}>
                             {formatCurrency(li.unitPrice)}
                           </td>
                           <td className="amend-td-num" style={delta === 0 ? { color: "var(--text-3)" } : undefined}>
-                            {li.originalQty}
+                            {isNew ? <span style={{ color: "var(--text-3)", fontStyle: "italic", fontSize: 11 }}>—</span> : li.originalQty}
                           </td>
                           <td className="amend-td-num" style={{ fontWeight: delta !== 0 ? 700 : undefined, color: delta === 0 ? "var(--text-3)" : undefined }}>
                             {li.amendedQty}

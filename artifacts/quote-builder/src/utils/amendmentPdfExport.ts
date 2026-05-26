@@ -323,9 +323,17 @@ export async function exportAmendmentToPDF(data: AmendmentExportData, mode?: "do
       doc.setFont("helvetica", "normal");
       doc.text(name, margin + 3, y + 4);
 
-      // Orig qty
+      // Orig qty — show "NEW" for net-new additions (originalQty === 0)
       doc.setTextColor(100, 116, 139);
-      doc.text(String(li.originalQty), colOrigQty, y + 4, { align: "right" });
+      if (li.originalQty === 0 && li.delta > 0) {
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(21, 128, 61);
+        doc.text("NEW", colOrigQty, y + 4, { align: "right" });
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(100, 116, 139);
+      } else {
+        doc.text(String(li.originalQty), colOrigQty, y + 4, { align: "right" });
+      }
 
       // New qty (bold, colored)
       doc.setFont("helvetica", "bold");
