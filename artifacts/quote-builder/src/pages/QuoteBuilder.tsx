@@ -172,6 +172,14 @@ export default function QuoteBuilder() {
   const [optionalProgramToggles, setOptionalProgramToggles] = useState<Record<string, boolean>>(DEFAULT_OPT_PROGRAMS);
   const [heatmapToggles, setHeatmapToggles] = useState<Record<string, boolean>>(DEFAULT_HEATMAP_TOGGLES);
   const isDirtyRef = useRef(false);
+  // True while the current in-form quote has never been explicitly saved by the
+  // user. Autosave will still write to localStorage for crash recovery, but it
+  // won't sync to the server (and therefore won't appear in the sidebar) until
+  // the user clicks Save.
+  const [isUnsavedNew, setIsUnsavedNew] = useState(true);
+  const isUnsavedNewRef = useRef(true);
+  function markSaved() { isUnsavedNewRef.current = false; setIsUnsavedNew(false); }
+  function markUnsavedNew() { isUnsavedNewRef.current = true; setIsUnsavedNew(true); }
   const groupDragSrc = useRef<number | null>(null);
 
   // ── CDM duplicate detection ───────────────────────────────────
@@ -548,6 +556,7 @@ export default function QuoteBuilder() {
       const taggedMeta = { ...pq.meta, _adminOwnerId: ownerId } as typeof pq.meta;
       handleSelectQuote({ ...pq, meta: taggedMeta });
     } else {
+      markSaved();
       setQuote(pq);
       if (pq.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...pq.meta.yesNoToggles });
       setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(pq.meta.optionalProgramToggles ?? {}) });
@@ -571,6 +580,7 @@ export default function QuoteBuilder() {
         const taggedMeta = { ...pq.meta, _adminOwnerId: ownerId } as typeof pq.meta;
         handleSelectQuote({ ...pq, meta: taggedMeta });
       } else {
+        markSaved();
         setQuote(pq);
         if (pq.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...pq.meta.yesNoToggles });
         setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(pq.meta.optionalProgramToggles ?? {}) });
@@ -586,6 +596,7 @@ export default function QuoteBuilder() {
     if (activeId) {
       const q = loadQuote(activeId, userId);
       if (q) {
+        markSaved();
         setQuote(q);
         if (q.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...q.meta.yesNoToggles });
         setOptionalProgramToggles({ ...DEFAULT_OPT_PROGRAMS, ...(q.meta.optionalProgramToggles ?? {}) });
@@ -596,6 +607,7 @@ export default function QuoteBuilder() {
     }
     const all = loadAllQuotes(userId);
     if (all.length > 0) {
+      markSaved();
       const q = all[all.length - 1];
       setQuote(q);
       if (q.meta.yesNoToggles) setYesNoToggles({ ...DEFAULT_YES_NO, ...q.meta.yesNoToggles });
@@ -626,18 +638,6 @@ export default function QuoteBuilder() {
         await bulkUploadQuotesToServer(localOnly);
       }
 
-      // Brand-new user with no quotes anywhere — persist the in-memory blank
-      // quote immediately so it appears in the sidebar right away, rather than
-      // leaving the sidebar empty while the form already shows content.
-      if (serverQuotes.length === 0 && localAll.length === 0) {
-        setQuote((current) => {
-          saveQuote(current, userId);
-          void saveQuoteToServerNow(current).then(() => setRefreshTrigger((n) => n + 1));
-          return current;
-        });
-        return;
-      }
-
       // Signal the sidebar to re-fetch its list from the server.
       setRefreshTrigger((n) => n + 1);
 
@@ -653,6 +653,7 @@ export default function QuoteBuilder() {
       if (serverVersion) {
         // Use server version if it's newer (e.g. edited by admin on another device)
         if (!localVersion || serverVersion.meta.updatedAt >= localVersion.meta.updatedAt) {
+          markSaved();
           setQuote(serverVersion);
           saveQuote(serverVersion, userId); // keep localStorage cache in sync
         }
@@ -661,6 +662,7 @@ export default function QuoteBuilder() {
         const latest = [...serverQuotes].sort((a, b) =>
           (b.meta.updatedAt ?? "").localeCompare(a.meta.updatedAt ?? ""),
         )[0];
+        markSaved();
         setQuote(latest);
       }
     })();
@@ -684,13 +686,16 @@ export default function QuoteBuilder() {
         // Do NOT save to localStorage (it belongs to the original owner, not admin).
         adminSaveQuoteToServer(updated.meta.id, updated);
       } else {
-        // Write to localStorage immediately (fast cache for form restore on reload).
+        // Write to localStorage immediately (crash recovery even before explicit save).
         saveQuote(updated, userId);
-        // Push to server; once confirmed, refresh the sidebar from server.
-        syncQuoteToServer(updated, () => {
-          isDirtyRef.current = false;
-          setRefreshTrigger((n) => n + 1);
-        });
+        // Only push to server (and therefore sidebar) once the user has explicitly
+        // saved. While the quote is brand-new and unsaved, keep it local only.
+        if (!isUnsavedNewRef.current) {
+          syncQuoteToServer(updated, () => {
+            isDirtyRef.current = false;
+            setRefreshTrigger((n) => n + 1);
+          });
+        }
       }
       if (markDirty) isDirtyRef.current = true;
     },
@@ -991,6 +996,8 @@ export default function QuoteBuilder() {
 
   const handleSave = async () => {
     setSaving(true);
+    // Mark as saved first so autosave (called next) will sync to the server.
+    markSaved();
     autosave(quote, false);
     isDirtyRef.current = false;
     try {
@@ -1043,13 +1050,12 @@ export default function QuoteBuilder() {
     setYesNoToggles(DEFAULT_YES_NO);
     setOptionalProgramToggles(DEFAULT_OPT_PROGRAMS);
     setHeatmapToggles(DEFAULT_HEATMAP_TOGGLES);
-    // Save to localStorage immediately (form cache).
+    // Save to localStorage immediately (form cache / crash recovery).
     saveQuote(newQ, userId!);
     isDirtyRef.current = false;
+    // New quote: keep out of the sidebar until the user explicitly saves.
+    markUnsavedNew();
     setSidebarOpen(false);
-    // Save to server immediately (no debounce) so the new quote appears
-    // in the sidebar as soon as the server confirms — no 1.5 s wait.
-    void saveQuoteToServerNow(newQ).then(() => setRefreshTrigger((n) => n + 1));
   };
 
   // Collect all alert-config mismatches for the given groups
@@ -1153,6 +1159,8 @@ export default function QuoteBuilder() {
     // Clear any pending alerts from the previous quote
     configAlertQueueRef.current = [];
     setConfigAlertState(null);
+    // Selecting an existing quote from the sidebar — it is already on the server.
+    markSaved();
     // Detect admin editing another user's quote
     const rawMeta = q.meta as unknown as Record<string, unknown>;
     const ownerId = rawMeta._adminOwnerId as string | undefined;
@@ -1310,10 +1318,10 @@ export default function QuoteBuilder() {
           <div className="topbar-actions">
             <button
               type="button"
-              className="btn-ghost"
+              className={isUnsavedNew ? "btn-primary" : "btn-ghost"}
               onClick={() => void handleSave()}
               disabled={saving}
-              title="Save quote and PDF to cloud"
+              title={isUnsavedNew ? "Save this quote to your library" : "Save quote and PDF to cloud"}
             >
               {saved ? (
                 <>
@@ -1331,7 +1339,7 @@ export default function QuoteBuilder() {
                     <rect x="5" y="8" width="4" height="4" rx="0.5" stroke="currentColor" strokeWidth="1.2" />
                     <path d="M5 2v3h4V2" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
                   </svg>
-                  Save
+                  {isUnsavedNew ? "Save Quote" : "Save"}
                 </>
               )}
             </button>
