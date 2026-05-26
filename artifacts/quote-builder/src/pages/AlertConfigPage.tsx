@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
+import { RichTextEditor, RichTextDisplay, stripHtml } from "@/components/RichTextEditor";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -234,12 +235,11 @@ function AlertModal({ config, products, onClose, onSaved, isDuplicate = false }:
           <div className="edit-field-group">
             <label>Display Message</label>
             <p className="edit-field-hint">Optional custom message shown in the alert popup.</p>
-            <textarea
+            <RichTextEditor
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={3}
+              onChange={setMessage}
               placeholder="e.g., Your license count must match the total number of terminals and tablets."
-              style={{ width: "100%", padding: "7px 10px", borderRadius: 6, border: "1px solid var(--border)", background: "var(--bg)", color: "var(--text)", fontSize: 13, resize: "vertical", boxSizing: "border-box" }}
+              minHeight={80}
             />
           </div>
 
@@ -489,7 +489,9 @@ export default function AlertConfigPage() {
                   </td>
                   <td style={{ maxWidth: 220 }}>
                     <div style={{ fontSize: 12, color: "var(--text-muted)", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                      {cfg.displayMessage || <em style={{ opacity: 0.5 }}>Default message</em>}
+                      {cfg.displayMessage
+                        ? <RichTextDisplay html={cfg.displayMessage} />
+                        : <em style={{ opacity: 0.5 }}>Default message</em>}
                     </div>
                   </td>
                   <td style={{ whiteSpace: "nowrap" }}>{cfg.delaySeconds}s</td>

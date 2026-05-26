@@ -3,6 +3,7 @@ import type { CustomerProfile } from "../pages/CDMPage";
 import type { Quote } from "../types";
 import { quoteTotal, formatCurrency } from "../utils/calculations";
 import { formatPhoneUS } from "../utils/phone";
+import { RichTextEditor } from "./RichTextEditor";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 const C = 226.19;
@@ -798,12 +799,11 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                 })()}
                 <div className="cdm-form-field">
                   <label>Message</label>
-                  <textarea
-                    className="cdm-mail-body"
+                  <RichTextEditor
                     value={mailBody}
-                    onChange={e => setMailBody(e.target.value)}
+                    onChange={setMailBody}
                     placeholder="Write your message here…"
-                    rows={8}
+                    minHeight={160}
                   />
                 </div>
                 {sendResult === "sent" && (

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
+import { RichTextEditor, RichTextDisplay, stripHtml } from "@/components/RichTextEditor";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -106,7 +107,7 @@ export default function AppReleasePage() {
     setError("");
     setSuccess("");
 
-    if (!message.trim()) { setError("Message is required"); return; }
+    if (!stripHtml(message).trim()) { setError("Message is required"); return; }
     const emails = Array.from(selectedEmails);
     if (!emails.length) { setError("Select at least one recipient"); return; }
     if (versionWillChange && !validateVersion(versionTrimmed)) {
@@ -277,12 +278,11 @@ export default function AppReleasePage() {
 
                 <div className="edit-field-group">
                   <label>Message</label>
-                  <textarea
+                  <RichTextEditor
                     value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    onChange={setMessage}
                     placeholder="Write your release notes or announcement here…"
-                    rows={5}
-                    style={{ resize: "vertical", minHeight: 110 }}
+                    minHeight={110}
                   />
                 </div>
 
@@ -352,8 +352,8 @@ export default function AppReleasePage() {
                             {n.subject && (
                               <div className="admin-td-bold" style={{ marginBottom: 2 }}>{n.subject}</div>
                             )}
-                            <div style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
-                              {n.message.slice(0, 120)}{n.message.length > 120 ? "…" : ""}
+                            <div style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                              <RichTextDisplay html={n.message} />
                             </div>
                           </td>
                           <td>
