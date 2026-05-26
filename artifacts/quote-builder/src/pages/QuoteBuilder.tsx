@@ -155,6 +155,9 @@ export default function QuoteBuilder() {
   const [amendQuote, setAmendQuote] = useState<Quote | null>(null);
   const { open: sidebarOpen, setOpen: setSidebarOpen } = useGlobalNav();
   const [activeTab, setActiveTab] = useState(0);
+  const [slideDir, setSlideDir] = useState<"left" | "right" | null>(null);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
   const [appVersion, setAppVersion] = useState<string>("");
 
   useEffect(() => {
@@ -1262,6 +1265,24 @@ export default function QuoteBuilder() {
     return _rawTxnCount > 0 ? fees / _rawTxnCount : 0;
   })();
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (dx < 0 && activeTab < 3) {
+      setSlideDir("left");
+      setActiveTab((t) => t + 1);
+    } else if (dx > 0 && activeTab > 0) {
+      setSlideDir("right");
+      setActiveTab((t) => t - 1);
+    }
+  };
+
   return (
     <div className="app-shell">
       {/* Unsaved changes modal */}
@@ -1393,8 +1414,12 @@ export default function QuoteBuilder() {
         </div>
 
         {/* Content */}
-        <div className="content" ref={printAreaRef}>
-          <div className="content-inner">
+        <div className="content" ref={printAreaRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+          <div
+            className="content-inner"
+            data-slide={slideDir ?? undefined}
+            onAnimationEnd={() => setSlideDir(null)}
+          >
 
             {/* ── Tab 0: Quote ── */}
             {activeTab === 0 && (
