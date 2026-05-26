@@ -60,6 +60,8 @@ export interface AmendmentExportData {
   tax?: number;
   notes?: string;
   mcn?: string;
+  fua?: number;
+  dba?: string;
   addressLine?: string;
   addressNumber?: string;
   addressName?: string;
@@ -181,6 +183,8 @@ export async function exportAmendmentToPDF(data: AmendmentExportData, mode?: "do
   if (data.quoteNumber) leftRow("Amendment Quote #:", data.quoteNumber);
   if (data.originalQuoteNumber) leftRow("Original Quote #:", data.originalQuoteNumber);
   if (data.mcn) leftRow("MCN:", data.mcn);
+  if (data.fua !== undefined && data.fua !== null) leftRow("FUA:", String(data.fua));
+  if (data.dba) leftRow("DBA:", data.dba);
 
   if (data.companyName) rightRow("Company:", data.companyName, true);
   if (data.customerName) rightRow("Customer:", data.customerName);

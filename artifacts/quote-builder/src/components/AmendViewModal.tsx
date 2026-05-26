@@ -37,6 +37,8 @@ interface AmendmentDataShape {
   tax?: number;
   notes?: string;
   mcn?: string;
+  fua?: number;
+  dba?: string;
   addressLine?: string;
   addressNumber?: string;
   addressName?: string;
@@ -108,6 +110,8 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
     tax: data.tax as number | undefined,
     notes,
     mcn: data.mcn as string | undefined,
+    fua: data.fua as number | undefined,
+    dba: data.dba as string | undefined,
     addressLine: data.addressLine as string | undefined,
     addressNumber: data.addressNumber as string | undefined,
     addressName: data.addressName as string | undefined,
