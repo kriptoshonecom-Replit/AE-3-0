@@ -4016,6 +4016,69 @@ td:has(.inline-cell-input) {
 }
 
 /* ── Amendments accordion list ─────────────────────────── */
+/* Amendment integrity warning modal */
+.amend-warn-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  width: 100%;
+  max-width: 400px;
+  padding: 28px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+.amend-warn-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #fef3c7;
+  border: 1.5px solid #fcd34d;
+  color: #d97706;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.amend-warn-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.amend-warn-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+.amend-warn-text {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin: 0;
+}
+.amend-warn-text strong {
+  color: var(--text);
+}
+.amend-warn-close {
+  margin-top: 4px;
+  padding: 8px 28px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.amend-warn-close:hover {
+  opacity: 0.88;
+}
+
 .amend-accordion-list {
   display: flex;
   flex-direction: column;

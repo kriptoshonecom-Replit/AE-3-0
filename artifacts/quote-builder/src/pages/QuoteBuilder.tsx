@@ -499,6 +499,22 @@ export default function QuoteBuilder() {
       .catch(() => {});
   }, []);
 
+  // ── Amendment count for current quote ────────────────────────────────────
+  const [amendmentCount, setAmendmentCount] = useState(0);
+  const [amendmentWarnOpen, setAmendmentWarnOpen] = useState(false);
+  const amendmentWarnShownRef = useRef(false);
+
+  useEffect(() => {
+    const id = quote.meta.id;
+    if (!id) return;
+    amendmentWarnShownRef.current = false;
+    setAmendmentCount(0);
+    fetch(`${API_BASE}/api/amendments?originalQuoteId=${encodeURIComponent(id)}`, { credentials: "include", cache: "no-store" })
+      .then((r) => r.ok ? r.json() as Promise<{ amendments: unknown[] }> : null)
+      .then((d) => { if (d) setAmendmentCount(d.amendments.length); })
+      .catch(() => {});
+  }, [quote.meta.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Refs so timer callbacks always read the freshest groups state
   const latestGroupsRef = useRef(quote.groups);
 
@@ -853,6 +869,18 @@ export default function QuoteBuilder() {
     latestGroupsRef.current = groups;
 
     if (!oldGroup) return;
+
+    // ── Amendment integrity warning ──────────────────────────────────────────
+    if (amendmentCount > 0 && !amendmentWarnShownRef.current) {
+      const anyQtyChanged = oldGroup.lineItems.some((oldItem) => {
+        const newItem = group.lineItems.find((i) => i.id === oldItem.id);
+        return newItem !== undefined && newItem.quantity !== oldItem.quantity;
+      });
+      if (anyQtyChanged) {
+        amendmentWarnShownRef.current = true;
+        setAmendmentWarnOpen(true);
+      }
+    }
 
     // ── Dynamic DB-configured alert checks ──────────────────────────────────
     for (const cfg of alertConfigs) {
@@ -1331,6 +1359,30 @@ export default function QuoteBuilder() {
           onAutoAdjust={handleConfigAlertAutoAdjust}
           onKeep={handleConfigAlertKeep}
         />
+      )}
+
+      {/* Amendment integrity warning */}
+      {amendmentWarnOpen && (
+        <div className="admin-modal-backdrop" onMouseDown={() => setAmendmentWarnOpen(false)}>
+          <div className="amend-warn-modal" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="amend-warn-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path d="M12 9v4M12 17h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <div className="amend-warn-body">
+              <p className="amend-warn-title">Amendment Integrity Notice</p>
+              <p className="amend-warn-text">
+                This quote has <strong>{amendmentCount} amendment{amendmentCount !== 1 ? "s" : ""}</strong> created.
+                Changing quantities may affect the integrity of {amendmentCount !== 1 ? "those" : "that"} amendment{amendmentCount !== 1 ? "s" : ""} and create discrepancies in the delta values they track.
+              </p>
+            </div>
+            <button className="amend-warn-close" type="button" onClick={() => setAmendmentWarnOpen(false)}>
+              Understood
+            </button>
+          </div>
+        </div>
       )}
 
       {createPortal(
