@@ -1768,7 +1768,7 @@ textarea:focus::placeholder {
 .ql-items {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   padding: 0 15px;
 }
 
@@ -1778,7 +1778,7 @@ textarea:focus::placeholder {
   justify-content: space-between;
   width: 100%;
   text-align: left;
-  padding: 10px 10px;
+  padding: 6px 10px;
   border-radius: 6px;
   border: 1px solid transparent;
   transition: all 0.12s;
@@ -5571,8 +5571,8 @@ tr:hover .drag-handle { opacity: 1; }
 .ql-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 11px 14px;
+  gap: 2px;
+  padding: 7px 14px;
   text-align: left;
 }
 .ql-item-top {
@@ -5623,7 +5623,7 @@ tr:hover .drag-handle { opacity: 1; }
 .ql-item-status-row {
   display: flex;
   justify-content: flex-end;
-  margin-top: 5px;
+  margin-top: 2px;
 }
 .ql-status-badge {
   display: inline-flex;
