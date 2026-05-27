@@ -268,20 +268,6 @@ function PaymentsRevenueStats({ stats, loading }: { stats: QuoteStats | null; lo
           </span>
           <span className="profile-stat-sub">{fmtMoney(passGatewayPerSite)}/site · {stats.passTotalSites} site{stats.passTotalSites !== 1 ? "s" : ""}</span>
         </div>
-        <div className="profile-stat-card">
-          <span className="profile-stat-label">Pipeline Payments Rev</span>
-          <span className="profile-stat-value psc-money" style={{ opacity: 0.75 }}>
-            {fmtMoney(stats.totalPaymentsRevMo)}<span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-3)" }}>/mo</span>
-          </span>
-          <span className="profile-stat-sub">{fmtMoney(allPaymentsPerSite)}/site · {stats.allTotalSites} site{stats.allTotalSites !== 1 ? "s" : ""}</span>
-        </div>
-        <div className="profile-stat-card">
-          <span className="profile-stat-label">Pipeline Gateway Rev</span>
-          <span className="profile-stat-value psc-gateway" style={{ opacity: 0.75 }}>
-            {fmtMoney(stats.totalGatewayRevMo)}<span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-3)" }}>/mo</span>
-          </span>
-          <span className="profile-stat-sub">{fmtMoney(allGatewayPerSite)}/site · {stats.allTotalSites} site{stats.allTotalSites !== 1 ? "s" : ""}</span>
-        </div>
       </div>
     </div>
   );

@@ -2687,6 +2687,12 @@ textarea:focus::placeholder {
   overflow: hidden;
 }
 
+@media (min-width: 640px) {
+  .profile-card {
+    max-width: 600px;
+  }
+}
+
 .profile-header {
   display: flex;
   align-items: center;
