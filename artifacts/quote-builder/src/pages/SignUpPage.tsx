@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
 import logo from "/logo.png";
+import AuthSpinner from "@/components/AuthSpinner";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -85,6 +86,7 @@ export default function SignUpPage() {
 
   return (
     <div className="auth-page">
+      <AuthSpinner />
       <div className="auth-brand">
         <img src={logo} alt="Aloha Essential CPQ 3.0" className="auth-logo" />
         <span>Aloha Essential CPQ 3.0</span>
