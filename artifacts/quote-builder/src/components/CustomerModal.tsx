@@ -433,26 +433,37 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                       </div>
                     )}
                     {(() => {
-                      const sorted = customer.quotes
-                        .slice()
-                        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-                      const dba = sorted.map(q => q.data?.meta?.dba).find(v => v && String(v).trim());
-                      const fua = sorted.map(q => q.data?.meta?.fua).find(v => v != null);
+                      const seen = new Set<string>();
+                      const units: { fua: number | undefined; dba: string | undefined }[] = [];
+                      for (const q of customer.quotes) {
+                        const f = q.data?.meta?.fua;
+                        const d = q.data?.meta?.dba;
+                        const key = `${f ?? ""}|${d ?? ""}`;
+                        if ((f != null || (d && d.trim())) && !seen.has(key)) {
+                          seen.add(key);
+                          units.push({ fua: f, dba: d });
+                        }
+                      }
+                      if (units.length === 0) return null;
                       return (
-                        <>
-                          {dba && (
-                            <div className="cdm-contact-item">
-                              <span className="cdm-contact-label">DBA</span>
-                              <span className="cdm-contact-value">{dba}</span>
-                            </div>
-                          )}
-                          {fua != null && (
-                            <div className="cdm-contact-item">
-                              <span className="cdm-contact-label">FUA</span>
-                              <span className="cdm-contact-value">{formatCurrency(Number(fua))}</span>
-                            </div>
-                          )}
-                        </>
+                        <div className="cdm-fua-table-wrap">
+                          <table className="cdm-fua-table">
+                            <thead>
+                              <tr>
+                                <th>FUA</th>
+                                <th>DBA</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {units.map((u, i) => (
+                                <tr key={i}>
+                                  <td>{u.fua != null ? String(u.fua) : "—"}</td>
+                                  <td>{u.dba?.trim() || "—"}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       );
                     })()}
                   </div>
