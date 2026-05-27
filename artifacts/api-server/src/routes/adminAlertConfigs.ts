@@ -21,12 +21,6 @@ const router = Router();
 router.get("/alert-configs", async (_req, res) => {
   res.setHeader("Cache-Control", "no-store");
   try {
-    const gcsAll = await readAlertConfigsFromGCS();
-    if (gcsAll) {
-      const active = gcsAll.filter((c) => (c as Record<string, unknown>).isActive === true);
-      res.json(active);
-      return;
-    }
     const configs = await db
       .select()
       .from(alertConfigsTable)
@@ -45,11 +39,6 @@ router.use("/admin/alert-configs", requireAdmin);
 router.get("/admin/alert-configs", async (_req, res) => {
   res.setHeader("Cache-Control", "no-store");
   try {
-    const gcsAll = await readAlertConfigsFromGCS();
-    if (gcsAll) {
-      res.json(gcsAll);
-      return;
-    }
     const configs = await db
       .select()
       .from(alertConfigsTable)
