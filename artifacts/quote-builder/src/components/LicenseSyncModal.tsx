@@ -73,12 +73,7 @@ export default function LicenseSyncModal({
         style={{ maxWidth: 400 }}
       >
         <div className="unsaved-modal-header">
-          <img
-            src="/warning-btn.png"
-            alt="Warning"
-            style={{ width: 22, height: 22, flexShrink: 0 }}
-          />
-          License Quantity Mismatch
+          Quantity Mismatch
         </div>
 
         <div className="unsaved-modal-text" style={{ marginTop: 12 }}>

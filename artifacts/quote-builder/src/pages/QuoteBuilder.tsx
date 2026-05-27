@@ -956,29 +956,49 @@ export default function QuoteBuilder() {
   const handleConfigAlertAutoAdjust = () => {
     if (!configAlertState) return;
     if (configAlertState.infoOnly) { handleConfigAlertKeep(); return; }
-    const { subjectCount, configId } = configAlertState;
+
     const baseGroups = preflightAction ? preflightGroupsRef.current : quote.groups;
-    // Re-resolve subject position at apply-time so drag reordering can't
-    // leave us with stale groupIdx/itemIdx pointing at the wrong group.
-    const cfg = alertConfigs.find((c) => c.id === configId);
-    const freshSubject = cfg ? findSubjectItem(baseGroups, cfg.subjectProductId) : null;
-    const resolvedGroupIdx = freshSubject?.groupIdx ?? configAlertState.groupIdx;
-    const resolvedItemIdx = freshSubject?.itemIdx ?? configAlertState.itemIdx;
-    const groups = baseGroups.map((g, gi) => {
-      if (gi !== resolvedGroupIdx) return g;
-      const lineItems = g.lineItems.map((item, li) =>
-        li === resolvedItemIdx ? { ...item, quantity: subjectCount } : item,
-      );
-      return { ...g, lineItems };
-    });
+
+    // Collect the current alert + every non-info-only alert still in the queue
+    // so that all connected products (e.g. rubber pads, pin pads, terminals)
+    // are adjusted in a single operation instead of separate sequential dialogs.
+    const toApply = [
+      configAlertState,
+      ...configAlertQueueRef.current.filter((a) => !a.infoOnly),
+    ];
+
+    // Keep only info-only items left in the queue — they still need their own dialog
+    configAlertQueueRef.current = configAlertQueueRef.current.filter((a) => a.infoOnly);
+
+    // Apply all adjustments in one pass, re-resolving positions each time so
+    // reordering can't leave stale indices.
+    let groups = baseGroups;
+    for (const alert of toApply) {
+      const cfg = alertConfigs.find((c) => c.id === alert.configId);
+      const freshSubject = cfg ? findSubjectItem(groups, cfg.subjectProductId) : null;
+      const resolvedGroupIdx = freshSubject?.groupIdx ?? alert.groupIdx;
+      const resolvedItemIdx = freshSubject?.itemIdx ?? alert.itemIdx;
+      groups = groups.map((g, gi) => {
+        if (gi !== resolvedGroupIdx) return g;
+        const lineItems = g.lineItems.map((item, li) =>
+          li === resolvedItemIdx ? { ...item, quantity: alert.subjectCount } : item,
+        );
+        return { ...g, lineItems };
+      });
+    }
+
     const updated = { ...quote, groups };
     setQuote(updated);
     autosave(updated);
+
     if (preflightAction) {
       preflightGroupsRef.current = groups;
-      advancePreflightQueue(preflightQueue, preflightAction);
+      // Rebuild the remaining AlertEntry array from what's left in the queue
+      const remaining = configAlertQueueRef.current.splice(0);
+      advancePreflightQueue(remaining, preflightAction);
+    } else {
+      showNextQueuedAlert();
     }
-    showNextQueuedAlert();
   };
 
   const handleConfigAlertKeep = () => {
