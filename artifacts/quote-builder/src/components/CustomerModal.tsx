@@ -432,6 +432,29 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                         <span className="cdm-contact-value">{customer.mcn}</span>
                       </div>
                     )}
+                    {(() => {
+                      const sorted = customer.quotes
+                        .slice()
+                        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+                      const dba = sorted.map(q => q.data?.meta?.dba).find(v => v && String(v).trim());
+                      const fua = sorted.map(q => q.data?.meta?.fua).find(v => v != null);
+                      return (
+                        <>
+                          {dba && (
+                            <div className="cdm-contact-item">
+                              <span className="cdm-contact-label">DBA</span>
+                              <span className="cdm-contact-value">{dba}</span>
+                            </div>
+                          )}
+                          {fua != null && (
+                            <div className="cdm-contact-item">
+                              <span className="cdm-contact-label">FUA</span>
+                              <span className="cdm-contact-value">{formatCurrency(Number(fua))}</span>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {(customer.address || customer.billingAddress) && (
