@@ -2637,7 +2637,7 @@ textarea:focus::placeholder {
 .auth-spinner {
   width: 100px;
   height: 100px;
-  animation: spin 1.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  animation: spin 1.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) 1 forwards;
 }
 
 .auth-brand {

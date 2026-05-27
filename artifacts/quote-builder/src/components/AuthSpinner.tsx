@@ -6,7 +6,7 @@ export default function AuthSpinner() {
           <circle cx="50" cy="22" r="7" />
           <circle cx="69" cy="31" r="7" />
           <circle cx="78" cy="50" r="7" />
-          <circle cx="69" cy="49" r="7" />
+          <circle cx="69" cy="69" r="7" />
           <circle cx="50" cy="78" r="7" />
           <circle cx="31" cy="69" r="7" />
           <circle cx="22" cy="50" r="7" />
