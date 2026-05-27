@@ -3404,7 +3404,7 @@ textarea:focus::placeholder {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 60vh;
+  max-height: 33vh;
 }
 
 .sidebar-version-footer {
