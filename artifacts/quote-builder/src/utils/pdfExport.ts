@@ -107,7 +107,7 @@ export async function exportQuoteToPDF(
     doc.setFontSize(7.5);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(100, 100, 98);
-    doc.text("Aloha Essential CPQ 3.0", margin, logoTopY + logoHeightMm + 4.5);
+    doc.text("Aloha WebCalculator", margin, logoTopY + logoHeightMm + 4.5);
 
     // Created | Valid Until — right side of banner
     doc.setFont("helvetica", "normal");
@@ -140,7 +140,7 @@ export async function exportQuoteToPDF(
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(124, 58, 237);
-    doc.text("Aloha Essential CPQ 3.0", margin, bannerHeight / 2 + 2);
+    doc.text("Aloha WebCalculator", margin, bannerHeight / 2 + 2);
   }
 
   y = bannerHeight + 6;

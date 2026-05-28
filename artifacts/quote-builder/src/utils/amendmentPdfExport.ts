@@ -112,7 +112,7 @@ export async function exportAmendmentToPDF(data: AmendmentExportData, mode?: "do
     doc.setFontSize(7.5);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(100, 100, 98);
-    doc.text("Aloha Essential CPQ 3.0", margin, logoTopY + logoHeightMm + 4.5);
+    doc.text("Aloha WebCalculator", margin, logoTopY + logoHeightMm + 4.5);
 
     // Amendment label pill
     const pillX = margin;
@@ -140,7 +140,7 @@ export async function exportAmendmentToPDF(data: AmendmentExportData, mode?: "do
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(124, 58, 237);
-    doc.text("Aloha Essential CPQ 3.0 — Amendment", margin, bannerHeight / 2 + 2);
+    doc.text("Aloha WebCalculator — Amendment", margin, bannerHeight / 2 + 2);
   }
 
   y = bannerHeight + 6;

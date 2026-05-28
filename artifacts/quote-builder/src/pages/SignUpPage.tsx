@@ -88,8 +88,8 @@ export default function SignUpPage() {
     <div className="auth-page">
       <AuthSpinner />
       <div className="auth-brand">
-        <img src={logo} alt="Aloha Essential CPQ 3.0" className="auth-logo" />
-        <span>Aloha Essential CPQ 3.0</span>
+        <img src={logo} alt="Aloha WebCalculator" className="auth-logo" />
+        <span>Aloha WebCalculator</span>
       </div>
 
       <div className="auth-form-card">

@@ -1422,8 +1422,8 @@ export default function QuoteBuilder() {
                 <path d="M2 4.5h14M2 9h14M2 13.5h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             </button>
-            <img src={logo} alt="Aloha Essential CPQ 3.0" className="topbar-logo" />
-            <span className="topbar-brand">Aloha Essential CPQ 3.0</span>
+            <img src={logo} alt="Aloha WebCalculator" className="topbar-logo" />
+            <span className="topbar-brand">Aloha WebCalculator</span>
           </div>
           <div className="topbar-actions">
             <button
