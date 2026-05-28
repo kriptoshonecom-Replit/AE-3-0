@@ -410,28 +410,64 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                       <span className="cdm-contact-label">Company</span>
                       <span className="cdm-contact-value">{customer.companyName || "—"}</span>
                     </div>
-                    <div className="cdm-contact-item">
-                      <span className="cdm-contact-label">Contact</span>
-                      <span className="cdm-contact-value">{customer.customerName || "—"}</span>
-                    </div>
-                    <div className="cdm-contact-item">
-                      <span className="cdm-contact-label">Email</span>
-                      <span className="cdm-contact-value">
-                        {customer.customerEmail
-                          ? <a href={`mailto:${customer.customerEmail}`} style={{ color: "var(--accent)" }}>{customer.customerEmail}</a>
-                          : "—"}
-                      </span>
-                    </div>
-                    <div className="cdm-contact-item">
-                      <span className="cdm-contact-label">Phone</span>
-                      <span className="cdm-contact-value">{customer.customerPhone || "—"}</span>
-                    </div>
                     {customer.mcn && (
                       <div className="cdm-contact-item">
                         <span className="cdm-contact-label">MCN</span>
                         <span className="cdm-contact-value">{customer.mcn}</span>
                       </div>
                     )}
+
+                    {/* Contacts table */}
+                    {(() => {
+                      const seen = new Set<string>();
+                      const contacts: { name: string; position: string; email: string; phone: string }[] = [];
+                      for (const q of customer.quotes) {
+                        const name = (q.data?.meta?.customerName as string | undefined) ?? "";
+                        const position = (q.data?.meta?.customerPosition as string | undefined) ?? "";
+                        const email = (q.data?.meta?.customerEmail as string | undefined) ?? "";
+                        const phone = (q.data?.meta?.customerPhone as string | undefined) ?? "";
+                        const key = `${name.toLowerCase()}|${email.toLowerCase()}`;
+                        if ((name || email) && !seen.has(key)) {
+                          seen.add(key);
+                          contacts.push({ name, position, email, phone });
+                        }
+                      }
+                      const pk = `${(customer.customerName ?? "").toLowerCase()}|${(customer.customerEmail ?? "").toLowerCase()}`;
+                      if (!seen.has(pk) && (customer.customerName || customer.customerEmail)) {
+                        contacts.unshift({ name: customer.customerName ?? "", position: "", email: customer.customerEmail ?? "", phone: customer.customerPhone ?? "" });
+                      }
+                      if (contacts.length === 0) return null;
+                      return (
+                        <div className="cdm-fua-table-wrap" style={{ gridColumn: "1 / -1" }}>
+                          <table className="cdm-fua-table cdm-contacts-table">
+                            <thead>
+                              <tr>
+                                <th>Name</th>
+                                <th>Position</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {contacts.map((c, i) => (
+                                <tr key={i}>
+                                  <td>{c.name || "—"}</td>
+                                  <td>{c.position || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
+                                  <td>
+                                    {c.email
+                                      ? <a href={`mailto:${c.email}`} style={{ color: "var(--accent)" }}>{c.email}</a>
+                                      : "—"}
+                                  </td>
+                                  <td>{c.phone || "—"}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      );
+                    })()}
+
+                    {/* FUA / DBA table */}
                     {(() => {
                       const seen = new Set<string>();
                       const units: { fua: number | undefined; dba: string | undefined }[] = [];
@@ -446,7 +482,7 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                       }
                       if (units.length === 0) return null;
                       return (
-                        <div className="cdm-fua-table-wrap">
+                        <div className="cdm-fua-table-wrap" style={{ gridColumn: "1 / -1" }}>
                           <table className="cdm-fua-table">
                             <thead>
                               <tr>

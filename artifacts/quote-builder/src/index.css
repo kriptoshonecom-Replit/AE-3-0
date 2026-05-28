@@ -580,7 +580,8 @@ button {
 }
 
 .field-group input,
-.field-group textarea {
+.field-group textarea,
+.field-group select {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 8px 10px;
@@ -591,6 +592,11 @@ button {
   outline: none;
   transition: border-color 0.15s;
   width: 100%;
+}
+
+.field-group select {
+  cursor: pointer;
+  appearance: auto;
 }
 
 .field-group textarea {
@@ -625,7 +631,8 @@ button {
 }
 
 .field-group input:focus,
-.field-group textarea:focus {
+.field-group textarea:focus,
+.field-group select:focus {
   border-color: var(--accent);
   background: var(--surface);
 }
@@ -7201,6 +7208,22 @@ tr:hover .drag-handle { opacity: 1; }
   color: var(--text-2);
   white-space: nowrap;
   width: 90px;
+}
+
+/* Contacts table overrides — first col is a name, not a code */
+.cdm-contacts-table tbody td:first-child {
+  font-family: inherit;
+  color: var(--text);
+  font-weight: 600;
+  white-space: normal;
+  width: auto;
+}
+.cdm-contacts-table tbody td {
+  white-space: nowrap;
+}
+.cdm-contacts-table tbody td:nth-child(3) {
+  white-space: normal;
+  word-break: break-all;
 }
 
 /* Address section */

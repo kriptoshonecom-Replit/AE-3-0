@@ -102,14 +102,30 @@ export default function QuoteMetaForm({ meta, onChange, pspmDiscountPct, upfront
           />
         </div>
 
-        <div className="field-group">
-          <label>Customer Name</label>
-          <input
-            type="text"
-            value={meta.customerName}
-            onChange={set("customerName")}
-            placeholder="John Smith"
-          />
+        <div style={{ display: "flex", gap: 8 }}>
+          <div className="field-group" style={{ flex: 1 }}>
+            <label>Customer Name</label>
+            <input
+              type="text"
+              value={meta.customerName}
+              onChange={set("customerName")}
+              placeholder="John Smith"
+            />
+          </div>
+          <div className="field-group" style={{ width: 108, flexShrink: 0 }}>
+            <label>Position</label>
+            <select
+              value={meta.customerPosition ?? ""}
+              onChange={e => onChange({ ...meta, customerPosition: e.target.value || undefined })}
+            >
+              <option value="">—</option>
+              <option>CEO</option>
+              <option>COO</option>
+              <option>CFO</option>
+              <option>CTO</option>
+              <option>GM</option>
+            </select>
+          </div>
         </div>
 
         <div className="field-group">

@@ -69,6 +69,7 @@ export interface QuoteMeta {
   customerName: string;
   customerEmail: string;
   customerPhone?: string;
+  customerPosition?: string;
   validUntil: string;
   notes: string;
   createdAt: string;
