@@ -309,14 +309,13 @@ export default function QuoteLibraryPage() {
   const groups = useMemo(() => {
     const map = new Map<string, {
       key: string;
-      customerName: string;
-      companyName: string | null;
+      companyName: string;
       rows: AdminQuoteRow[];
     }>();
     for (const row of filtered) {
-      const key = (row.customerName || row.companyName || "(No Name)").trim();
+      const key = (row.companyName || row.customerName || "(No Name)").trim();
       if (!map.has(key)) {
-        map.set(key, { key, customerName: key, companyName: row.companyName, rows: [] });
+        map.set(key, { key, companyName: key, rows: [] });
       }
       map.get(key)!.rows.push(row);
     }
@@ -405,11 +404,7 @@ export default function QuoteLibraryPage() {
                       <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
 
-                    <span className="amend-accordion-title">{group.customerName}</span>
-
-                    {group.companyName && group.companyName !== group.customerName && (
-                      <span className="amend-accordion-company">· {group.companyName}</span>
-                    )}
+                    <span className="amend-accordion-title">{group.companyName}</span>
 
                     <span className="amend-accordion-meta">
                       <span className="amend-accordion-count">
@@ -438,6 +433,7 @@ export default function QuoteLibraryPage() {
                           <thead>
                             <tr>
                               <th>Quote #</th>
+                              <th>Customer</th>
                               {isAdmin && <th>Creator</th>}
                               <th>Created</th>
                               <th>Updated</th>
@@ -454,6 +450,7 @@ export default function QuoteLibraryPage() {
                                 <td className="admin-td-bold" style={{ fontFamily: "monospace", fontSize: 12 }}>
                                   {row.quoteNumber || <span style={{ color: "var(--text-3)" }}>Untitled</span>}
                                 </td>
+                                <td>{row.customerName || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
                                 {isAdmin && (
                                   <td>
                                     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
