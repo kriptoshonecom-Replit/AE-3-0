@@ -5717,7 +5717,9 @@ tr:hover .drag-handle { opacity: 1; }
 .ql-meta-admin { color: #7c3aed; font-weight: 600; }
 .ql-item-status-row {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 5px;
   margin-top: 2px;
 }
 .ql-status-badge {
@@ -5734,6 +5736,20 @@ tr:hover .drag-handle { opacity: 1; }
 }
 .ql-status-pass { background: #dcfce7; color: #15803d; }
 .ql-status-fail { background: #fee2e2; color: #b91c1c; }
+.ql-amend-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent, #7c3aed);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
 
 
 /* ── Prior Spend vs Requested Pricing ───────────────────── */

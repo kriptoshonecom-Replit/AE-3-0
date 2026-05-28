@@ -87,6 +87,7 @@ export default function QuoteList({
   const [viewMode, setViewMode] = useState<"mine" | "all">("mine");
   const [loading, setLoading] = useState(true);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+  const [amendCounts, setAmendCounts] = useState<Record<string, number>>({});
   const hasFetchedOnce = useRef(false);
 
   useEffect(() => {
@@ -95,14 +96,19 @@ export default function QuoteList({
     if (!hasFetchedOnce.current) setLoading(true);
 
     if (isAdmin && viewMode === "all") {
-      fetch(`${apiBase}/api/admin/quotes`, { credentials: "include" })
-        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-        .then((data: { quotes: AdminQuoteRow[] }) => {
+      Promise.all([
+        fetch(`${apiBase}/api/admin/quotes`, { credentials: "include" })
+          .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))),
+        fetch(`${apiBase}/api/admin/amendments/counts`, { credentials: "include" })
+          .then((r) => r.ok ? r.json() : { counts: {} }),
+      ])
+        .then(([quotesData, amendData]: [{ quotes: AdminQuoteRow[] }, { counts: Record<string, number> }]) => {
           if (cancelled) return;
-          const sorted = [...(data.quotes ?? [])].sort((a, b) =>
+          const sorted = [...(quotesData.quotes ?? [])].sort((a, b) =>
             (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""),
           );
           setAdminRows(sorted);
+          setAmendCounts(amendData.counts ?? {});
           hasFetchedOnce.current = true;
           setLoading(false);
         })
@@ -113,14 +119,23 @@ export default function QuoteList({
           setLoading(false);
         });
     } else {
-      fetch(`${apiBase}/api/quotes`, { credentials: "include" })
-        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-        .then((data: { quotes: Quote[] }) => {
+      Promise.all([
+        fetch(`${apiBase}/api/quotes`, { credentials: "include" })
+          .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))),
+        fetch(`${apiBase}/api/amendments`, { credentials: "include" })
+          .then((r) => r.ok ? r.json() : { amendments: [] }),
+      ])
+        .then(([quotesData, amendData]: [{ quotes: Quote[] }, { amendments: { originalQuoteId: string }[] }]) => {
           if (cancelled) return;
-          const sorted = [...(data.quotes ?? [])].sort((a, b) =>
+          const sorted = [...(quotesData.quotes ?? [])].sort((a, b) =>
             (b.meta.updatedAt ?? "").localeCompare(a.meta.updatedAt ?? ""),
           );
           setQuotes(sorted);
+          const counts: Record<string, number> = {};
+          for (const a of amendData.amendments ?? []) {
+            counts[a.originalQuoteId] = (counts[a.originalQuoteId] ?? 0) + 1;
+          }
+          setAmendCounts(counts);
           hasFetchedOnce.current = true;
           setLoading(false);
         })
@@ -376,11 +391,18 @@ export default function QuoteList({
                       )}
                     </div>
 
-                    {passStatus ? (
+                    {(passStatus || amendCounts[row.id] > 0) ? (
                       <div className="ql-item-status-row">
-                        <span className={`ql-status-badge ql-status-${passStatus}`}>
-                          {passStatus === "pass" ? "PASS" : "FAIL"}
-                        </span>
+                        {passStatus && (
+                          <span className={`ql-status-badge ql-status-${passStatus}`}>
+                            {passStatus === "pass" ? "PASS" : "FAIL"}
+                          </span>
+                        )}
+                        {amendCounts[row.id] > 0 && (
+                          <span className="ql-amend-badge" title={`${amendCounts[row.id]} amendment${amendCounts[row.id] !== 1 ? "s" : ""}`}>
+                            A
+                          </span>
+                        )}
                       </div>
                     ) : null}
                   </button>
@@ -497,11 +519,18 @@ export default function QuoteList({
                       )}
                     </div>
 
-                    {passStatus ? (
+                    {(passStatus || amendCounts[q.meta.id] > 0) ? (
                       <div className="ql-item-status-row">
-                        <span className={`ql-status-badge ql-status-${passStatus}`}>
-                          {passStatus === "pass" ? "PASS" : "FAIL"}
-                        </span>
+                        {passStatus && (
+                          <span className={`ql-status-badge ql-status-${passStatus}`}>
+                            {passStatus === "pass" ? "PASS" : "FAIL"}
+                          </span>
+                        )}
+                        {amendCounts[q.meta.id] > 0 && (
+                          <span className="ql-amend-badge" title={`${amendCounts[q.meta.id]} amendment${amendCounts[q.meta.id] !== 1 ? "s" : ""}`}>
+                            A
+                          </span>
+                        )}
                       </div>
                     ) : null}
                   </button>
