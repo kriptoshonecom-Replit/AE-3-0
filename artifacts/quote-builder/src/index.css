@@ -7547,9 +7547,25 @@ select.cdm-cell-input {
 /* Dashboard layout */
 .cdm-dashboard {
   display: flex;
-  gap: 32px;
+  gap: 24px;
   align-items: flex-start;
   flex-wrap: wrap;
+}
+.cdm-dashboard-left {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+.cdm-dashboard-right {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 200px;
+  width: 220px;
+  flex-shrink: 0;
 }
 .cdm-donut-wrap {
   display: flex;

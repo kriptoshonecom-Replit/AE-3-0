@@ -412,4 +412,57 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
   }
 });
 
+/* ── GET /api/admin/customers/:key/kpis ── payments + gateway revenue for one customer */
+router.get("/admin/customers/:key/kpis", requireAdmin, async (req, res) => {
+  const key = decodeURIComponent(String(req.params.key));
+  try {
+    const [rows, configRows] = await Promise.all([
+      db.select({ id: quotesTable.id, data: quotesTable.data, passStatus: quotesTable.passStatus }).from(quotesTable),
+      db.select({ data: statusPassConfigTable.data }).from(statusPassConfigTable)
+        .where(eq(statusPassConfigTable.id, STATUS_PASS_CONFIG_ID)).limit(1),
+    ]);
+
+    const cfgData = (configRows[0]?.data ?? {}) as Record<string, unknown>;
+
+    function metaKey(meta: Record<string, unknown>): string {
+      const mcn   = String(meta.mcn ?? "").trim();
+      const email = String(meta.customerEmail ?? "").trim().toLowerCase();
+      return mcn || email || `${String(meta.companyName ?? "").trim()}___${String(meta.customerName ?? "").trim()}`;
+    }
+
+    let passPaymentsRevMo = 0, passGatewayRevMo = 0;
+    let totalPaymentsRevMo = 0, totalGatewayRevMo = 0;
+    let passTotalSites = 0, allTotalSites = 0;
+
+    for (const row of rows) {
+      const meta = ((row.data as Record<string, unknown>)?.meta ?? {}) as Record<string, unknown>;
+      if (metaKey(meta) !== key) continue;
+
+      const normalizedStatus = row.passStatus ?? (meta.passStatus as string | undefined) ?? null;
+      const annualStoreRev = parseFloat(String(meta.annualStoreRevenue ?? "").replace(/[^0-9.]/g, "")) || 0;
+      if (annualStoreRev === 0) continue;
+
+      const sites      = Math.max(parseInt(String(meta.numberOfSites ?? "1"), 10) || 1, 1);
+      const basisPts   = parseFloat(String(meta.basisPoint ?? "0").replace(/[^0-9.]/g, "")) || 0;
+      const monthlyVol = annualStoreRev / 12;
+      const paymentsRevMo = (basisPts / 10000) * monthlyVol;
+      const gatewayRevMo  = computeGatewayRevMo(meta, cfgData);
+
+      totalPaymentsRevMo += paymentsRevMo;
+      totalGatewayRevMo  += gatewayRevMo;
+      allTotalSites      += sites;
+      if (normalizedStatus?.toLowerCase() === "pass") {
+        passPaymentsRevMo += paymentsRevMo;
+        passGatewayRevMo  += gatewayRevMo;
+        passTotalSites    += sites;
+      }
+    }
+
+    res.json({ passPaymentsRevMo, passGatewayRevMo, totalPaymentsRevMo, totalGatewayRevMo, passTotalSites, allTotalSites });
+  } catch (err) {
+    console.error("GET /admin/customers/:key/kpis error:", err);
+    res.status(500).json({ error: "Failed to compute KPIs" });
+  }
+});
+
 export default router;
