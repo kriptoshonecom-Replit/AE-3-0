@@ -132,8 +132,17 @@ interface EditRow {
   phone: string;
   fua: string;
   dba: string;
+  addressLine: string;
+  addressCity: string;
+  addressState: string;
+  addressZip: string;
   quoteIds: string[];
   dirty: boolean;
+}
+
+function fmtCompactAddr(line: string, city: string, state: string, zip: string): string {
+  const cityLine = [city, state].filter(Boolean).join(", ") + (zip ? ` ${zip}` : "");
+  return [line, cityLine].filter(Boolean).join(", ");
 }
 
 function buildEditRows(customer: CustomerProfile): EditRow[] {
@@ -146,12 +155,24 @@ function buildEditRows(customer: CustomerProfile): EditRow[] {
     const fuaRaw = q.data?.meta?.fua as number | undefined;
     const fua = fuaRaw != null ? String(fuaRaw) : "";
     const dba = (q.data?.meta?.dba as string | undefined) ?? "";
+    const addressLine = (q.data?.meta?.addressLine as string | undefined) ?? "";
+    const addressCity = (q.data?.meta?.addressCity as string | undefined) ?? "";
+    const addressState = (q.data?.meta?.addressState as string | undefined) ?? "";
+    const addressZip = (q.data?.meta?.zipCode as string | undefined) ?? "";
     const key = `${name.toLowerCase()}|${email.toLowerCase()}|${fua}|${dba}`;
     if (name || email || fua || dba.trim()) {
       if (map.has(key)) {
-        map.get(key)!.quoteIds.push(q.id);
+        const existing = map.get(key)!;
+        existing.quoteIds.push(q.id);
+        // Prefer the row with the most address detail
+        if (!existing.addressLine && addressLine) {
+          existing.addressLine = addressLine;
+          existing.addressCity = addressCity;
+          existing.addressState = addressState;
+          existing.addressZip = addressZip;
+        }
       } else {
-        map.set(key, { name, position, email, phone, fua, dba, quoteIds: [q.id], dirty: false });
+        map.set(key, { name, position, email, phone, fua, dba, addressLine, addressCity, addressState, addressZip, quoteIds: [q.id], dirty: false });
       }
     }
   }
@@ -162,7 +183,20 @@ function buildEditRows(customer: CustomerProfile): EditRow[] {
   const primaryEmail = (customer.customerEmail ?? "").toLowerCase();
   const alreadyCovered = rows.some(r => r.email.toLowerCase() === primaryEmail && primaryEmail !== "");
   if (!alreadyCovered && (customer.customerName || customer.customerEmail)) {
-    rows.unshift({ name: customer.customerName ?? "", position: "", email: customer.customerEmail ?? "", phone: customer.customerPhone ?? "", fua: "", dba: "", quoteIds: [], dirty: false });
+    rows.unshift({
+      name: customer.customerName ?? "",
+      position: "",
+      email: customer.customerEmail ?? "",
+      phone: customer.customerPhone ?? "",
+      fua: "",
+      dba: "",
+      addressLine: customer.address?.line ?? "",
+      addressCity: customer.address?.city ?? "",
+      addressState: customer.address?.state ?? "",
+      addressZip: customer.address?.zip ?? "",
+      quoteIds: [],
+      dirty: false,
+    });
   }
   return rows;
 }
@@ -320,6 +354,10 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
               customerPhone: row.phone || undefined,
               fua: row.fua ? Number(row.fua) : undefined,
               dba: row.dba.trim() || undefined,
+              addressLine: row.addressLine || undefined,
+              addressCity: row.addressCity || undefined,
+              addressState: row.addressState || undefined,
+              zipCode: row.addressZip || undefined,
             },
           }),
         }).then(r => { if (!r.ok) throw new Error("Failed"); })
@@ -555,6 +593,7 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                             <th>Phone</th>
                             <th>FUA</th>
                             <th>DBA</th>
+                            <th>Service Address</th>
                             <th></th>
                           </tr>
                         </thead>
@@ -617,6 +656,34 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                                   onChange={e => setEditRows(rows => rows.map((row, j) => j === i ? { ...row, dba: e.target.value, dirty: true } : row))}
                                 />
                               </td>
+                              <td className="cdm-addr-cell">
+                                <input
+                                  className="cdm-cell-input"
+                                  value={r.addressLine}
+                                  placeholder="Street"
+                                  onChange={e => setEditRows(rows => rows.map((row, j) => j === i ? { ...row, addressLine: e.target.value, dirty: true } : row))}
+                                />
+                                <div className="cdm-addr-row2">
+                                  <input
+                                    className="cdm-cell-input cdm-cell-city"
+                                    value={r.addressCity}
+                                    placeholder="City"
+                                    onChange={e => setEditRows(rows => rows.map((row, j) => j === i ? { ...row, addressCity: e.target.value, dirty: true } : row))}
+                                  />
+                                  <input
+                                    className="cdm-cell-input cdm-cell-state"
+                                    value={r.addressState}
+                                    placeholder="ST"
+                                    onChange={e => setEditRows(rows => rows.map((row, j) => j === i ? { ...row, addressState: e.target.value, dirty: true } : row))}
+                                  />
+                                  <input
+                                    className="cdm-cell-input cdm-cell-zip"
+                                    value={r.addressZip}
+                                    placeholder="ZIP"
+                                    onChange={e => setEditRows(rows => rows.map((row, j) => j === i ? { ...row, addressZip: e.target.value, dirty: true } : row))}
+                                  />
+                                </div>
+                              </td>
                               <td style={{ whiteSpace: "nowrap", paddingLeft: 6 }}>
                                 {r.quoteIds.length > 0 ? (
                                   <>
@@ -668,6 +735,7 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                               <th>Phone</th>
                               <th>FUA</th>
                               <th>DBA</th>
+                              <th>Service Address</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -683,6 +751,9 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                                 <td>{r.phone || "—"}</td>
                                 <td>{r.fua || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
                                 <td>{r.dba?.trim() || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
+                                <td style={{ whiteSpace: "nowrap" }}>
+                                  {fmtCompactAddr(r.addressLine, r.addressCity, r.addressState, r.addressZip) || <span style={{ color: "var(--text-3)" }}>—</span>}
+                                </td>
                               </tr>
                             ))}
                           </tbody>

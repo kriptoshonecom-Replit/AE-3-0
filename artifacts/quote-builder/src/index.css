@@ -7178,11 +7178,37 @@ tr:hover .drag-handle { opacity: 1; }
 .cdm-fua-table-wrap {
   grid-column: 1 / -1;
   margin-top: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .cdm-fua-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+}
+
+/* Address cell: stacked street + city/state/zip */
+.cdm-addr-cell {
+  min-width: 200px;
+}
+.cdm-addr-row2 {
+  display: flex;
+  gap: 3px;
+  margin-top: 3px;
+}
+.cdm-cell-city {
+  flex: 1 1 90px;
+  min-width: 60px;
+}
+.cdm-cell-state {
+  flex: 0 0 40px;
+  width: 40px;
+  text-transform: uppercase;
+}
+.cdm-cell-zip {
+  flex: 0 0 62px;
+  width: 62px;
 }
 .cdm-fua-table thead th {
   font-size: 11px;
