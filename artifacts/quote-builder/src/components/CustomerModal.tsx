@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { CustomerProfile } from "../pages/CDMPage";
 import type { Quote } from "../types";
 import { quoteTotal, formatCurrency } from "../utils/calculations";
@@ -187,8 +187,20 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
   const [editRows, setEditRows] = useState<EditRow[]>(() => buildEditRows(customer));
   const [rowSaving, setRowSaving] = useState<Set<number>>(new Set());
   const [rowErrors, setRowErrors] = useState<Record<number, string>>({});
+  const contactEmails = useMemo(() => {
+    const seen = new Set<string>();
+    const out: { email: string; name: string }[] = [];
+    for (const r of editRows) {
+      const e = r.email.trim().toLowerCase();
+      if (e && !seen.has(e)) { seen.add(e); out.push({ email: r.email.trim(), name: r.name }); }
+    }
+    return out;
+  }, [editRows]);
 
-  const [mailTo, setMailTo] = useState(customer.customerEmail);
+  const [mailToSet, setMailToSet] = useState<Set<string>>(
+    () => new Set(customer.customerEmail ? [customer.customerEmail] : [])
+  );
+  const [mailToCustom, setMailToCustom] = useState("");
   const [mailSubject, setMailSubject] = useState("");
   const [mailBody, setMailBody] = useState("");
   const [mailRef, setMailRef] = useState("");
@@ -289,7 +301,8 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
   };
 
   const handleSendMail = async () => {
-    if (!mailTo || !mailSubject || !mailBody) return;
+    const mailTo = [...mailToSet].join(", ");
+    if (!mailToSet.size || !mailSubject || !mailBody) return;
     setSending(true);
     setSendResult(null);
     try {
@@ -886,14 +899,78 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
           {tab === "email" && (
             <div className="cdm-section">
               <div className="cdm-mail-form">
+                {/* Recipient checkboxes */}
                 <div className="cdm-form-field">
                   <label>To</label>
-                  <input
-                    type="email"
-                    value={mailTo}
-                    onChange={e => setMailTo(e.target.value)}
-                    placeholder="recipient@example.com"
-                  />
+                  {contactEmails.length > 0 && (
+                    <div className="cdm-recipient-list">
+                      {contactEmails.map(({ email, name }) => {
+                        const checked = [...mailToSet].some(e => e.trim().toLowerCase() === email.toLowerCase());
+                        return (
+                          <label key={email} className="cdm-recipient-row">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => {
+                                setMailToSet(prev => {
+                                  const next = new Set(prev);
+                                  const key = email.toLowerCase();
+                                  const existing = [...next].find(e => e.toLowerCase() === key);
+                                  if (existing) next.delete(existing); else next.add(email);
+                                  return next;
+                                });
+                              }}
+                            />
+                            <span className="cdm-recipient-email">{email}</span>
+                            {name && <span className="cdm-recipient-name">{name}</span>}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div className="cdm-recipient-custom">
+                    <input
+                      type="email"
+                      value={mailToCustom}
+                      onChange={e => setMailToCustom(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const v = mailToCustom.trim();
+                          if (v) { setMailToSet(prev => new Set([...prev, v])); setMailToCustom(""); }
+                        }
+                      }}
+                      placeholder="Add email address…"
+                    />
+                    <button
+                      type="button"
+                      className="cdm-recipient-add-btn"
+                      disabled={!mailToCustom.trim()}
+                      onClick={() => {
+                        const v = mailToCustom.trim();
+                        if (v) { setMailToSet(prev => new Set([...prev, v])); setMailToCustom(""); }
+                      }}
+                    >
+                      + Add
+                    </button>
+                  </div>
+                  {[...mailToSet]
+                    .filter(e => !contactEmails.some(c => c.email.toLowerCase() === e.toLowerCase()))
+                    .map(e => (
+                      <div key={e} className="cdm-recipient-custom-tag">
+                        <span>{e}</span>
+                        <button
+                          type="button"
+                          onClick={() => setMailToSet(prev => { const n = new Set(prev); n.delete(e); return n; })}
+                        >×</button>
+                      </div>
+                    ))
+                  }
+                  {mailToSet.size > 0 && (
+                    <div className="cdm-recipient-summary">
+                      Sending to: {[...mailToSet].join(", ")}
+                    </div>
+                  )}
                 </div>
                 <div className="cdm-form-field">
                   <label>Subject</label>
@@ -1040,7 +1117,7 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                     style={{ padding: "7px 20px" }}
                     type="button"
                     onClick={() => void handleSendMail()}
-                    disabled={sending || !mailTo || !mailSubject || !mailBody}
+                    disabled={sending || !mailToSet.size || !mailSubject || !mailBody}
                   >
                     <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ marginRight: 6 }}>
                       <path d="M2 2l12 6-12 6V9.5L11 8 2 6.5V2z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
