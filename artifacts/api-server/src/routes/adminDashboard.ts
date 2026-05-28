@@ -7,6 +7,63 @@ import { requireAdmin } from "../middlewares/requireAdmin";
 const STATUS_PASS_CONFIG_ID = "default";
 const DEFAULT_GATEWAY_COST = 0.005;
 
+type SpTier  = { lowVolume: number; highVolume: number; txnRate: number };
+type SpModel = { id: string; tiers: SpTier[] };
+type SpCat   = { id: string; models: SpModel[] };
+
+/**
+ * Mirrors the QuoteBuilder frontend blended-rate logic exactly.
+ * Uses the per-quote fixed rate override when enabled, otherwise
+ * walks the StatusPass tier buckets to derive a blended $/txn rate.
+ */
+function computeGatewayRevMo(
+  meta: Record<string, unknown>,
+  cfgData: Record<string, unknown>,
+): number {
+  const annualStoreRev = parseFloat(String(meta.annualStoreRevenue ?? "").replace(/[^0-9.]/g, "")) || 0;
+  const avgTicket      = parseFloat(String(meta.averageTicketAmount  ?? "").replace(/[^0-9.]/g, "")) || 0;
+  if (annualStoreRev === 0 || avgTicket === 0) return 0;
+
+  const txnCount  = annualStoreRev / avgTicket;
+  const numSites  = parseFloat(String(meta.numberOfSites ?? "").replace(/[^0-9.]/g, "")) || 0;
+  const ncrPay    = meta.ncrPay === true;
+
+  const yesEnabled = meta.voyixPayYesEnabled === true;
+  const yesRate    = parseFloat(String(meta.voyixPayYesRate ?? "0").replace(/[^0-9.]/g, "")) || 0;
+  const noEnabled  = meta.voyixPayNoEnabled === true;
+  const noRate     = parseFloat(String(meta.voyixPayNoRate  ?? "0").replace(/[^0-9.]/g, "")) || 0;
+
+  const useFixed = ncrPay ? (yesEnabled && yesRate > 0) : (noEnabled && noRate > 0);
+
+  let blendedRate = 0;
+  if (useFixed) {
+    blendedRate = ncrPay ? yesRate : noRate;
+  } else if (numSites > 0 && txnCount > 0) {
+    const catId   = ncrPay ? "voyix-pay-yes" : "voyix-pay-no";
+    const modelId = numSites < 10 ? "smb" : numSites <= 50 ? "mid-market" : "enterprise";
+    const rawTxnCount      = (txnCount / 12) * numSites;
+    const computedTxnCount = Math.round(rawTxnCount / 10) * 10;
+    const spCats   = (cfgData.categories ?? []) as SpCat[];
+    const spModel  = spCats.find((c) => c.id === catId)?.models.find((m) => m.id === modelId);
+    if (spModel && computedTxnCount > 0) {
+      let remaining = computedTxnCount, fees = 0;
+      for (let i = 0; i < spModel.tiers.length; i++) {
+        const t = spModel.tiers[i];
+        const isLast   = t.highVolume === t.lowVolume;
+        const prevHigh = i === 0 ? 0 : spModel.tiers[i - 1].highVolume;
+        const cap  = isLast ? Infinity : i === 0 ? t.highVolume : t.highVolume - prevHigh;
+        const used = Math.min(remaining, cap);
+        fees += used * t.txnRate;
+        remaining = Math.max(0, remaining - used);
+        if (remaining === 0) break;
+      }
+      blendedRate = rawTxnCount > 0 ? fees / rawTxnCount : 0;
+    }
+  }
+
+  return txnCount > 0 && blendedRate > 0 ? (txnCount * blendedRate) / 12 : 0;
+}
+
 const router = Router();
 
 /**
@@ -182,7 +239,7 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
       const basisPts = parseFloat(String(meta.basisPoint ?? "0").replace(/[^0-9.]/g, "")) || 0;
       const monthlyVol = annualStoreRev / 12;
       const paymentsRevMo = (basisPts / 10000) * monthlyVol;
-      const gatewayRevMo = gatewayCost * monthlyVol;
+      const gatewayRevMo = computeGatewayRevMo(meta, cfgData);
       if (annualStoreRev > 0) {
         totalPaymentsRevMo += paymentsRevMo;
         totalGatewayRevMo += gatewayRevMo;
