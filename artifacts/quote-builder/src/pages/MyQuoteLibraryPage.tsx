@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 import { formatCurrency, quoteTotal } from "../utils/calculations";
@@ -194,6 +194,14 @@ export default function MyQuoteLibraryPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [editRow, setEditRow] = useState<UserQuoteRow | null>(null);
+  const [closedGroups, setClosedGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroup = (key: string) =>
+    setClosedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -251,6 +259,23 @@ export default function MyQuoteLibraryPage() {
       .some((v) => v?.toLowerCase().includes(s));
   });
 
+  const groups = useMemo(() => {
+    const map = new Map<string, {
+      key: string;
+      customerName: string;
+      companyName: string | null;
+      rows: UserQuoteRow[];
+    }>();
+    for (const row of filtered) {
+      const key = (row.customerName || row.companyName || "(No Name)").trim();
+      if (!map.has(key)) {
+        map.set(key, { key, customerName: key, companyName: row.companyName, rows: [] });
+      }
+      map.get(key)!.rows.push(row);
+    }
+    return [...map.values()];
+  }, [filtered]);
+
   return (
     <div className="admin-page">
       <div className="admin-topbar">
@@ -301,93 +326,144 @@ export default function MyQuoteLibraryPage() {
         {!loading && error && <div className="edit-modal-error">{error}</div>}
 
         {!loading && !error && (
-          <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Quote #</th>
-                  <th>Company</th>
-                  <th>Customer</th>
-                  <th>Created</th>
-                  <th>Updated</th>
-                  <th>Updated By</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: "center" }}>Amend</th>
-                  <th style={{ textAlign: "right" }}>Total MRR</th>
-                  <th style={{ textAlign: "right" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 && (
-                  <tr>
-                    <td colSpan={10} className="admin-table-empty">
-                      {search
-                        ? `No quotes match "${search}"`
-                        : "No quotes yet — open a quote in the builder and it will appear here automatically."}
-                    </td>
-                  </tr>
-                )}
-                {filtered.map((row) => (
-                  <tr key={row.id}>
-                    <td className="admin-td-bold" style={{ fontFamily: "monospace", fontSize: 12 }}>
-                      {row.quoteNumber || <span style={{ color: "var(--text-3)" }}>Untitled</span>}
-                    </td>
-                    <td>{row.companyName || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
-                    <td>{row.customerName || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
-                    <td style={{ whiteSpace: "nowrap", fontSize: 12, color: "var(--text-2)" }}>
-                      {fmtDate(row.createdAt)}
-                    </td>
-                    <td style={{ whiteSpace: "nowrap", fontSize: 12, color: "var(--text-2)" }}>
-                      {fmtDate(row.updatedAt)}
-                    </td>
-                    <td style={{ fontSize: 12 }}>
-                      {row.updatedByName || <span style={{ color: "var(--text-3)" }}>—</span>}
-                    </td>
-                    <td>
-                      <StatusBadge status={row.passStatus} />
-                    </td>
-                    <td style={{ textAlign: "center" }}>
-                      {amendCounts[row.id] ? (
-                        <span style={{ color: "var(--accent)", fontWeight: 700, fontSize: 13 }}>
-                          {amendCounts[row.id]}
+          <div className="amend-accordion-list">
+            {groups.length === 0 && (
+              <div className="admin-table-empty" style={{ padding: "32px 0", textAlign: "center", color: "var(--text-3)", fontSize: 13 }}>
+                {search
+                  ? `No quotes match "${search}"`
+                  : "No quotes yet — open a quote in the builder and it will appear here automatically."}
+              </div>
+            )}
+
+            {groups.map((group) => {
+              const isOpen = !closedGroups.has(group.key);
+              const totalMrr = group.rows.reduce((sum, r) => sum + (r.data ? computeTotal(r.data) : 0), 0);
+              const passCount = group.rows.filter(r => r.passStatus === "pass").length;
+              const failCount = group.rows.filter(r => r.passStatus === "fail").length;
+
+              return (
+                <div key={group.key} className="amend-accordion">
+                  <button
+                    type="button"
+                    className="amend-accordion-header"
+                    onClick={() => toggleGroup(group.key)}
+                    aria-expanded={isOpen}
+                  >
+                    <svg
+                      className={`amend-accordion-chevron${isOpen ? " open" : ""}`}
+                      width="14" height="14" viewBox="0 0 16 16" fill="none"
+                    >
+                      <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+
+                    <span className="amend-accordion-title">{group.customerName}</span>
+
+                    {group.companyName && group.companyName !== group.customerName && (
+                      <span className="amend-accordion-company">· {group.companyName}</span>
+                    )}
+
+                    <span className="amend-accordion-meta">
+                      <span className="amend-accordion-count">
+                        {group.rows.length} quote{group.rows.length !== 1 ? "s" : ""}
+                      </span>
+                      {passCount > 0 && (
+                        <span style={{ fontSize: 11, color: "#15803d", background: "#dcfce7", borderRadius: 4, padding: "1px 6px", fontWeight: 600 }}>
+                          {passCount} PASS
                         </span>
-                      ) : (
-                        <span style={{ color: "var(--text-3)" }}>—</span>
                       )}
-                    </td>
-                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      {row.data ? formatCurrency(computeTotal(row.data)) : "—"}
-                    </td>
-                    <td>
-                      <div className="admin-actions">
-                        <button
-                          type="button"
-                          className="admin-btn-edit"
-                          onClick={() => setEditRow(row)}
-                          title="Edit quote"
-                        >
-                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                            <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          className="admin-btn-delete"
-                          onClick={() => handleDelete(row.id, row.userId)}
-                          title="Delete quote"
-                        >
-                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                            <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M13 4l-1 9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L3 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          Delete
-                        </button>
+                      {failCount > 0 && (
+                        <span style={{ fontSize: 11, color: "#b91c1c", background: "#fee2e2", borderRadius: 4, padding: "1px 6px", fontWeight: 600 }}>
+                          {failCount} FAIL
+                        </span>
+                      )}
+                      <span className="amend-accordion-mrr">
+                        {formatCurrency(totalMrr)} MRR
+                      </span>
+                    </span>
+                  </button>
+
+                  {isOpen && (
+                    <div className="amend-accordion-body">
+                      <div className="admin-table-wrap" style={{ borderRadius: 0, border: "none" }}>
+                        <table className="admin-table" style={{ borderRadius: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Quote #</th>
+                              <th>Created</th>
+                              <th>Updated</th>
+                              <th>Updated By</th>
+                              <th>Status</th>
+                              <th style={{ textAlign: "center" }}>Amend</th>
+                              <th style={{ textAlign: "right" }}>Total MRR</th>
+                              <th style={{ textAlign: "right" }}>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {group.rows.map((row) => (
+                              <tr key={row.id}>
+                                <td className="admin-td-bold" style={{ fontFamily: "monospace", fontSize: 12 }}>
+                                  {row.quoteNumber || <span style={{ color: "var(--text-3)" }}>Untitled</span>}
+                                </td>
+                                <td style={{ whiteSpace: "nowrap", fontSize: 12, color: "var(--text-2)" }}>
+                                  {fmtDate(row.createdAt)}
+                                </td>
+                                <td style={{ whiteSpace: "nowrap", fontSize: 12, color: "var(--text-2)" }}>
+                                  {fmtDate(row.updatedAt)}
+                                </td>
+                                <td style={{ fontSize: 12 }}>
+                                  {row.updatedByName || <span style={{ color: "var(--text-3)" }}>—</span>}
+                                </td>
+                                <td>
+                                  <StatusBadge status={row.passStatus} />
+                                </td>
+                                <td style={{ textAlign: "center" }}>
+                                  {amendCounts[row.id] ? (
+                                    <span style={{ color: "var(--accent)", fontWeight: 700, fontSize: 13 }}>
+                                      {amendCounts[row.id]}
+                                    </span>
+                                  ) : (
+                                    <span style={{ color: "var(--text-3)" }}>—</span>
+                                  )}
+                                </td>
+                                <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                                  {row.data ? formatCurrency(computeTotal(row.data)) : "—"}
+                                </td>
+                                <td>
+                                  <div className="admin-actions">
+                                    <button
+                                      type="button"
+                                      className="admin-btn-edit"
+                                      onClick={() => setEditRow(row)}
+                                      title="Edit quote"
+                                    >
+                                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                                        <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                      Edit
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="admin-btn-delete"
+                                      onClick={() => handleDelete(row.id, row.userId)}
+                                      title="Delete quote"
+                                    >
+                                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                                        <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M13 4l-1 9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L3 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                      Delete
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

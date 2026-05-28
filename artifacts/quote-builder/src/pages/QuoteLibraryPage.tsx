@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
@@ -218,6 +218,7 @@ function EditDrawer({ row, onClose, onSaved }: EditDrawerProps) {
 export default function QuoteLibraryPage() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [quotes, setQuotes] = useState<AdminQuoteRow[]>([]);
   const [amendCounts, setAmendCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -225,6 +226,14 @@ export default function QuoteLibraryPage() {
   const [search, setSearch] = useState("");
   const [editRow, setEditRow] = useState<AdminQuoteRow | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+  const [closedGroups, setClosedGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroup = (key: string) =>
+    setClosedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -283,8 +292,6 @@ export default function QuoteLibraryPage() {
         const d = (await res.json()) as { error?: string };
         throw new Error(d.error ?? "Delete failed");
       }
-      // Clean up localStorage for this quote's owner (no-op if not in this browser).
-      // Ensures the startup sync doesn't re-upload a locally-cached copy.
       deleteQuote(id, ownerId);
       setQuotes((prev) => prev.filter((r) => r.id !== id));
     } catch (err) {
@@ -298,6 +305,23 @@ export default function QuoteLibraryPage() {
     return [row.quoteNumber, row.companyName, row.customerName, row.creatorName, row.creatorEmail]
       .some((v) => v?.toLowerCase().includes(s));
   });
+
+  const groups = useMemo(() => {
+    const map = new Map<string, {
+      key: string;
+      customerName: string;
+      companyName: string | null;
+      rows: AdminQuoteRow[];
+    }>();
+    for (const row of filtered) {
+      const key = (row.customerName || row.companyName || "(No Name)").trim();
+      if (!map.has(key)) {
+        map.set(key, { key, customerName: key, companyName: row.companyName, rows: [] });
+      }
+      map.get(key)!.rows.push(row);
+    }
+    return [...map.values()];
+  }, [filtered]);
 
   return (
     <div className="admin-page">
@@ -351,136 +375,189 @@ export default function QuoteLibraryPage() {
         {!loading && error && <div className="edit-modal-error">{error}</div>}
 
         {!loading && !error && (
-          <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Quote #</th>
-                  <th>Company</th>
-                  <th>Customer</th>
-                  <th>Creator</th>
-                  <th>Created</th>
-                  <th>Updated</th>
-                  <th>Updated By</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: "center" }}>Amend</th>
-                  <th style={{ textAlign: "right" }}>Total MRR</th>
-                  <th style={{ textAlign: "right" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 && (
-                  <tr>
-                    <td colSpan={11} className="admin-table-empty">
-                      {search
-                        ? `No quotes match "${search}"`
-                        : "No quotes have been synced yet — open any quote in the builder to sync it here."}
-                    </td>
-                  </tr>
-                )}
-                {filtered.map((row) => (
-                  <tr key={row.id}>
-                    <td className="admin-td-bold" style={{ fontFamily: "monospace", fontSize: 12 }}>
-                      {row.quoteNumber || <span style={{ color: "var(--text-3)" }}>Untitled</span>}
-                    </td>
-                    <td>{row.companyName || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
-                    <td>{row.customerName || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
-                    <td>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                        <span style={{ fontWeight: 500 }}>{row.creatorName || "—"}</span>
-                        {row.creatorEmail && (
-                          <span style={{ fontSize: 11, color: "var(--text-3)" }}>{row.creatorEmail}</span>
-                        )}
-                      </div>
-                    </td>
-                    <td style={{ whiteSpace: "nowrap", fontSize: 12, color: "var(--text-2)" }}>
-                      {fmtDate(row.createdAt)}
-                    </td>
-                    <td style={{ whiteSpace: "nowrap", fontSize: 12, color: "var(--text-2)" }}>
-                      {fmtDate(row.updatedAt)}
-                    </td>
-                    <td style={{ fontSize: 12 }}>
-                      {row.updatedByName || <span style={{ color: "var(--text-3)" }}>—</span>}
-                    </td>
-                    <td>
-                      <StatusBadge status={row.passStatus} />
-                    </td>
-                    <td style={{ textAlign: "center" }}>
-                      {amendCounts[row.id] ? (
-                        <span style={{ color: "var(--accent)", fontWeight: 700, fontSize: 13 }}>
-                          {amendCounts[row.id]}
+          <div className="amend-accordion-list">
+            {groups.length === 0 && (
+              <div className="admin-table-empty" style={{ padding: "32px 0", textAlign: "center", color: "var(--text-3)", fontSize: 13 }}>
+                {search
+                  ? `No quotes match "${search}"`
+                  : "No quotes have been synced yet — open any quote in the builder to sync it here."}
+              </div>
+            )}
+
+            {groups.map((group) => {
+              const isOpen = !closedGroups.has(group.key);
+              const totalMrr = group.rows.reduce((sum, r) => sum + (r.data ? computeTotal(r.data) : 0), 0);
+              const passCount = group.rows.filter(r => r.passStatus === "pass").length;
+              const failCount = group.rows.filter(r => r.passStatus === "fail").length;
+
+              return (
+                <div key={group.key} className="amend-accordion">
+                  <button
+                    type="button"
+                    className="amend-accordion-header"
+                    onClick={() => toggleGroup(group.key)}
+                    aria-expanded={isOpen}
+                  >
+                    <svg
+                      className={`amend-accordion-chevron${isOpen ? " open" : ""}`}
+                      width="14" height="14" viewBox="0 0 16 16" fill="none"
+                    >
+                      <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+
+                    <span className="amend-accordion-title">{group.customerName}</span>
+
+                    {group.companyName && group.companyName !== group.customerName && (
+                      <span className="amend-accordion-company">· {group.companyName}</span>
+                    )}
+
+                    <span className="amend-accordion-meta">
+                      <span className="amend-accordion-count">
+                        {group.rows.length} quote{group.rows.length !== 1 ? "s" : ""}
+                      </span>
+                      {passCount > 0 && (
+                        <span style={{ fontSize: 11, color: "#15803d", background: "#dcfce7", borderRadius: 4, padding: "1px 6px", fontWeight: 600 }}>
+                          {passCount} PASS
                         </span>
-                      ) : (
-                        <span style={{ color: "var(--text-3)" }}>—</span>
                       )}
-                    </td>
-                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      {row.data ? formatCurrency(computeTotal(row.data)) : "—"}
-                    </td>
-                    <td>
-                      <div className="admin-actions">
-                        <button
-                          type="button"
-                          className="admin-btn-edit"
-                          onClick={() => {
-                            if (row.data) {
-                              setPendingOpenQuote(row.data, row.userId);
-                            }
-                            setLocation("/");
-                          }}
-                          title="Open quote in builder"
-                        >
-                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                            <path d="M7 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M10 1h5v5M15 1L8 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          Open
-                        </button>
-                        <button
-                          type="button"
-                          className="admin-btn-edit"
-                          onClick={() => setEditRow(row)}
-                          title="Edit quote metadata (status, numbers)"
-                          style={{ padding: "4px 7px" }}
-                        >
-                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                            <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          className="admin-btn-edit"
-                          onClick={() => void handleDuplicate(row.id)}
-                          disabled={duplicatingId === row.id}
-                          title="Duplicate quote (copy assigned to original owner)"
-                        >
-                          {duplicatingId === row.id ? (
-                            <span className="spinner" style={{ width: 11, height: 11 }} />
-                          ) : (
-                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                              <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                              <path d="M3 11V2h9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          )}
-                          {duplicatingId === row.id ? "Copying…" : "Duplicate"}
-                        </button>
-                        <button
-                          type="button"
-                          className="admin-btn-delete"
-                          onClick={() => handleDelete(row.id, row.userId)}
-                          title="Delete quote"
-                        >
-                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                            <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M13 4l-1 9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L3 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          Delete
-                        </button>
+                      {failCount > 0 && (
+                        <span style={{ fontSize: 11, color: "#b91c1c", background: "#fee2e2", borderRadius: 4, padding: "1px 6px", fontWeight: 600 }}>
+                          {failCount} FAIL
+                        </span>
+                      )}
+                      <span className="amend-accordion-mrr">
+                        {formatCurrency(totalMrr)} MRR
+                      </span>
+                    </span>
+                  </button>
+
+                  {isOpen && (
+                    <div className="amend-accordion-body">
+                      <div className="admin-table-wrap" style={{ borderRadius: 0, border: "none" }}>
+                        <table className="admin-table" style={{ borderRadius: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Quote #</th>
+                              {isAdmin && <th>Creator</th>}
+                              <th>Created</th>
+                              <th>Updated</th>
+                              <th>Updated By</th>
+                              <th>Status</th>
+                              <th style={{ textAlign: "center" }}>Amend</th>
+                              <th style={{ textAlign: "right" }}>Total MRR</th>
+                              <th style={{ textAlign: "right" }}>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {group.rows.map((row) => (
+                              <tr key={row.id}>
+                                <td className="admin-td-bold" style={{ fontFamily: "monospace", fontSize: 12 }}>
+                                  {row.quoteNumber || <span style={{ color: "var(--text-3)" }}>Untitled</span>}
+                                </td>
+                                {isAdmin && (
+                                  <td>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                      <span style={{ fontWeight: 500 }}>{row.creatorName || "—"}</span>
+                                      {row.creatorEmail && (
+                                        <span style={{ fontSize: 11, color: "var(--text-3)" }}>{row.creatorEmail}</span>
+                                      )}
+                                    </div>
+                                  </td>
+                                )}
+                                <td style={{ whiteSpace: "nowrap", fontSize: 12, color: "var(--text-2)" }}>
+                                  {fmtDate(row.createdAt)}
+                                </td>
+                                <td style={{ whiteSpace: "nowrap", fontSize: 12, color: "var(--text-2)" }}>
+                                  {fmtDate(row.updatedAt)}
+                                </td>
+                                <td style={{ fontSize: 12 }}>
+                                  {row.updatedByName || <span style={{ color: "var(--text-3)" }}>—</span>}
+                                </td>
+                                <td>
+                                  <StatusBadge status={row.passStatus} />
+                                </td>
+                                <td style={{ textAlign: "center" }}>
+                                  {amendCounts[row.id] ? (
+                                    <span style={{ color: "var(--accent)", fontWeight: 700, fontSize: 13 }}>
+                                      {amendCounts[row.id]}
+                                    </span>
+                                  ) : (
+                                    <span style={{ color: "var(--text-3)" }}>—</span>
+                                  )}
+                                </td>
+                                <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                                  {row.data ? formatCurrency(computeTotal(row.data)) : "—"}
+                                </td>
+                                <td>
+                                  <div className="admin-actions">
+                                    <button
+                                      type="button"
+                                      className="admin-btn-edit"
+                                      onClick={() => {
+                                        if (row.data) {
+                                          setPendingOpenQuote(row.data, row.userId);
+                                        }
+                                        setLocation("/");
+                                      }}
+                                      title="Open quote in builder"
+                                    >
+                                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                                        <path d="M7 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path d="M10 1h5v5M15 1L8 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                      Open
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="admin-btn-edit"
+                                      onClick={() => setEditRow(row)}
+                                      title="Edit quote metadata (status, numbers)"
+                                      style={{ padding: "4px 7px" }}
+                                    >
+                                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                                        <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="admin-btn-edit"
+                                      onClick={() => void handleDuplicate(row.id)}
+                                      disabled={duplicatingId === row.id}
+                                      title="Duplicate quote"
+                                    >
+                                      {duplicatingId === row.id ? (
+                                        <span className="spinner" style={{ width: 11, height: 11 }} />
+                                      ) : (
+                                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                                          <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                                          <path d="M3 11V2h9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                      )}
+                                      {duplicatingId === row.id ? "Copying…" : "Duplicate"}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="admin-btn-delete"
+                                      onClick={() => handleDelete(row.id, row.userId)}
+                                      title="Delete quote"
+                                    >
+                                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                                        <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M13 4l-1 9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L3 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                      Delete
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
