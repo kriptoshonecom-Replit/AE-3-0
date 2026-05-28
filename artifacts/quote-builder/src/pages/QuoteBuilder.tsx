@@ -1299,7 +1299,13 @@ export default function QuoteBuilder() {
   type _SpCat   = { id: string; models: _SpModel[] };
   const _spCats  = (spData?.categories ?? []) as _SpCat[];
   const _spModel = _spCats.find((c) => c.id === _catId)?.models.find((m) => m.id === _modelId);
+  const _fixedYesRateOv = parseFloat(quote.meta.voyixPayYesRate ?? "0") || 0;
+  const _fixedNoRateOv  = parseFloat(quote.meta.voyixPayNoRate  ?? "0") || 0;
+  const _useFixedOv = quote.meta.ncrPay
+    ? ((quote.meta.voyixPayYesEnabled ?? false) && _fixedYesRateOv > 0)
+    : ((quote.meta.voyixPayNoEnabled  ?? false) && _fixedNoRateOv  > 0);
   const gatewayTxnRate = (() => {
+    if (_useFixedOv) return quote.meta.ncrPay ? _fixedYesRateOv : _fixedNoRateOv;
     if (!_spModel || _rawTxnCount === 0) return 0;
     let rem = _rawTxnCount, fees = 0;
     for (let i = 0; i < _spModel.tiers.length; i++) {
