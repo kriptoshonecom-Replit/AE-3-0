@@ -125,6 +125,44 @@ function DonutChart({ pass, fail, noStatus }: { pass: number; fail: number; noSt
   );
 }
 
+interface EditRow {
+  name: string;
+  position: string;
+  email: string;
+  phone: string;
+  fua: string;
+  dba: string;
+  quoteIds: string[];
+  dirty: boolean;
+}
+
+function buildEditRows(customer: CustomerProfile): EditRow[] {
+  const map = new Map<string, EditRow>();
+  for (const q of customer.quotes) {
+    const name = (q.data?.meta?.customerName as string | undefined) ?? "";
+    const position = (q.data?.meta?.customerPosition as string | undefined) ?? "";
+    const email = (q.data?.meta?.customerEmail as string | undefined) ?? "";
+    const phone = (q.data?.meta?.customerPhone as string | undefined) ?? "";
+    const fuaRaw = q.data?.meta?.fua as number | undefined;
+    const fua = fuaRaw != null ? String(fuaRaw) : "";
+    const dba = (q.data?.meta?.dba as string | undefined) ?? "";
+    const key = `${name.toLowerCase()}|${email.toLowerCase()}|${fua}|${dba}`;
+    if (name || email || fua || dba.trim()) {
+      if (map.has(key)) {
+        map.get(key)!.quoteIds.push(q.id);
+      } else {
+        map.set(key, { name, position, email, phone, fua, dba, quoteIds: [q.id], dirty: false });
+      }
+    }
+  }
+  const rows = Array.from(map.values());
+  const pk = `${(customer.customerName ?? "").toLowerCase()}|${(customer.customerEmail ?? "").toLowerCase()}||`;
+  if (!map.has(pk) && (customer.customerName || customer.customerEmail)) {
+    rows.unshift({ name: customer.customerName ?? "", position: "", email: customer.customerEmail ?? "", phone: customer.customerPhone ?? "", fua: "", dba: "", quoteIds: [], dirty: false });
+  }
+  return rows;
+}
+
 interface Props {
   customer: CustomerProfile;
   isAdmin: boolean;
@@ -146,6 +184,9 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
   });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [editRows, setEditRows] = useState<EditRow[]>(() => buildEditRows(customer));
+  const [rowSaving, setRowSaving] = useState<Set<number>>(new Set());
+  const [rowErrors, setRowErrors] = useState<Record<number, string>>({});
 
   const [mailTo, setMailTo] = useState(customer.customerEmail);
   const [mailSubject, setMailSubject] = useState("");
@@ -213,6 +254,37 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
       setSaveError("Failed to save changes. Please try again.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveRow = async (idx: number) => {
+    const row = editRows[idx];
+    if (!row.quoteIds.length) return;
+    setRowSaving(s => new Set([...s, idx]));
+    setRowErrors(e => { const n = { ...e }; delete n[idx]; return n; });
+    try {
+      await Promise.all(row.quoteIds.map(qid =>
+        fetch(`${API_BASE}/api/admin/quotes/${qid}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            meta: {
+              customerName: row.name,
+              customerPosition: row.position || undefined,
+              customerEmail: row.email,
+              customerPhone: row.phone || undefined,
+              fua: row.fua ? Number(row.fua) : undefined,
+              dba: row.dba.trim() || undefined,
+            },
+          }),
+        }).then(r => { if (!r.ok) throw new Error("Failed"); })
+      ));
+      setEditRows(rows => rows.map((r, i) => i === idx ? { ...r, dirty: false } : r));
+    } catch {
+      setRowErrors(e => ({ ...e, [idx]: "Save failed. Try again." }));
+    } finally {
+      setRowSaving(s => { const n = new Set(s); n.delete(idx); return n; });
     }
   };
 
@@ -403,61 +475,104 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                     </button>
                   </div>
 
-                  {/* Contacts reference table */}
-                  {(() => {
-                    const seen = new Set<string>();
-                    const rows: { name: string; position: string; email: string; phone: string; fua: number | undefined; dba: string | undefined }[] = [];
-                    for (const q of customer.quotes) {
-                      const name = (q.data?.meta?.customerName as string | undefined) ?? "";
-                      const position = (q.data?.meta?.customerPosition as string | undefined) ?? "";
-                      const email = (q.data?.meta?.customerEmail as string | undefined) ?? "";
-                      const phone = (q.data?.meta?.customerPhone as string | undefined) ?? "";
-                      const fua = q.data?.meta?.fua as number | undefined;
-                      const dba = (q.data?.meta?.dba as string | undefined);
-                      const key = `${name.toLowerCase()}|${email.toLowerCase()}|${fua ?? ""}|${dba ?? ""}`;
-                      if ((name || email || fua != null || dba?.trim()) && !seen.has(key)) {
-                        seen.add(key);
-                        rows.push({ name, position, email, phone, fua, dba });
-                      }
-                    }
-                    const pk = `${(customer.customerName ?? "").toLowerCase()}|${(customer.customerEmail ?? "").toLowerCase()}||`;
-                    if (!seen.has(pk) && (customer.customerName || customer.customerEmail)) {
-                      rows.unshift({ name: customer.customerName ?? "", position: "", email: customer.customerEmail ?? "", phone: customer.customerPhone ?? "", fua: undefined, dba: undefined });
-                    }
-                    if (rows.length === 0) return null;
-                    return (
-                      <div className="cdm-fua-table-wrap" style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
-                        <table className="cdm-fua-table cdm-contacts-table">
-                          <thead>
-                            <tr>
-                              <th>Name</th>
-                              <th>Position</th>
-                              <th>Email</th>
-                              <th>Phone</th>
-                              <th>FUA</th>
-                              <th>DBA</th>
+                  {/* Contacts editable table */}
+                  {editRows.length > 0 && (
+                    <div className="cdm-fua-table-wrap" style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+                      <table className="cdm-fua-table cdm-contacts-table">
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Position</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>FUA</th>
+                            <th>DBA</th>
+                            <th></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {editRows.map((r, i) => (
+                            <tr key={i}>
+                              <td>
+                                <input
+                                  className="cdm-cell-input"
+                                  value={r.name}
+                                  placeholder="Name"
+                                  onChange={e => setEditRows(rows => rows.map((row, j) => j === i ? { ...row, name: e.target.value, dirty: true } : row))}
+                                />
+                              </td>
+                              <td>
+                                <select
+                                  className="cdm-cell-input"
+                                  value={r.position}
+                                  onChange={e => setEditRows(rows => rows.map((row, j) => j === i ? { ...row, position: e.target.value, dirty: true } : row))}
+                                >
+                                  <option value="">—</option>
+                                  <option>CEO</option>
+                                  <option>COO</option>
+                                  <option>CFO</option>
+                                  <option>CTO</option>
+                                  <option>GM</option>
+                                </select>
+                              </td>
+                              <td>
+                                <input
+                                  className="cdm-cell-input"
+                                  type="email"
+                                  value={r.email}
+                                  placeholder="Email"
+                                  onChange={e => setEditRows(rows => rows.map((row, j) => j === i ? { ...row, email: e.target.value, dirty: true } : row))}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  className="cdm-cell-input"
+                                  value={r.phone}
+                                  placeholder="Phone"
+                                  onChange={e => setEditRows(rows => rows.map((row, j) => j === i ? { ...row, phone: formatPhoneUS(e.target.value), dirty: true } : row))}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  className="cdm-cell-input"
+                                  inputMode="numeric"
+                                  value={r.fua}
+                                  placeholder="—"
+                                  onChange={e => setEditRows(rows => rows.map((row, j) => j === i ? { ...row, fua: e.target.value, dirty: true } : row))}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  className="cdm-cell-input"
+                                  value={r.dba}
+                                  placeholder="—"
+                                  onChange={e => setEditRows(rows => rows.map((row, j) => j === i ? { ...row, dba: e.target.value, dirty: true } : row))}
+                                />
+                              </td>
+                              <td style={{ whiteSpace: "nowrap", paddingLeft: 6 }}>
+                                {r.quoteIds.length > 0 ? (
+                                  <>
+                                    {rowErrors[i] && <span style={{ color: "#ef4444", fontSize: 10, display: "block", marginBottom: 2 }}>{rowErrors[i]}</span>}
+                                    <button
+                                      type="button"
+                                      className="admin-btn-edit"
+                                      style={{ padding: "3px 10px", fontSize: 11, opacity: r.dirty ? 1 : 0.4 }}
+                                      disabled={!r.dirty || rowSaving.has(i)}
+                                      onClick={() => void handleSaveRow(i)}
+                                    >
+                                      {rowSaving.has(i) ? "…" : "Save"}
+                                    </button>
+                                  </>
+                                ) : (
+                                  <span style={{ fontSize: 10, color: "var(--text-3)" }}>primary</span>
+                                )}
+                              </td>
                             </tr>
-                          </thead>
-                          <tbody>
-                            {rows.map((r, i) => (
-                              <tr key={i}>
-                                <td>{r.name || "—"}</td>
-                                <td>{r.position || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
-                                <td>
-                                  {r.email
-                                    ? <a href={`mailto:${r.email}`} style={{ color: "var(--accent)" }}>{r.email}</a>
-                                    : "—"}
-                                </td>
-                                <td>{r.phone || "—"}</td>
-                                <td>{r.fua != null ? String(r.fua) : <span style={{ color: "var(--text-3)" }}>—</span>}</td>
-                                <td>{r.dba?.trim() || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    );
-                  })()}
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <>
