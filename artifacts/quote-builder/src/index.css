@@ -7210,20 +7210,29 @@ tr:hover .drag-handle { opacity: 1; }
   width: 90px;
 }
 
-/* Contacts table overrides — first col is a name, not a code */
+/* Merged contacts + FUA/DBA table */
+.cdm-contacts-table {
+  font-size: 11.5px;
+}
+.cdm-contacts-table thead th {
+  font-size: 10px;
+  padding-bottom: 5px;
+}
+.cdm-contacts-table tbody td {
+  padding: 5px 8px 5px 0;
+  white-space: nowrap;
+}
 .cdm-contacts-table tbody td:first-child {
   font-family: inherit;
   color: var(--text);
   font-weight: 600;
-  white-space: normal;
-  width: auto;
-}
-.cdm-contacts-table tbody td {
   white-space: nowrap;
+  width: auto;
 }
 .cdm-contacts-table tbody td:nth-child(3) {
   white-space: normal;
   word-break: break-all;
+  max-width: 160px;
 }
 
 /* Address section */
