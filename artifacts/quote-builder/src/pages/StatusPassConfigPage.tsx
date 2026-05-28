@@ -336,9 +336,14 @@ interface BlendedRateBarProps {
   computedTxnCount: number;
   categories: PayCategory[];
   activeCatId: string;
+  /** Already-resolved blended rate (respects fixed override). If provided it
+   *  overrides the tiered calculation for the final displayed rate. */
+  resolvedRate?: number;
+  /** True when a fixed rate override is active for this quote. */
+  fixedOverrideActive?: boolean;
 }
 
-function BlendedRateBar({ numSites, rawTxnCount, computedTxnCount, categories, activeCatId }: BlendedRateBarProps) {
+function BlendedRateBar({ numSites, rawTxnCount, computedTxnCount, categories, activeCatId, resolvedRate, fixedOverrideActive }: BlendedRateBarProps) {
   const sites = parseFloat(numSites);
   const { id: modelId, label: modelLabel } = sites > 0 ? modelIdFromSites(sites) : { id: "", label: "" };
 
@@ -346,7 +351,11 @@ function BlendedRateBar({ numSites, rawTxnCount, computedTxnCount, categories, a
   const model = activeCat?.models.find((m) => m.id === modelId);
   const buckets = model ? computeTierBuckets(model.tiers, computedTxnCount) : [];
   const txnFees = buckets.reduce((sum, b) => sum + b.txnFee, 0);
-  const blendedRate = rawTxnCount > 0 && txnFees > 0 ? txnFees / rawTxnCount : 0;
+  const tieredRate = rawTxnCount > 0 && txnFees > 0 ? txnFees / rawTxnCount : 0;
+
+  // Use the resolved rate (which respects fixed override) for the final display;
+  // fall back to the locally-computed tiered rate if not provided.
+  const displayRate = resolvedRate !== undefined ? resolvedRate : tieredRate;
 
   const hasValues = rawTxnCount > 0 && computedTxnCount > 0 && modelId !== "";
 
@@ -354,7 +363,12 @@ function BlendedRateBar({ numSites, rawTxnCount, computedTxnCount, categories, a
     <div className="sp-blended-bar">
       <div className="sp-calc-header">
         <div className="sp-calc-title">Blended Rate</div>
-        {modelLabel && (
+        {fixedOverrideActive && (
+          <div className="sp-blended-model-tag" style={{ background: "rgba(124,58,237,0.12)", color: "var(--accent)" }}>
+            Fixed Rate Override
+          </div>
+        )}
+        {!fixedOverrideActive && modelLabel && (
           <div className="sp-blended-model-tag">
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
               <rect x="1" y="1" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.3" />
@@ -366,28 +380,34 @@ function BlendedRateBar({ numSites, rawTxnCount, computedTxnCount, categories, a
       </div>
 
       <div className="sp-blended-fields">
-        <div className="sp-blended-field">
-          <label className="sp-calc-label">TXN Fees</label>
-          <div className={`sp-calc-readonly ${!hasValues ? "sp-calc-empty" : ""}`}>
-            {hasValues ? `$${txnFees.toFixed(2)}` : "—"}
+        {!fixedOverrideActive && (
+          <>
+            <div className="sp-blended-field">
+              <label className="sp-calc-label">TXN Fees</label>
+              <div className={`sp-calc-readonly ${!hasValues ? "sp-calc-empty" : ""}`}>
+                {hasValues ? `$${txnFees.toFixed(2)}` : "—"}
+              </div>
+            </div>
+
+            <div className="sp-calc-sep">÷</div>
+
+            <div className="sp-blended-field">
+              <label className="sp-calc-label">TXN # (before rounding)</label>
+              <div className={`sp-calc-readonly ${!hasValues ? "sp-calc-empty" : ""}`}>
+                {hasValues ? rawTxnCount.toFixed(4) : "—"}
+              </div>
+            </div>
+
+            <div className="sp-calc-sep">=</div>
+          </>
+        )}
+
+        <div className={`sp-blended-result ${!hasValues && !fixedOverrideActive ? "sp-calc-result-empty" : ""}`}>
+          <div className="sp-calc-result-label">
+            {fixedOverrideActive ? "Fixed Override Rate" : "Blended Rate"}
           </div>
-        </div>
-
-        <div className="sp-calc-sep">÷</div>
-
-        <div className="sp-blended-field">
-          <label className="sp-calc-label">TXN # (before rounding)</label>
-          <div className={`sp-calc-readonly ${!hasValues ? "sp-calc-empty" : ""}`}>
-            {hasValues ? rawTxnCount.toFixed(4) : "—"}
-          </div>
-        </div>
-
-        <div className="sp-calc-sep">=</div>
-
-        <div className={`sp-blended-result ${!hasValues ? "sp-calc-result-empty" : ""}`}>
-          <div className="sp-calc-result-label">Blended Rate</div>
-          <div className="sp-blended-result-value">
-            {hasValues ? `$${blendedRate.toFixed(4)}` : "—"}
+          <div className="sp-blended-result-value" style={fixedOverrideActive ? { color: "var(--accent)" } : undefined}>
+            {(hasValues || fixedOverrideActive) ? `$${displayRate.toFixed(4)}` : "—"}
           </div>
         </div>
       </div>
@@ -1411,6 +1431,8 @@ export default function StatusPassConfigPage() {
                   computedTxnCount={computedTxnCount}
                   categories={data.categories}
                   activeCatId={activeCat}
+                  resolvedRate={blendedRate}
+                  fixedOverrideActive={_spUseFixed}
                 />
 
                 {/* Total Revenue */}
