@@ -24,9 +24,13 @@ function computeGatewayRevMo(
   const avgTicket      = parseFloat(String(meta.averageTicketAmount  ?? "").replace(/[^0-9.]/g, "")) || 0;
   if (annualStoreRev === 0 || avgTicket === 0) return 0;
 
-  const txnCount  = annualStoreRev / avgTicket;
-  const numSites  = parseFloat(String(meta.numberOfSites ?? "").replace(/[^0-9.]/g, "")) || 0;
-  const ncrPay    = meta.ncrPay === true;
+  const txnCount = annualStoreRev / avgTicket;
+  const numSites = parseFloat(String(meta.numberOfSites ?? "").replace(/[^0-9.]/g, "")) || 0;
+  const ncrPay   = meta.ncrPay === true;
+
+  // voyixPayTransactionFee is a flat per-txn fee that stacks on top of the
+  // gateway blended rate (e.g. $0.06 + $0.02 = $0.08/txn in the image).
+  const voyixFee = parseFloat(String(meta.voyixPayTransactionFee ?? "0").replace(/[^0-9.]/g, "")) || 0;
 
   const yesEnabled = meta.voyixPayYesEnabled === true;
   const yesRate    = parseFloat(String(meta.voyixPayYesRate ?? "0").replace(/[^0-9.]/g, "")) || 0;
@@ -35,9 +39,9 @@ function computeGatewayRevMo(
 
   const useFixed = ncrPay ? (yesEnabled && yesRate > 0) : (noEnabled && noRate > 0);
 
-  let blendedRate = 0;
+  let ncrPayRate = 0;
   if (useFixed) {
-    blendedRate = ncrPay ? yesRate : noRate;
+    ncrPayRate = ncrPay ? yesRate : noRate;
   } else if (numSites > 0 && txnCount > 0) {
     const catId   = ncrPay ? "voyix-pay-yes" : "voyix-pay-no";
     const modelId = numSites < 10 ? "smb" : numSites <= 50 ? "mid-market" : "enterprise";
@@ -57,11 +61,13 @@ function computeGatewayRevMo(
         remaining = Math.max(0, remaining - used);
         if (remaining === 0) break;
       }
-      blendedRate = rawTxnCount > 0 ? fees / rawTxnCount : 0;
+      ncrPayRate = rawTxnCount > 0 ? fees / rawTxnCount : 0;
     }
   }
 
-  return txnCount > 0 && blendedRate > 0 ? (txnCount * blendedRate) / 12 : 0;
+  // Total per-txn rate = voyix transaction fee + NCR Pay gateway rate
+  const totalTxnRate = voyixFee + ncrPayRate;
+  return txnCount > 0 && totalTxnRate > 0 ? (txnCount * totalTxnRate) / 12 : 0;
 }
 
 const router = Router();
