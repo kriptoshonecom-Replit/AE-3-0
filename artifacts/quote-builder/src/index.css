@@ -5718,8 +5718,7 @@ tr:hover .drag-handle { opacity: 1; }
 .ql-item-status-row {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 5px;
+  justify-content: space-between;
   margin-top: 2px;
 }
 .ql-status-badge {

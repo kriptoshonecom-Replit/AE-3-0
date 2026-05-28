@@ -393,16 +393,20 @@ export default function QuoteList({
 
                     {(passStatus || amendCounts[row.id] > 0) ? (
                       <div className="ql-item-status-row">
-                        {passStatus && (
-                          <span className={`ql-status-badge ql-status-${passStatus}`}>
-                            {passStatus === "pass" ? "PASS" : "FAIL"}
-                          </span>
-                        )}
-                        {amendCounts[row.id] > 0 && (
-                          <span className="ql-amend-badge" title={`${amendCounts[row.id]} amendment${amendCounts[row.id] !== 1 ? "s" : ""}`}>
-                            A
-                          </span>
-                        )}
+                        <div>
+                          {amendCounts[row.id] > 0 && (
+                            <span className="ql-amend-badge" title={`${amendCounts[row.id]} amendment${amendCounts[row.id] !== 1 ? "s" : ""}`}>
+                              A
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          {passStatus && (
+                            <span className={`ql-status-badge ql-status-${passStatus}`}>
+                              {passStatus === "pass" ? "PASS" : "FAIL"}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     ) : null}
                   </button>
@@ -521,16 +525,20 @@ export default function QuoteList({
 
                     {(passStatus || amendCounts[q.meta.id] > 0) ? (
                       <div className="ql-item-status-row">
-                        {passStatus && (
-                          <span className={`ql-status-badge ql-status-${passStatus}`}>
-                            {passStatus === "pass" ? "PASS" : "FAIL"}
-                          </span>
-                        )}
-                        {amendCounts[q.meta.id] > 0 && (
-                          <span className="ql-amend-badge" title={`${amendCounts[q.meta.id]} amendment${amendCounts[q.meta.id] !== 1 ? "s" : ""}`}>
-                            A
-                          </span>
-                        )}
+                        <div>
+                          {amendCounts[q.meta.id] > 0 && (
+                            <span className="ql-amend-badge" title={`${amendCounts[q.meta.id]} amendment${amendCounts[q.meta.id] !== 1 ? "s" : ""}`}>
+                              A
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          {passStatus && (
+                            <span className={`ql-status-badge ql-status-${passStatus}`}>
+                              {passStatus === "pass" ? "PASS" : "FAIL"}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     ) : null}
                   </button>
