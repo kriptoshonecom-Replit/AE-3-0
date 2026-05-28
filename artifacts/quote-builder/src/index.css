@@ -7544,6 +7544,33 @@ select.cdm-cell-input {
   padding-top: 4px;
 }
 
+/* Right-column KPI cards — match cdm-stat-card appearance */
+.cdm-dashboard-right .db-kpi-card {
+  padding: 14px 16px;
+  box-shadow: none;
+  border-radius: 10px;
+  background: var(--surface-subtle, var(--bg));
+}
+.cdm-dashboard-right .db-kpi-header {
+  margin-bottom: 6px;
+}
+.cdm-dashboard-right .db-kpi-header svg {
+  display: none;
+}
+.cdm-dashboard-right .db-kpi-value {
+  font-size: 22px;
+  margin-bottom: 2px;
+}
+.cdm-dashboard-right .db-kpi-sub {
+  font-size: 11px;
+}
+.cdm-dashboard-right .db-kpi-breakdown {
+  margin-top: 4px;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
 /* Dashboard layout */
 .cdm-dashboard {
   display: flex;
