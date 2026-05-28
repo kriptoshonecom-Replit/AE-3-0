@@ -1774,7 +1774,7 @@ textarea:focus::placeholder {
 .ql-items {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 10px;
   padding: 0 15px;
 }
 
