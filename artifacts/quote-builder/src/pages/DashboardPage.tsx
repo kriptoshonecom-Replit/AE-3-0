@@ -358,59 +358,6 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Payments Processing Revenue */}
-            {(kpis.totalPaymentsRevMo > 0) && (
-              <div className="db-kpi-card">
-                <div className="db-kpi-header">
-                  <span className="db-kpi-label">Payments Processing Rev</span>
-                  <span style={{ color: "#16a34a", opacity: 0.75 }}>
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                      <rect x="2" y="5" width="16" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M2 9h16" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M6 13h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
-                  </span>
-                </div>
-                <div className="db-kpi-value" style={{ color: "#16a34a" }}>
-                  {fmt(kpis.passPaymentsRevMo)}<span style={{ fontSize: 13, fontWeight: 400, color: "var(--text-3)" }}>/mo</span>
-                </div>
-                <div className="db-kpi-sub">
-                  {kpis.passTotalSites > 0 ? `${fmt(kpis.passPaymentsRevMo / kpis.passTotalSites)}/site · ` : ""}
-                  {kpis.passTotalSites} won site{kpis.passTotalSites !== 1 ? "s" : ""}
-                </div>
-                <div className="db-kpi-breakdown">
-                  <span className="db-kpi-pass">Won {fmt(kpis.passPaymentsRevMo)}</span>
-                  <span style={{ fontSize: 11, color: "var(--text-3)" }}>Pipeline {fmt(kpis.totalPaymentsRevMo)}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Gateway Revenue */}
-            {(kpis.totalGatewayRevMo > 0) && (
-              <div className="db-kpi-card">
-                <div className="db-kpi-header">
-                  <span className="db-kpi-label">Gateway Revenue</span>
-                  <span style={{ color: "#0369a1", opacity: 0.75 }}>
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                      <path d="M10 2a8 8 0 1 0 0 16A8 8 0 0 0 10 2z" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M10 6v4l3 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </span>
-                </div>
-                <div className="db-kpi-value" style={{ color: "#0369a1" }}>
-                  {fmt(kpis.passGatewayRevMo)}<span style={{ fontSize: 13, fontWeight: 400, color: "var(--text-3)" }}>/mo</span>
-                </div>
-                <div className="db-kpi-sub">
-                  {kpis.passTotalSites > 0 ? `${fmt(kpis.passGatewayRevMo / kpis.passTotalSites)}/site · ` : ""}
-                  {kpis.passTotalSites} won site{kpis.passTotalSites !== 1 ? "s" : ""}
-                </div>
-                <div className="db-kpi-breakdown">
-                  <span className="db-kpi-pass">Won {fmt(kpis.passGatewayRevMo)}</span>
-                  <span style={{ fontSize: 11, color: "var(--text-3)" }}>Pipeline {fmt(kpis.totalGatewayRevMo)}</span>
-                </div>
-              </div>
-            )}
-
             {/* Amendments */}
             <div className="db-kpi-card">
               <div className="db-kpi-header">
