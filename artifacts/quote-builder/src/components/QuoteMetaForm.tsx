@@ -58,7 +58,7 @@ export default function QuoteMetaForm({ meta, onChange, pspmDiscountPct, upfront
             inputMode="numeric"
             value={meta.mcn ?? ""}
             onChange={set("mcn")}
-            placeholder="0"
+            placeholder="1234567"
           />
         </div>
 
@@ -68,7 +68,7 @@ export default function QuoteMetaForm({ meta, onChange, pspmDiscountPct, upfront
             type="text"
             value={meta.fua ?? ""}
             onChange={(e) => onChange({ ...meta, fua: e.target.value === "" ? undefined : Number(e.target.value) })}
-            placeholder="0"
+            placeholder="1234567"
           />
         </div>
 
@@ -78,7 +78,7 @@ export default function QuoteMetaForm({ meta, onChange, pspmDiscountPct, upfront
             type="text"
             value={meta.dba ?? ""}
             onChange={set("dba")}
-            placeholder=""
+            placeholder="Doing Business As"
           />
         </div>
 

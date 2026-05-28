@@ -95,15 +95,15 @@ export default function AddCustomerModal({ onClose, onCreated }: Props) {
               <div className="meta-grid">
                 <div className="field-group">
                   <label>MCN</label>
-                  <input type="text" inputMode="numeric" value={mcn} onChange={e => setMcn(e.target.value)} placeholder="0" />
+                  <input type="text" inputMode="numeric" value={mcn} onChange={e => setMcn(e.target.value)} placeholder="1234567" />
                 </div>
                 <div className="field-group">
                   <label>FUA</label>
-                  <input type="text" value={fua} onChange={e => setFua(e.target.value)} placeholder="0" />
+                  <input type="text" value={fua} onChange={e => setFua(e.target.value)} placeholder="1234567" />
                 </div>
                 <div className="field-group">
                   <label>DBA</label>
-                  <input type="text" value={dba} onChange={e => setDba(e.target.value)} />
+                  <input type="text" value={dba} onChange={e => setDba(e.target.value)} placeholder="Doing Business As" />
                 </div>
                 <div className="field-group">
                   <label>Sales Rep</label>
