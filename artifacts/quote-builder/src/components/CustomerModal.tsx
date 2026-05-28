@@ -156,8 +156,12 @@ function buildEditRows(customer: CustomerProfile): EditRow[] {
     }
   }
   const rows = Array.from(map.values());
-  const pk = `${(customer.customerName ?? "").toLowerCase()}|${(customer.customerEmail ?? "").toLowerCase()}||`;
-  if (!map.has(pk) && (customer.customerName || customer.customerEmail)) {
+  // Add a primary row from the customer record only if no quote row already
+  // covers the same email address — prevents a ghost duplicate when the name
+  // was edited via a row-save but the customers table hasn't been updated yet.
+  const primaryEmail = (customer.customerEmail ?? "").toLowerCase();
+  const alreadyCovered = rows.some(r => r.email.toLowerCase() === primaryEmail && primaryEmail !== "");
+  if (!alreadyCovered && (customer.customerName || customer.customerEmail)) {
     rows.unshift({ name: customer.customerName ?? "", position: "", email: customer.customerEmail ?? "", phone: customer.customerPhone ?? "", fua: "", dba: "", quoteIds: [], dirty: false });
   }
   return rows;
@@ -303,7 +307,7 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
     setRowSaving(s => new Set([...s, idx]));
     setRowErrors(e => { const n = { ...e }; delete n[idx]; return n; });
     try {
-      await Promise.all(row.quoteIds.map(qid =>
+      const saves: Promise<void>[] = row.quoteIds.map(qid =>
         fetch(`${API_BASE}/api/admin/quotes/${qid}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -319,7 +323,30 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
             },
           }),
         }).then(r => { if (!r.ok) throw new Error("Failed"); })
-      ));
+      );
+
+      // If this row is the primary contact (same email as the customer record,
+      // or it's the only row), also sync the customers table so the values
+      // survive a page refresh without reverting to the old stored record.
+      const isPrimary =
+        row.email.toLowerCase() === (customer.customerEmail ?? "").toLowerCase() ||
+        editRows.filter(r => r.quoteIds.length > 0).length === 1;
+      if (isPrimary) {
+        saves.push(
+          fetch(`${API_BASE}/api/admin/customers/${encodeURIComponent(customer.key)}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              customerName: row.name,
+              customerEmail: row.email,
+              customerPhone: row.phone || undefined,
+            }),
+          }).then(r => { if (!r.ok) throw new Error("Customer sync failed"); })
+        );
+      }
+
+      await Promise.all(saves);
       setEditRows(rows => rows.map((r, i) => i === idx ? { ...r, dirty: false } : r));
     } catch {
       setRowErrors(e => ({ ...e, [idx]: "Save failed. Try again." }));
