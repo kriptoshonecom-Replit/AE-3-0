@@ -210,7 +210,7 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
   const [mailToCustom, setMailToCustom] = useState("");
   const [mailSubject, setMailSubject] = useState("");
   const [mailBody, setMailBody] = useState("");
-  const [mailRef, setMailRef] = useState("");
+  const [mailRefs, setMailRefs] = useState<Set<string>>(new Set());
   const [mailAttachOpen, setMailAttachOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<"sent" | "error" | null>(null);
@@ -337,8 +337,8 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
       let body = mailBody;
       const attachments: { type: "quote" | "amendment"; id: string; filename: string }[] = [];
 
-      if (mailRef) {
-        const [refType, refId] = mailRef.split(":");
+      for (const ref of mailRefs) {
+        const [refType, refId] = ref.split(":");
         if (refType === "quote" && refId) {
           const refQ = customer.quotes.find(q => q.id === refId);
           if (refQ) {
@@ -380,7 +380,7 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
       setSendResult("sent");
       setMailSubject("");
       setMailBody("");
-      setMailRef("");
+      setMailRefs(new Set());
     } catch {
       setSendResult("error");
     } finally {
@@ -1065,10 +1065,8 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                   />
                 </div>
                 {(customer.quotes.length > 0 || amendments.length > 0) && (() => {
-                  // Build flat option list for lookup
                   type AttachOption = { value: string; label: string; hasPdf: boolean; group: string };
                   const options: AttachOption[] = [
-                    { value: "", label: "None", hasPdf: false, group: "" },
                     ...customer.quotes.map(q => ({
                       value: `quote:${q.id}`,
                       label: `${q.quoteNumber || "Untitled"} — ${q.passStatus ? q.passStatus.toUpperCase() : "No Status"}`,
@@ -1086,12 +1084,21 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                       };
                     }),
                   ];
-                  const selected = options.find(o => o.value === mailRef) ?? options[0];
                   const groups = ["Quotes", "Amendments"].filter(g => options.some(o => o.group === g));
+                  const selectedOptions = options.filter(o => mailRefs.has(o.value));
+                  const missingPdf = selectedOptions.filter(o => !o.hasPdf);
+
+                  const toggleRef = (val: string) => {
+                    setMailRefs(prev => {
+                      const next = new Set(prev);
+                      if (next.has(val)) next.delete(val); else next.add(val);
+                      return next;
+                    });
+                  };
 
                   return (
                     <div className="cdm-form-field">
-                      <label>Attach PDF</label>
+                      <label>Attach PDFs</label>
                       <div className="cdm-attach-dropdown" style={{ position: "relative" }}>
                         {/* Trigger */}
                         <button
@@ -1100,43 +1107,37 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                           onClick={() => setMailAttachOpen(v => !v)}
                         >
                           <span className="cdm-attach-trigger-content">
-                            {selected.value && selected.hasPdf && (
-                              <span className="cdm-pdf-badge">PDF</span>
+                            {mailRefs.size === 0 ? (
+                              <span className="cdm-attach-trigger-label" style={{ color: "var(--text-3)" }}>None selected</span>
+                            ) : (
+                              <span className="cdm-attach-trigger-label">
+                                {mailRefs.size} attachment{mailRefs.size !== 1 ? "s" : ""} selected
+                              </span>
                             )}
-                            <span className="cdm-attach-trigger-label">
-                              {selected.value ? selected.label : "None"}
-                              {selected.value && !selected.hasPdf && (
-                                <span className="cdm-attach-no-pdf"> (no PDF saved)</span>
-                              )}
-                            </span>
                           </span>
                           <svg className="cdm-attach-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
                             <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </button>
 
-                        {/* Dropdown panel */}
+                        {/* Multi-select panel */}
                         {mailAttachOpen && (
                           <>
                             <div className="cdm-attach-backdrop" onClick={() => setMailAttachOpen(false)} />
                             <div className="cdm-attach-panel">
-                              {/* None option */}
-                              <div
-                                className={`cdm-attach-item${mailRef === "" ? " cdm-attach-item--selected" : ""}`}
-                                onClick={() => { setMailRef(""); setMailAttachOpen(false); }}
-                              >
-                                <span className="cdm-attach-item-label">None</span>
-                              </div>
-
                               {groups.map(g => (
                                 <div key={g}>
                                   <div className="cdm-attach-group-label">{g}</div>
                                   {options.filter(o => o.group === g).map(o => (
-                                    <div
+                                    <label
                                       key={o.value}
-                                      className={`cdm-attach-item${mailRef === o.value ? " cdm-attach-item--selected" : ""}`}
-                                      onClick={() => { setMailRef(o.value); setMailAttachOpen(false); }}
+                                      className={`cdm-attach-item cdm-attach-item--check${mailRefs.has(o.value) ? " cdm-attach-item--selected" : ""}`}
                                     >
+                                      <input
+                                        type="checkbox"
+                                        checked={mailRefs.has(o.value)}
+                                        onChange={() => toggleRef(o.value)}
+                                      />
                                       {o.hasPdf
                                         ? <span className="cdm-pdf-badge">PDF</span>
                                         : <span className="cdm-pdf-badge cdm-pdf-badge--empty">PDF</span>
@@ -1145,7 +1146,7 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                                         {o.label}
                                         {!o.hasPdf && <span className="cdm-attach-no-pdf"> (no PDF saved)</span>}
                                       </span>
-                                    </div>
+                                    </label>
                                   ))}
                                 </div>
                               ))}
@@ -1154,17 +1155,26 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                         )}
                       </div>
 
-                      {mailRef && (() => {
-                        const [rType, rId] = mailRef.split(":");
-                        const hasPdf = rType === "quote"
-                          ? customer.quotes.find(q => q.id === rId)?.pdfSavedAt
-                          : amendments.find(a => a.id === rId)?.pdfSavedAt;
-                        return !hasPdf ? (
-                          <p style={{ fontSize: 11, color: "#f59e0b", marginTop: 4 }}>
-                            No PDF saved — save it first using "Save PDF" in the quote or amendment.
-                          </p>
-                        ) : null;
-                      })()}
+                      {/* Selected tags */}
+                      {selectedOptions.length > 0 && (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 6 }}>
+                          {selectedOptions.map(o => (
+                            <div key={o.value} className="cdm-recipient-custom-tag">
+                              {o.hasPdf && <span className="cdm-pdf-badge" style={{ fontSize: 9, padding: "1px 4px" }}>PDF</span>}
+                              <span>{o.label}</span>
+                              <button type="button" onClick={() => toggleRef(o.value)}>×</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {missingPdf.length > 0 && (
+                        <p style={{ fontSize: 11, color: "#f59e0b", marginTop: 4 }}>
+                          {missingPdf.length === 1
+                            ? `"${missingPdf[0].label}" has no PDF saved — save it first in the quote builder.`
+                            : `${missingPdf.length} selected items have no PDF saved yet.`}
+                        </p>
+                      )}
                     </div>
                   );
                 })()}
@@ -1191,7 +1201,7 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                   <button
                     className="admin-btn-add-secondary"
                     type="button"
-                    onClick={() => { setMailSubject(""); setMailBody(""); setMailRef(""); setSendResult(null); }}
+                    onClick={() => { setMailSubject(""); setMailBody(""); setMailRefs(new Set()); setSendResult(null); }}
                   >
                     Clear
                   </button>

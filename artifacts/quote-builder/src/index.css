@@ -7505,6 +7505,17 @@ select.cdm-cell-input {
   color: var(--accent, #7c3aed);
   font-weight: 500;
 }
+.cdm-attach-item--check {
+  cursor: pointer;
+  user-select: none;
+}
+.cdm-attach-item--check input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  accent-color: var(--accent, #7c3aed);
+  cursor: pointer;
+}
 .cdm-attach-item-label {
   min-width: 0;
   overflow: hidden;
