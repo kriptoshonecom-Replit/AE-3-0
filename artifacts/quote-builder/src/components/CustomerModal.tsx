@@ -402,6 +402,62 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                       {saving ? "Saving…" : "Save Changes"}
                     </button>
                   </div>
+
+                  {/* Contacts reference table */}
+                  {(() => {
+                    const seen = new Set<string>();
+                    const rows: { name: string; position: string; email: string; phone: string; fua: number | undefined; dba: string | undefined }[] = [];
+                    for (const q of customer.quotes) {
+                      const name = (q.data?.meta?.customerName as string | undefined) ?? "";
+                      const position = (q.data?.meta?.customerPosition as string | undefined) ?? "";
+                      const email = (q.data?.meta?.customerEmail as string | undefined) ?? "";
+                      const phone = (q.data?.meta?.customerPhone as string | undefined) ?? "";
+                      const fua = q.data?.meta?.fua as number | undefined;
+                      const dba = (q.data?.meta?.dba as string | undefined);
+                      const key = `${name.toLowerCase()}|${email.toLowerCase()}|${fua ?? ""}|${dba ?? ""}`;
+                      if ((name || email || fua != null || dba?.trim()) && !seen.has(key)) {
+                        seen.add(key);
+                        rows.push({ name, position, email, phone, fua, dba });
+                      }
+                    }
+                    const pk = `${(customer.customerName ?? "").toLowerCase()}|${(customer.customerEmail ?? "").toLowerCase()}||`;
+                    if (!seen.has(pk) && (customer.customerName || customer.customerEmail)) {
+                      rows.unshift({ name: customer.customerName ?? "", position: "", email: customer.customerEmail ?? "", phone: customer.customerPhone ?? "", fua: undefined, dba: undefined });
+                    }
+                    if (rows.length === 0) return null;
+                    return (
+                      <div className="cdm-fua-table-wrap" style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+                        <table className="cdm-fua-table cdm-contacts-table">
+                          <thead>
+                            <tr>
+                              <th>Name</th>
+                              <th>Position</th>
+                              <th>Email</th>
+                              <th>Phone</th>
+                              <th>FUA</th>
+                              <th>DBA</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rows.map((r, i) => (
+                              <tr key={i}>
+                                <td>{r.name || "—"}</td>
+                                <td>{r.position || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
+                                <td>
+                                  {r.email
+                                    ? <a href={`mailto:${r.email}`} style={{ color: "var(--accent)" }}>{r.email}</a>
+                                    : "—"}
+                                </td>
+                                <td>{r.phone || "—"}</td>
+                                <td>{r.fua != null ? String(r.fua) : <span style={{ color: "var(--text-3)" }}>—</span>}</td>
+                                <td>{r.dba?.trim() || <span style={{ color: "var(--text-3)" }}>—</span>}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  })()}
                 </div>
               ) : (
                 <>
