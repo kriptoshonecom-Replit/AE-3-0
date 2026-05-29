@@ -425,8 +425,8 @@ export default function MyQuoteLibraryPage() {
                                 <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                                   {row.data ? formatCurrency(computeTotal(row.data)) : "—"}
                                 </td>
-                                <td>
-                                  <div className="admin-actions">
+                                <td style={{ textAlign: "right" }}>
+                                  <div className="admin-actions" style={{ justifyContent: "flex-end" }}>
                                     <button
                                       type="button"
                                       className="admin-btn-edit"
