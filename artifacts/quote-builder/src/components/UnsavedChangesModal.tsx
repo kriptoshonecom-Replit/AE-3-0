@@ -1,3 +1,5 @@
+import { AlertCircle } from "lucide-react";
+
 interface Props {
   onYes: () => void;
   onNo: () => void;
@@ -8,11 +10,7 @@ export default function UnsavedChangesModal({ onYes, onNo }: Props) {
     <div className="info-modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onNo()}>
       <div className="unsaved-modal" onMouseDown={(e) => e.stopPropagation()}>
         <div className="unsaved-modal-header">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M10 6v4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            <circle cx="10" cy="13.5" r="0.9" fill="currentColor" />
-          </svg>
+          <AlertCircle size={20} />
           Unsaved Changes
         </div>
         <p className="unsaved-modal-text">

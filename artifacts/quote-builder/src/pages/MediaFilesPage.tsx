@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
+import { X, Search, Check, Copy, Pencil, Trash2 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -47,7 +48,7 @@ function RenameModal({ file, onClose, onSaved }: { file: MediaFile; onClose: () 
         <div className="admin-modal-header">
           <h3>Rename File</h3>
           <button className="edit-modal-close" onClick={onClose} aria-label="Close">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+            <X size={15} />
           </button>
         </div>
         <form className="admin-modal-body" onSubmit={handleSave}>
@@ -95,7 +96,7 @@ function DeleteConfirmModal({ file, onClose, onDeleted }: { file: MediaFile; onC
         <div className="admin-modal-header">
           <h3>Delete Image</h3>
           <button className="edit-modal-close" onClick={onClose} aria-label="Close">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+            <X size={15} />
           </button>
         </div>
         <div className="admin-modal-body">
@@ -236,10 +237,7 @@ export default function MediaFilesPage() {
 
       <div className="media-toolbar">
         <div className="media-search-wrap">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="media-search-icon">
-            <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" strokeWidth="1.4" />
-            <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-          </svg>
+          <Search size={14} className="media-search-icon" />
           <input
             className="media-search"
             type="text"
@@ -286,14 +284,9 @@ export default function MediaFilesPage() {
                     onClick={() => copyPath(file)}
                   >
                     {copied === file.id ? (
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                        <path d="M3 8l4 4 6-7" stroke="#22c55e" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                      <Check size={14} style={{ color: "#22c55e" }} />
                     ) : (
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                        <rect x="5" y="1" width="9" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                        <path d="M3 5H2a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                      </svg>
+                      <Copy size={14} />
                     )}
                   </button>
                   <button
@@ -301,18 +294,14 @@ export default function MediaFilesPage() {
                     title="Rename"
                     onClick={() => setRenameTarget(file)}
                   >
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                    <Pencil size={14} />
                   </button>
                   <button
                     className="media-action-btn media-action-btn-danger"
                     title="Delete"
                     onClick={() => setDeleteTarget(file)}
                   >
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 10h8l1-10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </div>

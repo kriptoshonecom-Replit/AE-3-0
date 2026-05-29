@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
+import { X, RefreshCw, Search, ChevronRight, ExternalLink, Pencil, Copy, Trash2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 import { formatCurrency, quoteTotal } from "../utils/calculations";
@@ -143,14 +144,7 @@ function EditDrawer({ row, onClose, onSaved }: EditDrawerProps) {
             </p>
           </div>
           <button type="button" className="lib-drawer-close" onClick={onClose} title="Close">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path
-                d="M2 2l10 10M12 2L2 12"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
+            <X size={14} />
           </button>
         </div>
 
@@ -337,9 +331,7 @@ export default function QuoteLibraryPage() {
             disabled={loading}
             title="Reload quotes"
           >
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ marginRight: 4 }}>
-              <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.8 0 3.4.87 4.4 2.2M13.5 2v3.5H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <RefreshCw size={13} style={{ marginRight: 4 }} />
             Refresh
           </button>
         </div>
@@ -349,10 +341,7 @@ export default function QuoteLibraryPage() {
       <div className="admin-content">
         <div className="admin-toolbar">
           <div className="ql-search-wrap admin-search" style={{ maxWidth: 320 }}>
-            <svg className="ql-search-icon" width="13" height="13" viewBox="0 0 14 14" fill="none">
-              <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.4" />
-              <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
+            <Search size={13} className="ql-search-icon" />
             <input
               type="text"
               className="ql-search"
@@ -362,9 +351,7 @@ export default function QuoteLibraryPage() {
             />
             {search && (
               <button type="button" className="ql-search-clear" onClick={() => setSearch("")}>
-                <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-                  <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
+                <X size={11} />
               </button>
             )}
           </div>
@@ -397,12 +384,10 @@ export default function QuoteLibraryPage() {
                     onClick={() => toggleGroup(group.key)}
                     aria-expanded={isOpen}
                   >
-                    <svg
+                    <ChevronRight
                       className={`amend-accordion-chevron${isOpen ? " open" : ""}`}
-                      width="14" height="14" viewBox="0 0 16 16" fill="none"
-                    >
-                      <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                      size={14}
+                    />
 
                     <span className="amend-accordion-title">{group.companyName}</span>
 
@@ -498,10 +483,7 @@ export default function QuoteLibraryPage() {
                                       }}
                                       title="Open quote in builder"
                                     >
-                                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                                        <path d="M7 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                                        <path d="M10 1h5v5M15 1L8 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                                      </svg>
+                                      <ExternalLink size={13} />
                                       Open
                                     </button>
                                     <button
@@ -510,9 +492,7 @@ export default function QuoteLibraryPage() {
                                       onClick={() => setEditRow(row)}
                                       title="Edit quote metadata (status, numbers)"
                                     >
-                                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                                        <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                      </svg>
+                                      <Pencil size={13} />
                                       Edit
                                     </button>
                                     <button
@@ -525,10 +505,7 @@ export default function QuoteLibraryPage() {
                                       {duplicatingId === row.id ? (
                                         <span className="spinner" style={{ width: 11, height: 11 }} />
                                       ) : (
-                                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                                          <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                                          <path d="M3 11V2h9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
+                                        <Copy size={13} />
                                       )}
                                       {duplicatingId === row.id ? "Copying…" : "Duplicate"}
                                     </button>
@@ -538,9 +515,7 @@ export default function QuoteLibraryPage() {
                                       onClick={() => handleDelete(row.id, row.userId)}
                                       title="Delete quote"
                                     >
-                                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                                        <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M13 4l-1 9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L3 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                                      </svg>
+                                      <Trash2 size={13} />
                                       Delete
                                     </button>
                                   </div>

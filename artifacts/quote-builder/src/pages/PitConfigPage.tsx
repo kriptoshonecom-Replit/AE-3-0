@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
+import { X, AlertCircle, Check, Pencil, Trash2 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -141,14 +142,7 @@ function EditItemModal({
             onClick={onClose}
             aria-label="Close"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M3 3l10 10M13 3L3 13"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
-            </svg>
+            <X size={15} />
           </button>
         </div>
         <form className="admin-modal-body" onSubmit={handleSave} noValidate>
@@ -180,21 +174,7 @@ function EditItemModal({
                       gap: "4px",
                     }}
                   >
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                      <circle
-                        cx="8"
-                        cy="8"
-                        r="7"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                      />
-                      <path
-                        d="M8 5v4M8 11v.5"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      />
-                    </svg>
+                    <AlertCircle size={12} />
                     ID not available
                   </span>
                 )}
@@ -345,14 +325,7 @@ function AddCategoryModal({ onClose, onSaved }: AddCategoryModalProps) {
         <div className="admin-modal-header">
           <h3>Add Category</h3>
           <button className="edit-modal-close" onClick={onClose}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M3 3l10 10M13 3L3 13"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
-            </svg>
+            <X size={15} />
           </button>
         </div>
         <form className="admin-modal-body" onSubmit={handleSave} noValidate>
@@ -571,15 +544,7 @@ export default function PitConfigPage() {
                   gap: "3px",
                 }}
               >
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                  <path
-                    d="M3 8l4 4 6-6"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                <Check size={12} />
                 Saved
               </span>
             )}
@@ -691,20 +656,7 @@ export default function PitConfigPage() {
                               className="admin-btn-edit"
                               onClick={() => setEditingItem(item)}
                             >
-                              <svg
-                                width="12"
-                                height="12"
-                                viewBox="0 0 16 16"
-                                fill="none"
-                              >
-                                <path
-                                  d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z"
-                                  stroke="currentColor"
-                                  strokeWidth="1.5"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
+                              <Pencil size={12} />
                               Edit
                             </button>
                             <button
@@ -717,20 +669,7 @@ export default function PitConfigPage() {
                                 )
                               }
                             >
-                              <svg
-                                width="12"
-                                height="12"
-                                viewBox="0 0 16 16"
-                                fill="none"
-                              >
-                                <path
-                                  d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M13 4l-1 9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L3 4"
-                                  stroke="currentColor"
-                                  strokeWidth="1.4"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
+                              <Trash2 size={12} />
                               Delete
                             </button>
                           </div>

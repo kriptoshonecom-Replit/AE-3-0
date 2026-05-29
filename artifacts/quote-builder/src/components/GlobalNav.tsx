@@ -2,6 +2,11 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
 import { useGlobalNav } from "@/context/GlobalNavContext";
+import {
+  Home, LayoutDashboard, UserPlus, Package, Building2,
+  FileImage, Bell, BadgeCheck, BookOpen, ScrollText,
+  Rocket, PenLine, Users, BookMarked, ChevronRight, Clock,
+} from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -48,148 +53,88 @@ export default function GlobalNav() {
                 <span className="sidebar-user-name">{user.fullName || "Your Account"}</span>
                 <span className="sidebar-user-email">{user.email}</span>
               </div>
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" className="sidebar-user-chevron">
-                <path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <ChevronRight size={13} className="sidebar-user-chevron" />
             </button>
           </div>
 
           {/* Sidebar slot — QuoteBuilder portals QuoteList here */}
           <div id="global-sidebar-slot" className="sidebar-slot" />
 
-          {/* Nav links */}
+          {/* Nav links — regular user */}
           {!isAdmin && (
             <div className="sidebar-user-links">
               <button type="button" className="sidebar-admin-link" onClick={() => go("/")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M2 6.5L8 2l6 4.5V14H10v-4H6v4H2V6.5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <Home size={16} />
                 Quote Builder
               </button>
               <button type="button" className="sidebar-admin-link" onClick={() => go("/my-quotes")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  <path d="M4.5 5.5h7M4.5 8h7M4.5 10.5h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                </svg>
+                <BookMarked size={16} />
                 My Quote Library
               </button>
               <button type="button" className="sidebar-admin-link" onClick={() => go("/amendments")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <PenLine size={16} />
                 Amendments
               </button>
               <button type="button" className="sidebar-admin-link" onClick={() => go("/customers")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <circle cx="6" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.4" />
-                  <path d="M1 13c0-2.5 2-4 5-4s5 1.5 5 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                  <circle cx="12" cy="5" r="1.8" stroke="currentColor" strokeWidth="1.3" />
-                  <path d="M14.5 12c0-1.8-1.1-2.9-2.5-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                </svg>
+                <Users size={16} />
                 Customers
               </button>
             </div>
           )}
 
+          {/* Nav links — admin */}
           {isAdmin && (
             <div className="sidebar-admin-links">
               <button type="button" className="sidebar-admin-link" onClick={() => go("/")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M2 6.5L8 2l6 4.5V14H10v-4H6v4H2V6.5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <Home size={16} />
                 Quote Builder
               </button>
               <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/dashboard")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="9" y="1.5" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="1.5" y="9" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="9" y="9" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                </svg>
+                <LayoutDashboard size={16} />
                 Dashboard
               </button>
               <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/users")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <circle cx="6" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.4" />
-                  <path d="M1 13c0-2.5 2-4 5-4s5 1.5 5 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                  <path d="M13 7v4M11 9h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                </svg>
+                <UserPlus size={16} />
                 Users
               </button>
               <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/products")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <rect x="1.5" y="1.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="9.5" y="1.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="1.5" y="9.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="9.5" y="9.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                </svg>
+                <Package size={16} />
                 Products Configuration
               </button>
               <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/pit")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M2 12V4l5-2 5 2v8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M7 14v-4h2v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M4 7h2M10 7h2M4 10h2M10 10h2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                </svg>
+                <Building2 size={16} />
                 PIT Configuration
               </button>
               <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/media")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  <circle cx="5.5" cy="7" r="1.5" stroke="currentColor" strokeWidth="1.2" />
-                  <path d="M1.5 11l3.5-3 3 3 2.5-2.5 3.5 3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <FileImage size={16} />
                 Media Files
               </button>
               <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/alerts")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 2a5 5 0 0 1 5 5c0 2.5.8 3.5 1.5 4.5H1.5C2.2 10.5 3 9.5 3 7a5 5 0 0 1 5-5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M6.5 11.5a1.5 1.5 0 0 0 3 0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                </svg>
+                <Bell size={16} />
                 Alert Configuration
               </button>
               <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/status-pass")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  <path d="M1.5 7h13" stroke="currentColor" strokeWidth="1.2" />
-                  <path d="M5.5 7v5.5M10.5 7v5.5" stroke="currentColor" strokeWidth="1.2" />
-                </svg>
+                <BadgeCheck size={16} />
                 StatusPass Config
               </button>
               <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/quote-library")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  <path d="M4.5 5.5h7M4.5 8h7M4.5 10.5h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                </svg>
+                <BookOpen size={16} />
                 Quote Library
               </button>
               <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/log-journal")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M2 4h12M2 8h8M2 12h5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                  <circle cx="13" cy="11.5" r="2.5" stroke="currentColor" strokeWidth="1.3" />
-                  <path d="M13 10.5v1l.7.7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                </svg>
+                <ScrollText size={16} />
                 Log Journals
               </button>
               <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/app-release")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 2L13 8M13 8L8 14M13 8H3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <Rocket size={16} />
                 App Release
               </button>
               <button type="button" className="sidebar-admin-link" onClick={() => go("/amendments")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <PenLine size={16} />
                 Amendments
               </button>
               <button type="button" className="sidebar-admin-link" onClick={() => go("/customers")}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <circle cx="6" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.4" />
-                  <path d="M1 13c0-2.5 2-4 5-4s5 1.5 5 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                  <circle cx="12" cy="5" r="1.8" stroke="currentColor" strokeWidth="1.3" />
-                  <path d="M14.5 12c0-1.8-1.1-2.9-2.5-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                </svg>
+                <Users size={16} />
                 Customers
               </button>
             </div>
@@ -197,10 +142,7 @@ export default function GlobalNav() {
 
           {appVersion && (
             <div className="sidebar-version-footer">
-              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-                <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2" />
-                <path d="M6 4v2.5l1.5 1" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <Clock size={11} />
               QuoteBuilder Version {appVersion}
             </div>
           )}

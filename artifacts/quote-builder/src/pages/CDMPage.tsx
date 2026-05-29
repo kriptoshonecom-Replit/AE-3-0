@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Plus, RefreshCw, Search, X, Eye } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 import CustomerModal from "@/components/CustomerModal";
@@ -148,9 +149,7 @@ export default function CDMPage() {
               onClick={() => setShowAddModal(true)}
               title="Add new customer"
             >
-              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" style={{ marginRight: 2 }}>
-                <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
-              </svg>
+              <Plus size={12} style={{ marginRight: 2 }} />
               Add Customer
             </button>
           )}
@@ -160,9 +159,7 @@ export default function CDMPage() {
             disabled={loading}
             title="Refresh customers"
           >
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ marginRight: 4 }}>
-              <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.8 0 3.4.87 4.4 2.2M13.5 2v3.5H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <RefreshCw size={13} style={{ marginRight: 4 }} />
             Refresh
           </button>
         </div>
@@ -171,10 +168,7 @@ export default function CDMPage() {
       <div className="admin-content">
         <div className="admin-toolbar">
           <div className="ql-search-wrap admin-search" style={{ maxWidth: 340 }}>
-            <svg className="ql-search-icon" width="13" height="13" viewBox="0 0 14 14" fill="none">
-              <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.4" />
-              <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
+            <Search size={13} className="ql-search-icon" />
             <input
               type="text"
               className="ql-search"
@@ -184,9 +178,7 @@ export default function CDMPage() {
             />
             {search && (
               <button type="button" className="ql-search-clear" onClick={() => setSearch("")}>
-                <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-                  <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
+                <X size={11} />
               </button>
             )}
           </div>
@@ -272,10 +264,7 @@ export default function CDMPage() {
                           onClick={() => setSelected(c)}
                           title="View customer"
                         >
-                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                            <ellipse cx="8" cy="8" rx="7" ry="4.5" stroke="currentColor" strokeWidth="1.4" />
-                            <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.4" />
-                          </svg>
+                          <Eye size={13} />
                         </button>
                         {isAdmin && (
                           <button
@@ -283,9 +272,7 @@ export default function CDMPage() {
                             onClick={() => { setDeleteConfirm(c); setDeleteError(""); }}
                             title="Delete customer"
                           >
-                            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                            </svg>
+                            <X size={12} />
                           </button>
                         )}
                       </div>

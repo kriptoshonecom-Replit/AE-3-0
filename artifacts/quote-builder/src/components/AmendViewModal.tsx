@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { formatCurrency } from "../utils/calculations";
 import { exportAmendmentToPDF } from "../utils/amendmentPdfExport";
+import { MapPin, X, Loader2, Download } from "lucide-react";
 
 const TIERED_ADDITIONAL_UNIT_PRICE = 30;
 
@@ -188,19 +189,14 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
               if (parts.length === 0) return null;
               return (
                 <p className="amend-modal-sub" style={{ marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
-                  <svg width="10" height="10" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, opacity: 0.55 }}>
-                    <path d="M7 1.5C4.79 1.5 3 3.29 3 5.5c0 3.25 4 7 4 7s4-3.75 4-7c0-2.21-1.79-4-4-4z" stroke="currentColor" strokeWidth="1.3" fill="none" />
-                    <circle cx="7" cy="5.5" r="1.2" fill="currentColor" />
-                  </svg>
+                  <MapPin size={10} style={{ flexShrink: 0, opacity: 0.55 }} />
                   {parts.join(" · ")}
                 </p>
               );
             })()}
           </div>
           <button className="edit-modal-close" type="button" onClick={onClose} aria-label="Close">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
+            <X size={15} />
           </button>
         </div>
 
@@ -335,17 +331,12 @@ export default function AmendViewModal({ row, onClose }: AmendViewModalProps) {
               >
                 {exporting ? (
                   <>
-                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ opacity: 0.5 }}>
-                      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" strokeDasharray="10 6" />
-                    </svg>
+                    <Loader2 size={13} style={{ opacity: 0.5 }} />
                     Exporting…
                   </>
                 ) : (
                   <>
-                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                      <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M3 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
+                    <Download size={13} />
                     Export PDF
                   </>
                 )}

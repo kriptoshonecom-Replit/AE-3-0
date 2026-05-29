@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Plus, Search, X, Copy, User, RefreshCw } from "lucide-react";
 import type { Quote } from "../types";
 import { formatCurrency, quoteTotal } from "../utils/calculations";
 import { loadAllQuotes, deleteQuote } from "../utils/storage";
@@ -241,14 +242,7 @@ export default function QuoteList({
           )}
           {!isAllMode && (
             <button className="btn-new-quote" type="button" onClick={onNew}>
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M7 2v10M2 7h10"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
+              <Plus size={13} />
               New
             </button>
           )}
@@ -256,10 +250,7 @@ export default function QuoteList({
       </div>
 
       <div className="ql-search-wrap">
-        <svg className="ql-search-icon" width="13" height="13" viewBox="0 0 14 14" fill="none">
-          <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.4" />
-          <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-        </svg>
+        <Search size={13} className="ql-search-icon" />
         <input
           type="text"
           className="ql-search"
@@ -269,14 +260,7 @@ export default function QuoteList({
         />
         {search && (
           <button type="button" className="ql-search-clear" onClick={() => setSearch("")}>
-            <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-              <path
-                d="M2 2l10 10M12 2L2 12"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
+            <X size={11} />
           </button>
         )}
       </div>
@@ -338,10 +322,7 @@ export default function QuoteList({
                             {duplicatingId === q.meta.id ? (
                               <span className="spinner" style={{ width: 10, height: 10 }} />
                             ) : (
-                              <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-                                <rect x="4" y="4" width="8" height="8" rx="1.2" stroke="currentColor" strokeWidth="1.4" />
-                                <path d="M2 10V2h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
+                              <Copy size={11} />
                             )}
                           </button>
                         )}
@@ -354,9 +335,7 @@ export default function QuoteList({
                             void handleDelete(q);
                           }}
                         >
-                          <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-                            <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                          </svg>
+                          <X size={11} />
                         </button>
                       </div>
                     </div>
@@ -368,20 +347,14 @@ export default function QuoteList({
                     )}
 
                     <div className="ql-item-meta-row">
-                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                        <circle cx="6" cy="4" r="2.5" stroke="currentColor" strokeWidth="1.1" />
-                        <path d="M1.5 11c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
-                      </svg>
+                      <User size={10} />
                       <span className="ql-meta-val ql-meta-creator">{row.creatorName || "—"}</span>
                       <span className="ql-meta-sep">·</span>
                       <span className="ql-meta-val">{fmtShortDate(row.createdAt)}</span>
                     </div>
 
                     <div className="ql-item-meta-row">
-                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                        <path d="M10 6A4 4 0 1 1 6 2" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
-                        <path d="M10 2v3H7" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                      <RefreshCw size={10} />
                       <span className="ql-meta-val">{fmtShortDate(row.updatedAt)}</span>
                       {row.updatedByName && (
                         <>
@@ -449,10 +422,7 @@ export default function QuoteList({
                             {duplicatingId === q.meta.id ? (
                               <span className="spinner" style={{ width: 10, height: 10 }} />
                             ) : (
-                              <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-                                <rect x="4" y="4" width="8" height="8" rx="1.2" stroke="currentColor" strokeWidth="1.4" />
-                                <path d="M2 10V2h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
+                              <Copy size={11} />
                             )}
                           </button>
                         )}
@@ -465,14 +435,7 @@ export default function QuoteList({
                             void handleDelete(q);
                           }}
                         >
-                          <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-                            <path
-                              d="M2 2l10 10M12 2L2 12"
-                              stroke="currentColor"
-                              strokeWidth="1.4"
-                              strokeLinecap="round"
-                            />
-                          </svg>
+                          <X size={11} />
                         </button>
                       </div>
                     </div>
@@ -484,36 +447,14 @@ export default function QuoteList({
                     )}
 
                     <div className="ql-item-meta-row">
-                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                        <circle cx="6" cy="4" r="2.5" stroke="currentColor" strokeWidth="1.1" />
-                        <path
-                          d="M1.5 11c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4"
-                          stroke="currentColor"
-                          strokeWidth="1.1"
-                          strokeLinecap="round"
-                        />
-                      </svg>
+                      <User size={10} />
                       <span className="ql-meta-val">{creator}</span>
                       <span className="ql-meta-sep">·</span>
                       <span className="ql-meta-val">{fmtShortDate(q.meta.createdAt)}</span>
                     </div>
 
                     <div className="ql-item-meta-row">
-                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                        <path
-                          d="M10 6A4 4 0 1 1 6 2"
-                          stroke="currentColor"
-                          strokeWidth="1.1"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M10 2v3H7"
-                          stroke="currentColor"
-                          strokeWidth="1.1"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
+                      <RefreshCw size={10} />
                       <span className="ql-meta-val">{fmtShortDate(q.meta.updatedAt)}</span>
                       {updatedBy && (
                         <>

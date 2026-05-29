@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { X, Pencil, ChevronDown, Send } from "lucide-react";
 import type { CustomerProfile } from "../pages/CDMPage";
 import type { Quote } from "../types";
 import { quoteTotal, formatCurrency } from "../utils/calculations";
@@ -494,9 +495,7 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
             </span>
           </div>
           <button className="cdm-close-btn" onClick={onClose} type="button" aria-label="Close">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+            <X size={14} />
           </button>
         </div>
 
@@ -821,9 +820,7 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                         type="button"
                         onClick={() => setEditing(true)}
                       >
-                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none" style={{ marginRight: 6 }}>
-                          <path d="M9.5 1.5a2.121 2.121 0 0 1 3 3L4 13H1v-3L9.5 1.5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                        <Pencil size={12} style={{ marginRight: 6 }} />
                         Edit Contact Info
                       </button>
                     </div>
@@ -1190,9 +1187,7 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                               </span>
                             )}
                           </span>
-                          <svg className="cdm-attach-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                            <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
+                          <ChevronDown className="cdm-attach-chevron" size={12} />
                         </button>
 
                         {/* Multi-select panel */}
@@ -1287,9 +1282,7 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                     onClick={() => void handleSendMail()}
                     disabled={sending || !mailToSet.size || !mailSubject || !mailBody}
                   >
-                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ marginRight: 6 }}>
-                      <path d="M2 2l12 6-12 6V9.5L11 8 2 6.5V2z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                    <Send size={13} style={{ marginRight: 6 }} />
                     {sending ? "Sending…" : "Send Email"}
                   </button>
                 </div>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 import { RichTextEditor, RichTextDisplay, stripHtml } from "@/components/RichTextEditor";
+import { Clock, ArrowRight, Mail, Copy, Trash2 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -210,10 +211,7 @@ export default function AppReleasePage() {
               {/* ── Version ── */}
               <div className="admin-table-wrap arc-panel">
                 <div className="arc-panel-heading">
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                    <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4" />
-                    <path d="M8 5v3.5l2 1.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <Clock size={14} />
                   App Version
                 </div>
 
@@ -248,9 +246,7 @@ export default function AppReleasePage() {
 
                 {versionWillChange && (
                   <div className="arc-version-hint">
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                      <path d="M8 2L13 8M13 8L8 14M13 8H3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                    <ArrowRight size={12} />
                     Version will be released when you send
                   </div>
                 )}
@@ -259,10 +255,7 @@ export default function AppReleasePage() {
               {/* ── Compose ── */}
               <div className="admin-table-wrap arc-panel">
                 <div className="arc-panel-heading">
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                    <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                    <path d="M1.5 6l6.5 4 6.5-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                  </svg>
+                  <Mail size={14} />
                   Compose Notification
                 </div>
 
@@ -373,10 +366,7 @@ export default function AppReleasePage() {
                                 onClick={() => handleClone(n)}
                                 title="Copy into compose"
                               >
-                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                                  <rect x="5" y="5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                                  <path d="M3 11V3.5A1.5 1.5 0 0 1 4.5 2H11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                                </svg>
+                                <Copy size={12} />
                                 Clone
                               </button>
                               {deletingId === n.id ? (
@@ -386,9 +376,7 @@ export default function AppReleasePage() {
                                 </>
                               ) : (
                                 <button className="admin-btn-delete" onClick={() => setDeletingId(n.id)}>
-                                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                                    <path d="M3 4h10M5 4V2.5h6V4M6 7v4M10 7v4M4 4l.5 9.5h7L12 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
+                                  <Trash2 size={12} />
                                   Delete
                                 </button>
                               )}

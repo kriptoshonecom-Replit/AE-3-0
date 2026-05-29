@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { RefreshCw, Search, X, ChevronRight, Eye, Pencil, Trash2 } from "lucide-react";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 import { formatCurrency } from "../utils/calculations";
 import AmendModal, { type AddedItem } from "../components/AmendModal";
@@ -327,9 +328,7 @@ export default function AmendmentsPage() {
             disabled={loading}
             title="Reload amendments"
           >
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ marginRight: 4 }}>
-              <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.8 0 3.4.87 4.4 2.2M13.5 2v3.5H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <RefreshCw size={13} style={{ marginRight: 4 }} />
             Refresh
           </button>
         </div>
@@ -338,10 +337,7 @@ export default function AmendmentsPage() {
       <div className="admin-content">
         <div className="admin-toolbar">
           <div className="ql-search-wrap admin-search" style={{ maxWidth: 320 }}>
-            <svg className="ql-search-icon" width="13" height="13" viewBox="0 0 14 14" fill="none">
-              <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.4" />
-              <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
+            <Search size={13} className="ql-search-icon" />
             <input
               type="text"
               className="ql-search"
@@ -351,9 +347,7 @@ export default function AmendmentsPage() {
             />
             {search && (
               <button type="button" className="ql-search-clear" onClick={() => setSearch("")}>
-                <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-                  <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
+                <X size={11} />
               </button>
             )}
           </div>
@@ -386,12 +380,10 @@ export default function AmendmentsPage() {
                     onClick={() => toggleGroup(group.key)}
                     aria-expanded={isOpen}
                   >
-                    <svg
+                    <ChevronRight
                       className={`amend-accordion-chevron${isOpen ? " open" : ""}`}
-                      width="14" height="14" viewBox="0 0 16 16" fill="none"
-                    >
-                      <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                      size={14}
+                    />
 
                     <span className="amend-accordion-title">
                       {group.originalQuoteNumber || <span style={{ color: "var(--text-3)", fontWeight: 400 }}>No quote number</span>}
@@ -463,10 +455,7 @@ export default function AmendmentsPage() {
                                       onClick={() => setViewRow(augmentRowWithAddress(row))}
                                       title="Preview amendment"
                                     >
-                                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                                        <ellipse cx="8" cy="8" rx="6.5" ry="4.5" stroke="currentColor" strokeWidth="1.4" />
-                                        <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3" />
-                                      </svg>
+                                      <Eye size={13} />
                                       View
                                     </button>
                                     <button
@@ -475,9 +464,7 @@ export default function AmendmentsPage() {
                                       onClick={() => setEditState(buildEditState(augmentRowWithAddress(row)))}
                                       title="Edit amendment"
                                     >
-                                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                                        <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                      </svg>
+                                      <Pencil size={13} />
                                       Edit
                                     </button>
                                     <button
@@ -486,9 +473,7 @@ export default function AmendmentsPage() {
                                       onClick={() => void handleDelete(row.id)}
                                       title="Delete amendment"
                                     >
-                                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                                        <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M13 4l-1 9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L3 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                                      </svg>
+                                      <Trash2 size={13} />
                                       Delete
                                     </button>
                                   </div>

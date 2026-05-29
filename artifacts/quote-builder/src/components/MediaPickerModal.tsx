@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { X, Search } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -47,18 +48,13 @@ export default function MediaPickerModal({ onSelect, onClose }: Props) {
         <div className="admin-modal-header">
           <h3>Choose from Media Library</h3>
           <button className="edit-modal-close" onClick={onClose} aria-label="Close">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
+            <X size={15} />
           </button>
         </div>
 
         <div className="media-picker-toolbar">
           <div className="media-search-wrap">
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="media-search-icon">
-              <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" strokeWidth="1.4" />
-              <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
+            <Search size={13} className="media-search-icon" />
             <input
               className="media-search"
               type="text"

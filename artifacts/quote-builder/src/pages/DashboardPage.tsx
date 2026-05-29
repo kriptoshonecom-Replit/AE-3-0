@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
+import { TrendingUp, FileText, CircleCheck, DollarSign, Calendar, ChevronDown, RefreshCw, CreditCard, Clock, ArrowRight, PenLine } from "lucide-react";
 import LocationCardsPanel, { type GeoPoint } from "@/components/LocationCardsPanel";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
@@ -186,46 +187,28 @@ export default function DashboardPage() {
       value: fmt(kpis.totalPipelineValue),
       sub: `MRR ${fmt(kpis.totalMRR)} · ${kpis.totalQuotes} quotes`,
       color: "#7c3aed",
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-          <path d="M10 2L3 7v11h5v-5h4v5h5V7L10 2z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-        </svg>
-      ),
+      icon: <TrendingUp size={18} />,
     },
     {
       label: "Quotes This Month",
       value: String(kpis.quotesThisMonth),
       sub: `${kpis.totalQuotes} total all time`,
       color: "#0ea5e9",
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-          <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M7 8h6M7 11h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      ),
+      icon: <FileText size={18} />,
     },
     {
       label: "Pass Rate",
       value: `${kpis.passRate}%`,
       sub: `${kpis.passCount} passed · ${kpis.failCount} failed`,
       color: "#22c55e",
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-          <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M7 10l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
+      icon: <CircleCheck size={18} />,
     },
     {
       label: "Avg Quote Value",
       value: fmt(kpis.avgQuoteValue),
       sub: "per quote (ARR)",
       color: "#f97316",
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-          <path d="M10 3v14M7 6h4.5a2.5 2.5 0 0 1 0 5H7m0 0h5.5a2.5 2.5 0 0 1 0 5H7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      ),
+      icon: <DollarSign size={18} />,
     },
   ];
 
@@ -246,19 +229,9 @@ export default function DashboardPage() {
               className="db-month-trigger"
               onClick={() => setPickerOpen((o) => !o)}
             >
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ opacity: 0.7 }}>
-                <rect x="1.5" y="2.5" width="13" height="12" rx="2" stroke="currentColor" strokeWidth="1.4" />
-                <path d="M5 1v3M11 1v3M1.5 6h13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                <rect x="4" y="8.5" width="2" height="2" rx="0.4" fill="currentColor" />
-                <rect x="7" y="8.5" width="2" height="2" rx="0.4" fill="currentColor" />
-                <rect x="10" y="8.5" width="2" height="2" rx="0.4" fill="currentColor" />
-                <rect x="4" y="11.5" width="2" height="2" rx="0.4" fill="currentColor" />
-                <rect x="7" y="11.5" width="2" height="2" rx="0.4" fill="currentColor" />
-              </svg>
+              <Calendar size={13} style={{ opacity: 0.7 }} />
               {selectedLabel}
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ opacity: 0.5 }}>
-                <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <ChevronDown size={10} style={{ opacity: 0.5 }} />
             </button>
             {pickerOpen && (
               <div className="db-month-dropdown">
@@ -288,9 +261,7 @@ export default function DashboardPage() {
             onClick={() => load()}
             title="Refresh data"
           >
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style={{ marginRight: 4 }}>
-              <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.8 0 3.4.87 4.4 2.2M13.5 2v3.5H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <RefreshCw size={12} style={{ marginRight: 4 }} />
             Refresh
           </button>
           <button
@@ -327,9 +298,7 @@ export default function DashboardPage() {
               <div className="db-kpi-header">
                 <span className="db-kpi-label">Customer Requested Amount</span>
                 <span style={{ color: "#14b8a6", opacity: 0.75 }}>
-                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                    <path d="M10 3v14M7 6h4.5a2.5 2.5 0 0 1 0 5H7m0 0h5.5a2.5 2.5 0 0 1 0 5H7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
+                  <DollarSign size={18} />
                 </span>
               </div>
               <div className="db-kpi-value">{fmt(totalReqMonthly)}<span style={{ fontSize: 13, fontWeight: 400, color: "var(--text-3)" }}>/mo</span></div>
@@ -345,9 +314,7 @@ export default function DashboardPage() {
               <div className="db-kpi-header">
                 <span className="db-kpi-label">Requested Upfront Amount</span>
                 <span style={{ color: "#8b5cf6", opacity: 0.75 }}>
-                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                    <path d="M3 10h14M10 3l7 7-7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <ArrowRight size={18} />
                 </span>
               </div>
               <div className="db-kpi-value">{fmt(totalReqUpfront)}</div>
@@ -363,10 +330,7 @@ export default function DashboardPage() {
               <div className="db-kpi-header">
                 <span className="db-kpi-label">Amendments</span>
                 <span style={{ color: "#7c3aed", opacity: 0.75 }}>
-                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                    <path d="M4 4h8l4 4v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                    <path d="M12 4v4h4M7 10h6M7 13h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
+                  <PenLine size={18} />
                 </span>
               </div>
               <div className="db-kpi-value">{amendments?.total ?? 0}</div>
@@ -382,11 +346,7 @@ export default function DashboardPage() {
                 <div className="db-kpi-header">
                   <span className="db-kpi-label">Payments Revenue Won</span>
                   <span style={{ color: "#16a34a", opacity: 0.75 }}>
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                      <rect x="2" y="5" width="16" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M2 9h16" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M6 13h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
+                    <CreditCard size={18} />
                   </span>
                 </div>
                 <div className="db-kpi-value" style={{ color: "#16a34a" }}>
@@ -409,10 +369,7 @@ export default function DashboardPage() {
                 <div className="db-kpi-header">
                   <span className="db-kpi-label">Gateway Revenue Won</span>
                   <span style={{ color: "#0369a1", opacity: 0.75 }}>
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                      <path d="M10 2a8 8 0 1 0 0 16A8 8 0 0 0 10 2z" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M10 6v4l3 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                    <Clock size={18} />
                   </span>
                 </div>
                 <div className="db-kpi-value" style={{ color: "#0369a1" }}>

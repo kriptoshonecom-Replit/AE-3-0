@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
+import { Clock, Plus, FileText, RefreshCw } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -277,10 +278,7 @@ function CalcBar({ annualRevenue, avgTicket, numSites, computedTxnCount }: CalcB
       <div className="sp-calc-header">
         <div className="sp-calc-title">Txn # Calculator</div>
         <div className="sp-calc-source">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M6 1v5l3 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.3" />
-          </svg>
+          <Clock size={12} />
           Values pulled from Payments Configuration Panel
         </div>
       </div>
@@ -370,10 +368,7 @@ function BlendedRateBar({ numSites, rawTxnCount, computedTxnCount, categories, a
         )}
         {!fixedOverrideActive && modelLabel && (
           <div className="sp-blended-model-tag">
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-              <rect x="1" y="1" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.3" />
-              <path d="M3.5 6h5M6 3.5v5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-            </svg>
+            <Plus size={11} />
             {modelLabel}
           </div>
         )}
@@ -1289,10 +1284,7 @@ export default function StatusPassConfigPage() {
         <h1 className="admin-page-title">StatusPass Configuration</h1>
         {calcCtx.quoteName && (
           <div className="sp-quote-badge">
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-              <rect x="1" y="1" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.3"/>
-              <path d="M3.5 4h5M3.5 6h5M3.5 8h3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
-            </svg>
+            <FileText size={11} />
             {calcCtx.quoteName}
           </div>
         )}
@@ -1302,10 +1294,7 @@ export default function StatusPassConfigPage() {
           disabled={loading}
           title="Reload data from server"
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ transform: loading ? "rotate(360deg)" : "none", transition: "transform 0.5s" }}>
-            <path d="M12 7A5 5 0 1 1 7 2a5 5 0 0 1 3.54 1.46L12 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M12 2v3h-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          <RefreshCw size={14} style={{ transform: loading ? "rotate(360deg)" : "none", transition: "transform 0.5s" }} />
           Refresh
         </button>
       </div>

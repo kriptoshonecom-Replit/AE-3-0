@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { X, AlertCircle, Image, Pencil, Copy, Trash2, ArrowUp } from "lucide-react";
 import { useLocation } from "wouter";
 import MediaPickerModal from "@/components/MediaPickerModal";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
@@ -303,9 +304,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
         <div className="admin-modal-header">
           <h3>{mode === "add" ? "Add Product" : mode === "duplicate" ? "Duplicate Product" : "Edit Product"}</h3>
           <button className="edit-modal-close" onClick={onClose} aria-label="Close">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
+            <X size={15} />
           </button>
         </div>
         <form className="admin-modal-body" onSubmit={handleSave} noValidate>
@@ -323,10 +322,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
               />
               {idTaken && (
                 <span style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M8 5v4M8 11v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
+                  <AlertCircle size={12} />
                   This ID is already in use
                 </span>
               )}
@@ -369,18 +365,12 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
                 <div className="product-img-preview">
                   <img src={imageUrl} alt="Product" />
                   <button type="button" className="product-img-remove" onClick={() => setImageUrl(null)} title="Remove image">
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                      <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                    </svg>
+                    <X size={12} />
                   </button>
                 </div>
               ) : (
                 <div className="product-img-placeholder">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                    <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.4"/>
-                    <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" strokeWidth="1.2"/>
-                    <path d="M3 15l5-4 4 4 3-2.5 4 4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <Image size={28} />
                   <span>No image</span>
                 </div>
               )}
@@ -390,11 +380,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
                   className="product-img-btn product-img-btn-library"
                   onClick={() => setShowMediaPicker(true)}
                 >
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                    <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
-                    <circle cx="5.5" cy="7" r="1.5" stroke="currentColor" strokeWidth="1.1" />
-                    <path d="M1.5 11l3.5-3 3 3 2.5-2.5 3.5 3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <Image size={12} />
                   {imageUrl ? "Choose different" : "Choose from library"}
                 </button>
                 <label className="product-img-btn" aria-disabled={imageUploading}>
@@ -409,10 +395,7 @@ function EditProductModal({ catId, item, onClose, onSaved, mode, allIds }: EditP
                 </label>
                 {imageError && (
                   <span className="product-img-error">
-                    <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                      <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                      <path d="M8 5v4M8 11v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
+                    <AlertCircle size={11} />
                     {imageError}
                   </span>
                 )}
@@ -504,9 +487,7 @@ function AddCategoryModal({ onClose, onSaved }: AddCategoryModalProps) {
         <div className="admin-modal-header">
           <h3>Add Category</h3>
           <button className="edit-modal-close" onClick={onClose}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
+            <X size={15} />
           </button>
         </div>
         <form className="admin-modal-body" onSubmit={handleSave} noValidate>
@@ -894,15 +875,11 @@ export default function ProductsConfigPage() {
                               onClick={() => moveItemInDirection(currentCat.id, idx, 1)}
                             >▼</button>
                             <button className="admin-btn-move" onClick={() => setMovingItem(item)}>
-                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                                <path d="M8 2v12M2 8l6-6 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
+                              <ArrowUp size={12} />
                               Move
                             </button>
                             <button className="admin-btn-edit" onClick={() => setEditingItem(item)}>
-                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                                <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
+                              <Pencil size={12} />
                               Edit
                             </button>
                             <button
@@ -910,16 +887,11 @@ export default function ProductsConfigPage() {
                               title="Duplicate product"
                               onClick={() => setDuplicateFrom(item)}
                             >
-                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                                <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                                <path d="M3 11V2h9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
+                              <Copy size={12} />
                               Duplicate
                             </button>
                             <button className="admin-btn-delete" onClick={() => handleDeleteItem(currentCat.id, item.id, item.name)}>
-                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                                <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M13 4l-1 9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L3 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
+                              <Trash2 size={12} />
                               Delete
                             </button>
                           </div>

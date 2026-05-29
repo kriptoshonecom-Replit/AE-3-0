@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { AlertTriangle, Menu, Check, Save, Download, ChevronDown, FileText, Plus, Pencil } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useGlobalNav } from "@/context/GlobalNavContext";
@@ -1372,10 +1373,7 @@ export default function QuoteBuilder() {
         <div className="admin-modal-backdrop" onMouseDown={() => setAmendmentWarnOpen(false)}>
           <div className="amend-warn-modal" onMouseDown={(e) => e.stopPropagation()}>
             <div className="amend-warn-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path d="M12 9v4M12 17h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <AlertTriangle size={22} />
             </div>
             <div className="amend-warn-body">
               <p className="amend-warn-title">Amendment Integrity Notice</p>
@@ -1418,9 +1416,7 @@ export default function QuoteBuilder() {
               onClick={() => setSidebarOpen((v) => !v)}
               title="Toggle quotes list"
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path d="M2 4.5h14M2 9h14M2 13.5h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
+              <Menu size={18} />
             </button>
             <img src={logo} alt="Aloha WebCalculator" className="topbar-logo" />
             <span className="topbar-brand">Aloha WebCalculator</span>
@@ -1435,20 +1431,14 @@ export default function QuoteBuilder() {
             >
               {saved ? (
                 <>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M2 7l3.5 3.5L12 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <Check size={14} />
                   Saved
                 </>
               ) : saving ? (
                 "Saving…"
               ) : (
                 <>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M11 2H4L2 4v8h10V3l-1-1z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-                    <rect x="5" y="8" width="4" height="4" rx="0.5" stroke="currentColor" strokeWidth="1.2" />
-                    <path d="M5 2v3h4V2" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-                  </svg>
+                  <Save size={14} />
                   {isUnsavedNew ? "Save Quote" : "Save"}
                 </>
               )}
@@ -1466,10 +1456,7 @@ export default function QuoteBuilder() {
                 <span style={{ color: "#ef4444" }}>⚠ Export failed</span>
               ) : (
                 <>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M7 2v7M4.5 6.5L7 9l2.5-2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M2 11h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
+                  <Download size={14} />
                   Export
                 </>
               )}
@@ -1580,9 +1567,7 @@ export default function QuoteBuilder() {
                           }
                         >
                           <span className={`chevron${allOpen ? " rotated" : ""}`}>
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                              <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
+                            <ChevronDown size={14} />
                           </span>
                         </button>
                       );
@@ -1619,11 +1604,7 @@ export default function QuoteBuilder() {
                   </div>
                   {quote.groups.length === 0 && (
                     <div className="empty-groups">
-                      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" opacity="0.3">
-                        <rect x="5" y="10" width="30" height="22" rx="3" stroke="currentColor" strokeWidth="1.5" />
-                        <path d="M5 16h30" stroke="currentColor" strokeWidth="1.5" />
-                        <path d="M12 22h8M12 26h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
+                      <FileText size={40} style={{ opacity: 0.3 }} />
                       <p>No groups yet. Add a product group to start building your quote.</p>
                     </div>
                   )}
@@ -1633,9 +1614,7 @@ export default function QuoteBuilder() {
                       className="btn-add-group"
                       onClick={() => setShowAddGroup(true)}
                     >
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
+                      <Plus size={14} />
                       Add Product Group
                     </button>
                   )}
@@ -1668,9 +1647,7 @@ export default function QuoteBuilder() {
                             setShowAmendModal(true);
                           }}
                         >
-                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                            <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
+                          <Pencil size={13} />
                           Amend
                         </button>
                       )}
@@ -1725,9 +1702,7 @@ export default function QuoteBuilder() {
                             setShowAmendModal(true);
                           }}
                         >
-                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                            <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
+                          <Pencil size={13} />
                           Amend
                         </button>
                       </div>

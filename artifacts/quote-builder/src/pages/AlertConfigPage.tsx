@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 import { RichTextEditor, RichTextDisplay, stripHtml } from "@/components/RichTextEditor";
+import { X, Pencil, Copy, Trash2 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -159,9 +160,7 @@ function AlertModal({ config, products, onClose, onSaved, isDuplicate = false }:
         <div className="admin-modal-header">
           <h3>{isEdit ? "Edit Alert" : isDuplicate ? "Duplicate Alert" : "Add Alert"}</h3>
           <button className="edit-modal-close" onClick={onClose} aria-label="Close">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
+            <X size={15} />
           </button>
         </div>
 
@@ -335,9 +334,7 @@ function DeleteModal({ config, onClose, onDeleted }: { config: AlertConfig; onCl
         <div className="admin-modal-header">
           <h3>Delete Alert</h3>
           <button className="edit-modal-close" onClick={onClose} aria-label="Close">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
+            <X size={15} />
           </button>
         </div>
         <div className="admin-modal-body">
@@ -518,22 +515,15 @@ export default function AlertConfigPage() {
                   <td>
                     <div className="admin-actions">
                       <button className="admin-btn-edit" onClick={() => setEditTarget(cfg)}>
-                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                          <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                        <Pencil size={12} />
                         Edit
                       </button>
                       <button className="admin-btn-edit" onClick={() => setDuplicateTarget(cfg)} title="Duplicate this alert">
-                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                          <rect x="5" y="5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                          <path d="M3 11V3.5A1.5 1.5 0 0 1 4.5 2H11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                        </svg>
+                        <Copy size={12} />
                         Duplicate
                       </button>
                       <button className="admin-btn-delete" onClick={() => setDeleteTarget(cfg)}>
-                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                          <path d="M3 4h10M5 4V2.5h6V4M6 7v4M10 7v4M4 4l.5 9.5h7L12 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                        <Trash2 size={12} />
                         Delete
                       </button>
                     </div>

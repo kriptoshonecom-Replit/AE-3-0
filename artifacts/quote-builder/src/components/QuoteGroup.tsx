@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { ChevronDown, X, Plus } from "lucide-react";
 import type { QuoteGroup as QuoteGroupType, ProductCategory, QuoteLineItem } from "../types";
 import { groupSubtotal, formatCurrency, generateId } from "../utils/calculations";
 import { getAdditionalExcludedIds, computeLineItemTotal, isTieredItem } from "../utils/quoteLogic";
@@ -92,9 +93,7 @@ export default function QuoteGroup({ group, catalog, onChange, onRemove, tieredA
             >⠿</span>
           )}
           <span className={`chevron ${isOpen ? "rotated" : ""}`}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <ChevronDown size={14} />
           </span>
           <span className="group-name">{group.categoryName}</span>
           {group.lineItems.length > 0 && (
@@ -109,9 +108,7 @@ export default function QuoteGroup({ group, catalog, onChange, onRemove, tieredA
             onClick={(e) => { e.stopPropagation(); onRemove(); }}
             title="Remove group"
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+            <X size={14} />
           </button>
         </div>
       </button>
@@ -166,9 +163,7 @@ export default function QuoteGroup({ group, catalog, onChange, onRemove, tieredA
             const allUsed = cat ? selectedIds.length >= cat.items.length : false;
             return !allUsed ? (
               <button className="btn-add-line" type="button" onClick={addLine}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
+                <Plus size={14} />
                 Add item
               </button>
             ) : null;
@@ -379,9 +374,7 @@ function LineItemRow({ item, catalog, groupId, usedProductIds, onProductChange, 
 
         <div className="col-actions">
           <button type="button" className="btn-icon danger" onClick={onRemove} title="Remove item">
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
+            <X size={13} />
           </button>
         </div>
       </div>

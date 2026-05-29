@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { X } from "lucide-react";
 import type { CustomerProfile } from "../pages/CDMPage";
 import { formatPhoneUS } from "../utils/phone";
 
@@ -81,9 +82,7 @@ export default function AddCustomerModal({ onClose, onCreated }: Props) {
         <div className="admin-modal-header">
           <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>Add Customer</h3>
           <button type="button" className="btn-icon" onClick={onClose} style={{ marginLeft: "auto" }}>
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+            <X size={13} />
           </button>
         </div>
 

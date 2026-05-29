@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { X } from "lucide-react";
 import type { ProductCategory } from "../types";
 
 interface Props {
@@ -17,9 +18,7 @@ export default function AddGroupModal({ catalog, existingGroupIds, onAdd, onClos
         <div className="modal-header">
           <span>Add Product Group</span>
           <button type="button" className="btn-icon" onClick={onClose}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+            <X size={14} />
           </button>
         </div>
 

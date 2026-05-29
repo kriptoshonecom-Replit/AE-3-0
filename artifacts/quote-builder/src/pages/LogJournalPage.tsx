@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
+import { RefreshCw } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -123,10 +124,7 @@ export default function LogJournalPage() {
         <h1 className="admin-page-title">Log Journals</h1>
         <div className="admin-topbar-right">
           <button className="btn-ghost" onClick={fetchData} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-              <path d="M1 8a7 7 0 1 0 7-7 7 7 0 0 0-5 2.1L1 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M1 2v3h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <RefreshCw size={13} />
             Refresh
           </button>
         </div>

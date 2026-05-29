@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
+import { Eye, EyeOff, Check, Mail, X, Search, RefreshCw, Pencil, Trash2 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -23,16 +24,7 @@ function pwChecks(pw: string) {
 }
 
 function EyeIcon({ open }: { open: boolean }) {
-  return open ? (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-    </svg>
-  ) : (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19M1 1l22 22" />
-      <path d="M10.73 10.73A2 2 0 0 0 12 14a2 2 0 0 0 1.27-3.27" />
-    </svg>
-  );
+  return open ? <Eye size={15} /> : <EyeOff size={15} />;
 }
 
 interface NewUserModalProps {
@@ -85,9 +77,7 @@ function NewUserModal({ onClose, onCreated }: NewUserModalProps) {
         <div className="admin-modal-header">
           <h3>New User</h3>
           <button className="edit-modal-close" onClick={onClose} aria-label="Close">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
+            <X size={15} />
           </button>
         </div>
 
@@ -146,27 +136,25 @@ function NewUserModal({ onClose, onCreated }: NewUserModalProps) {
             {(pwTouched || password.length > 0) && (
               <ul className="auth-pw-rules" style={{ marginTop: 6 }}>
                 <li className={checks.length ? "pw-ok" : "pw-fail"}>
-                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <Check size={11} />
                   At least 8 characters
                 </li>
                 <li className={checks.letter ? "pw-ok" : "pw-fail"}>
-                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <Check size={11} />
                   At least one letter
                 </li>
                 <li className={checks.number ? "pw-ok" : "pw-fail"}>
-                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <Check size={11} />
                   At least one number
                 </li>
                 <li className={checks.special ? "pw-ok" : "pw-fail"}>
-                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <Check size={11} />
                   At least one special character
                 </li>
               </ul>
             )}
             <p className="nu-email-note">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                <path d="M2 4l6 5 6-5M2 4h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <Mail size={12} />
               Login credentials will be emailed to the user after account creation.
             </p>
           </div>
@@ -239,9 +227,7 @@ function EditUserModal({ user, onClose, onSaved }: EditUserModalProps) {
         <div className="admin-modal-header">
           <h3>Edit User</h3>
           <button className="edit-modal-close" onClick={onClose} aria-label="Close">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
+            <X size={15} />
           </button>
         </div>
         <form className="admin-modal-body" onSubmit={handleSave} noValidate>
@@ -285,16 +271,16 @@ function EditUserModal({ user, onClose, onSaved }: EditUserModalProps) {
             {changingPw && (
               <ul className="auth-pw-rules" style={{ marginTop: 6 }}>
                 <li className={checks.length ? "pw-ok" : "pw-fail"}>
-                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg> At least 8 characters
+                  <Check size={11} /> At least 8 characters
                 </li>
                 <li className={checks.letter ? "pw-ok" : "pw-fail"}>
-                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg> At least one letter
+                  <Check size={11} /> At least one letter
                 </li>
                 <li className={checks.number ? "pw-ok" : "pw-fail"}>
-                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg> At least one number
+                  <Check size={11} /> At least one number
                 </li>
                 <li className={checks.special ? "pw-ok" : "pw-fail"}>
-                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg> At least one special character
+                  <Check size={11} /> At least one special character
                 </li>
               </ul>
             )}
@@ -362,9 +348,7 @@ export default function UsersPage() {
             disabled={loading}
             title="Reload user list"
           >
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ marginRight: 4 }}>
-              <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.8 0 3.4.87 4.4 2.2M13.5 2v3.5H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <RefreshCw size={13} style={{ marginRight: 4 }} />
             Refresh
           </button>
           <button className="edit-modal-save" style={{ padding: "7px 14px", fontSize: "13px" }} onClick={() => setCreatingNew(true)}>
@@ -376,10 +360,7 @@ export default function UsersPage() {
       <div className="admin-content">
         <div className="admin-toolbar">
           <div className="ql-search-wrap admin-search">
-            <svg className="ql-search-icon" width="13" height="13" viewBox="0 0 14 14" fill="none">
-              <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.4" />
-              <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
+            <Search size={13} className="ql-search-icon" />
             <input
               type="text"
               className="ql-search"
@@ -426,16 +407,12 @@ export default function UsersPage() {
                     <td>
                       <div className="admin-actions">
                         <button className="admin-btn-edit" onClick={() => setEditing(u)} title="Edit user">
-                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                            <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
+                          <Pencil size={13} />
                           Edit
                         </button>
                         {u.id !== me?.id && (
                           <button className="admin-btn-delete" onClick={() => handleDelete(u)} title="Delete user">
-                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                              <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M13 4l-1 9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L3 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
+                            <Trash2 size={13} />
                             Delete
                           </button>
                         )}

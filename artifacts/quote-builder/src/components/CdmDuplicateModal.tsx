@@ -1,3 +1,4 @@
+import { User } from "lucide-react";
 import type { CustomerProfile } from "../pages/CDMPage";
 
 interface Props {
@@ -19,15 +20,7 @@ export default function CdmDuplicateModal({ match, onUseRecord, onKeepGoing }: P
     >
       <div className="cdm-dup-modal" onMouseDown={(e) => e.stopPropagation()}>
         <div className="cdm-dup-header">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <circle cx="9" cy="5.5" r="2.5" stroke="currentColor" strokeWidth="1.5" />
-            <path
-              d="M3 15.5c0-3.314 2.686-6 6-6s6 2.686 6 6"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
+          <User size={18} />
           Similar entry exists within CDM records
         </div>
 

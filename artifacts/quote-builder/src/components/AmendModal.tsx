@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import type { Quote } from "../types";
+import { X, Plus } from "lucide-react";
 import { computeLineItemTotal } from "../utils/quoteLogic";
 import { formatCurrency, generateId } from "../utils/calculations";
 import productsData from "../data/products.json";
@@ -294,9 +295,7 @@ export default function AmendModal({
             </p>
           </div>
           <button className="edit-modal-close" type="button" onClick={onClose} aria-label="Close">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
+            <X size={15} />
           </button>
         </div>
 
@@ -453,9 +452,7 @@ export default function AmendModal({
                 disabled={!pickerProductId || pickerQty < 1}
                 title="Add product to amendment"
               >
-                <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                  <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                </svg>
+                <Plus size={12} />
                 Add
               </button>
             </div>
@@ -496,9 +493,7 @@ export default function AmendModal({
                               onClick={() => setAddedItems((prev) => prev.filter((i) => i.id !== item.id))}
                               title="Remove"
                             >
-                              <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
-                                <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                              </svg>
+                              <X size={10} />
                             </button>
                           </td>
                         </tr>
