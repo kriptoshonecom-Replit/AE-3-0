@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { AlertTriangle, Menu, Check, Save, Download, ChevronDown, FileText, Plus, Pencil } from "lucide-react";
-import { createPortal } from "react-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useGlobalNav } from "@/context/GlobalNavContext";
+import { useSidebarQuoteContext } from "@/context/SidebarQuoteContext";
 import { useLocation } from "wouter";
 import logo from "/logo.png";
 import type { Quote, QuoteGroup, QuoteLineItem, QuoteMeta, ProductCategory, PitCategory } from "../types";
@@ -32,7 +32,6 @@ import PitSection from "../components/PitSection";
 import ProductRelatedPitSection, { computeProductRelatedPitTotal, computeProductRelatedPitHours, buildProductCatalogMap, type ProductCatalogMap } from "../components/ProductRelatedPitSection";
 import QuoteGroupComponent from "../components/QuoteGroup";
 import QuoteSummary from "../components/QuoteSummary";
-import QuoteList from "../components/QuoteList";
 import AddGroupModal from "../components/AddGroupModal";
 import AmendModal from "../components/AmendModal";
 import { saveQuote, loadAllQuotes, getActiveQuoteId, loadQuote, consumePendingOpenQuote, markQuotesSynced, pruneSyncedIds, deleteQuote } from "../utils/storage";
@@ -157,6 +156,7 @@ export default function QuoteBuilder() {
   // The quote passed into AmendModal — fetched fresh from server on button click
   const [amendQuote, setAmendQuote] = useState<Quote | null>(null);
   const { open: sidebarOpen, setOpen: setSidebarOpen } = useGlobalNav();
+  const { setActiveState, callbacksRef } = useSidebarQuoteContext();
   const [activeTab, setActiveTab] = useState(0);
   const [slideDir, setSlideDir] = useState<"left" | "right" | null>(null);
   const touchStartX = useRef(0);
@@ -1243,6 +1243,24 @@ export default function QuoteBuilder() {
     setSidebarOpen(false);
   };
 
+  // Keep GlobalNav sidebar in sync with current QuoteBuilder state
+  callbacksRef.current = {
+    onSelect: handleSelectQuote,
+    onNew: handleNewQuote,
+    onDuplicate: handleDuplicateQuote,
+  };
+
+  useEffect(() => {
+    setActiveState({ currentId: quote.meta.id, currentStatus: stampStatus, refreshTrigger });
+  }, [quote.meta.id, stampStatus, refreshTrigger, setActiveState]);
+
+  useEffect(() => {
+    return () => {
+      setActiveState(null);
+      callbacksRef.current = null;
+    };
+  }, [setActiveState, callbacksRef]);
+
   const existingGroupIds = quote.groups.map((g) => g.categoryId);
   const allGroupsAdded = existingGroupIds.length >= productCategories.length;
 
@@ -1389,21 +1407,6 @@ export default function QuoteBuilder() {
         </div>
       )}
 
-      {createPortal(
-        <QuoteList
-          currentId={quote.meta.id}
-          currentStatus={stampStatus}
-          onSelect={handleSelectQuote}
-          onNew={handleNewQuote}
-          onDuplicate={handleDuplicateQuote}
-          refreshTrigger={refreshTrigger}
-          userId={userId}
-          userFullName={user?.fullName}
-          isAdmin={user?.role === "admin"}
-          apiBase={API_BASE}
-        />,
-        document.getElementById("global-sidebar-slot") ?? document.body
-      )}
 
       {/* Main */}
       <div className="main">

@@ -3,6 +3,7 @@ import { Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { GlobalNavProvider } from "@/context/GlobalNavContext";
+import { SidebarQuoteProvider } from "@/context/SidebarQuoteContext";
 import GlobalNav from "@/components/GlobalNav";
 import QuoteBuilder from "@/pages/QuoteBuilder";
 import SignInPage from "@/pages/SignInPage";
@@ -66,6 +67,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AppRoutes() {
   return (
     <GlobalNavProvider>
+    <SidebarQuoteProvider>
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
         <GlobalNav />
@@ -116,6 +118,7 @@ function AppRoutes() {
         </Switch>
       </QueryClientProvider>
     </AuthProvider>
+    </SidebarQuoteProvider>
     </GlobalNavProvider>
   );
 }

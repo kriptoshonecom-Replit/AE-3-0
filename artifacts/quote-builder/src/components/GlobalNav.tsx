@@ -1,7 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
 import { useGlobalNav } from "@/context/GlobalNavContext";
+import { useSidebarQuoteContext } from "@/context/SidebarQuoteContext";
+import QuoteList from "./QuoteList";
+import { setPendingOpenQuote } from "../utils/storage";
+import type { Quote } from "../types";
 import {
   Home, LayoutDashboard, UserPlus, Package, Building2,
   FileImage, Bell, BadgeCheck, BookOpen, ScrollText,
@@ -14,7 +18,15 @@ export default function GlobalNav() {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
   const { open, setOpen } = useGlobalNav();
+  const { activeState, callbacksRef } = useSidebarQuoteContext();
   const [appVersion, setAppVersion] = useState<string | null>(null);
+  const lastRefreshTrigger = useRef(0);
+
+  useEffect(() => {
+    if (activeState?.refreshTrigger != null) {
+      lastRefreshTrigger.current = activeState.refreshTrigger;
+    }
+  }, [activeState?.refreshTrigger]);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/app-version`)
@@ -25,6 +37,33 @@ export default function GlobalNav() {
 
   useEffect(() => { setOpen(false); }, [location, setOpen]);
 
+  const userId = user?.id ?? "";
+
+  const handleSelect = useCallback((q: Quote) => {
+    if (callbacksRef.current?.onSelect) {
+      callbacksRef.current.onSelect(q);
+      setOpen(false);
+    } else {
+      if (userId) setPendingOpenQuote(q, userId);
+      setLocation("/");
+    }
+  }, [callbacksRef, userId, setOpen, setLocation]);
+
+  const handleNew = useCallback(() => {
+    if (callbacksRef.current?.onNew) {
+      callbacksRef.current.onNew();
+      setOpen(false);
+    } else {
+      setLocation("/");
+    }
+  }, [callbacksRef, setOpen, setLocation]);
+
+  const handleDuplicate = useCallback(async (q: Quote) => {
+    if (callbacksRef.current?.onDuplicate) {
+      await callbacksRef.current.onDuplicate(q);
+    }
+  }, [callbacksRef]);
+
   if (!user) return null;
 
   function go(path: string) {
@@ -33,6 +72,13 @@ export default function GlobalNav() {
   }
 
   const isAdmin = user.role === "admin";
+  const refreshTrigger = activeState?.refreshTrigger ?? lastRefreshTrigger.current;
+  const currentId = activeState?.currentId ?? "";
+  const currentStatus = activeState?.currentStatus;
+
+  function navLink(path: string) {
+    return `sidebar-admin-link${location === path ? " active" : ""}`;
+  }
 
   return (
     <>
@@ -57,25 +103,38 @@ export default function GlobalNav() {
             </button>
           </div>
 
-          {/* Sidebar slot — QuoteBuilder portals QuoteList here */}
-          <div id="global-sidebar-slot" className="sidebar-slot" />
+          {/* Quote list — always visible on every page */}
+          <div className="sidebar-slot">
+            <QuoteList
+              currentId={currentId}
+              currentStatus={currentStatus}
+              onSelect={handleSelect}
+              onNew={handleNew}
+              onDuplicate={activeState ? handleDuplicate : undefined}
+              refreshTrigger={refreshTrigger}
+              userId={userId}
+              userFullName={user.fullName}
+              isAdmin={isAdmin}
+              apiBase={API_BASE}
+            />
+          </div>
 
           {/* Nav links — regular user */}
           {!isAdmin && (
             <div className="sidebar-user-links">
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/")}>
+              <button type="button" className={navLink("/")} onClick={() => go("/")}>
                 <Home size={16} />
                 Quote Builder
               </button>
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/my-quotes")}>
+              <button type="button" className={navLink("/my-quotes")} onClick={() => go("/my-quotes")}>
                 <BookMarked size={16} />
                 My Quote Library
               </button>
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/amendments")}>
+              <button type="button" className={navLink("/amendments")} onClick={() => go("/amendments")}>
                 <PenLine size={16} />
                 Amendments
               </button>
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/customers")}>
+              <button type="button" className={navLink("/customers")} onClick={() => go("/customers")}>
                 <Users size={16} />
                 Customers
               </button>
@@ -85,55 +144,55 @@ export default function GlobalNav() {
           {/* Nav links — admin */}
           {isAdmin && (
             <div className="sidebar-admin-links">
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/")}>
+              <button type="button" className={navLink("/")} onClick={() => go("/")}>
                 <Home size={16} />
                 Quote Builder
               </button>
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/dashboard")}>
+              <button type="button" className={navLink("/admin/dashboard")} onClick={() => go("/admin/dashboard")}>
                 <LayoutDashboard size={16} />
                 Dashboard
               </button>
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/users")}>
+              <button type="button" className={navLink("/admin/users")} onClick={() => go("/admin/users")}>
                 <UserPlus size={16} />
                 Users
               </button>
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/products")}>
+              <button type="button" className={navLink("/admin/products")} onClick={() => go("/admin/products")}>
                 <Package size={16} />
                 Products Configuration
               </button>
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/pit")}>
+              <button type="button" className={navLink("/admin/pit")} onClick={() => go("/admin/pit")}>
                 <Building2 size={16} />
                 PIT Configuration
               </button>
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/media")}>
+              <button type="button" className={navLink("/admin/media")} onClick={() => go("/admin/media")}>
                 <FileImage size={16} />
                 Media Files
               </button>
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/alerts")}>
+              <button type="button" className={navLink("/admin/alerts")} onClick={() => go("/admin/alerts")}>
                 <Bell size={16} />
                 Alert Configuration
               </button>
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/status-pass")}>
+              <button type="button" className={navLink("/admin/status-pass")} onClick={() => go("/admin/status-pass")}>
                 <BadgeCheck size={16} />
                 StatusPass Config
               </button>
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/quote-library")}>
+              <button type="button" className={navLink("/admin/quote-library")} onClick={() => go("/admin/quote-library")}>
                 <BookOpen size={16} />
                 Quote Library
               </button>
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/log-journal")}>
+              <button type="button" className={navLink("/admin/log-journal")} onClick={() => go("/admin/log-journal")}>
                 <ScrollText size={16} />
                 Log Journals
               </button>
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/admin/app-release")}>
+              <button type="button" className={navLink("/admin/app-release")} onClick={() => go("/admin/app-release")}>
                 <Rocket size={16} />
                 App Release
               </button>
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/amendments")}>
+              <button type="button" className={navLink("/amendments")} onClick={() => go("/amendments")}>
                 <PenLine size={16} />
                 Amendments
               </button>
-              <button type="button" className="sidebar-admin-link" onClick={() => go("/customers")}>
+              <button type="button" className={navLink("/customers")} onClick={() => go("/customers")}>
                 <Users size={16} />
                 Customers
               </button>

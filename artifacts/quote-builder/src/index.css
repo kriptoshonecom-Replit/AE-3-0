@@ -3477,12 +3477,19 @@ textarea:focus::placeholder {
   color: var(--accent);
 }
 
+.sidebar-admin-link.active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  font-weight: 600;
+}
+
 .sidebar-admin-link svg {
   flex-shrink: 0;
   opacity: 0.7;
 }
 
-.sidebar-admin-link:hover svg {
+.sidebar-admin-link:hover svg,
+.sidebar-admin-link.active svg {
   opacity: 1;
 }
 
