@@ -262,14 +262,20 @@ export default function MyQuoteLibraryPage() {
     const map = new Map<string, {
       key: string;
       companyName: string;
+      mcn: string | null;
       rows: UserQuoteRow[];
     }>();
     for (const row of filtered) {
       const key = (row.companyName || row.customerName || "(No Name)").trim();
       if (!map.has(key)) {
-        map.set(key, { key, companyName: key, rows: [] });
+        map.set(key, { key, companyName: key, mcn: null, rows: [] });
       }
-      map.get(key)!.rows.push(row);
+      const grp = map.get(key)!;
+      grp.rows.push(row);
+      if (!grp.mcn) {
+        const mcn = (row.data?.meta?.mcn ?? "").trim();
+        if (mcn) grp.mcn = mcn;
+      }
     }
     return [...map.values()];
   }, [filtered]);
@@ -345,7 +351,15 @@ export default function MyQuoteLibraryPage() {
                       size={14}
                     />
 
-                    <span className="amend-accordion-title">{group.companyName}</span>
+                    <span className="amend-accordion-title">
+                      {group.mcn && (
+                        <span style={{ color: "var(--text-3)", fontWeight: 500, marginRight: 6 }}>
+                          MCN: {group.mcn}
+                        </span>
+                      )}
+                      {group.mcn && <span style={{ color: "var(--text-3)", marginRight: 6 }}>|</span>}
+                      {group.companyName}
+                    </span>
 
                     <span className="amend-accordion-meta">
                       <span className="amend-accordion-count">
