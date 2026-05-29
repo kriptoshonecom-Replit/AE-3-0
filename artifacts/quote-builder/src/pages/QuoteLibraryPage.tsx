@@ -509,11 +509,11 @@ export default function QuoteLibraryPage() {
                                       className="admin-btn-edit"
                                       onClick={() => setEditRow(row)}
                                       title="Edit quote metadata (status, numbers)"
-                                      style={{ padding: "4px 7px" }}
                                     >
                                       <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
                                         <path d="M11.5 1.5a2.121 2.121 0 0 1 3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                                       </svg>
+                                      Edit
                                     </button>
                                     <button
                                       type="button"
