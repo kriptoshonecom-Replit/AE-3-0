@@ -7624,7 +7624,7 @@ select.cdm-cell-input {
 /* Unified card grid — stat cards + KPI cards same width/height */
 .cdm-cards-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
   flex: 1;
   min-width: 0;
