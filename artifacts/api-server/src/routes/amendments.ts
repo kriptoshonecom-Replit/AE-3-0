@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { amendmentsTable, usersTable } from "@workspace/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 import { requireAdmin } from "../middlewares/requireAdmin";
 import { logger } from "../lib/logger";
@@ -199,6 +199,25 @@ router.delete("/amendments/:id", requireAuth, async (req, res) => {
   } catch (err) {
     logger.error(err, "DELETE /amendments/:id error");
     res.status(500).json({ error: "Failed to delete amendment" });
+  }
+});
+
+/* GET /api/amendments/for-customer?quoteIds=id1,id2,... — all amendments for given quote IDs (any authenticated user) */
+router.get("/amendments/for-customer", requireAuth, async (req, res) => {
+  const { quoteIds } = req.query as { quoteIds?: string };
+  if (!quoteIds?.trim()) { res.json({ amendments: [] }); return; }
+  const ids = quoteIds.split(",").map(s => s.trim()).filter(Boolean);
+  if (ids.length === 0) { res.json({ amendments: [] }); return; }
+  try {
+    const rows = await db
+      .select()
+      .from(amendmentsTable)
+      .where(inArray(amendmentsTable.originalQuoteId, ids))
+      .orderBy(amendmentsTable.createdAt);
+    res.json({ amendments: rows });
+  } catch (err) {
+    logger.error(err, "GET /amendments/for-customer error");
+    res.status(500).json({ error: "Failed to load amendments" });
   }
 });
 

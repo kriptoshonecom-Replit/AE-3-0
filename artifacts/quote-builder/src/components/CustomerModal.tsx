@@ -260,13 +260,19 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
     if (amendsLoading) return;
     setAmendsLoading(true);
     try {
-      const endpoint = isAdmin
-        ? `${API_BASE}/api/admin/amendments`
-        : `${API_BASE}/api/amendments`;
+      let endpoint: string;
+      if (isAdmin) {
+        endpoint = `${API_BASE}/api/admin/amendments`;
+      } else {
+        const ids = [...quoteIds].join(",");
+        if (!ids) { setAmendments([]); setAmendsLoading(false); return; }
+        endpoint = `${API_BASE}/api/amendments/for-customer?quoteIds=${encodeURIComponent(ids)}`;
+      }
       const res = await fetch(endpoint, { credentials: "include" });
       if (!res.ok) throw new Error("Failed");
       const d = (await res.json()) as { amendments: AmendmentRow[] };
-      setAmendments(d.amendments.filter(a => quoteIds.has(a.originalQuoteId)));
+      const filtered = isAdmin ? d.amendments.filter(a => quoteIds.has(a.originalQuoteId)) : d.amendments;
+      setAmendments(filtered);
     } catch {
       setAmendments([]);
     } finally {
