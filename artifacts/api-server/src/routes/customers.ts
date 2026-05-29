@@ -443,10 +443,24 @@ router.post("/customers/send-email", requireAuth, async (req, res) => {
       }
     }
 
+    const html = `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#1e293b">
+        <h2 style="color:#7c3aed;margin:0 0 4px">Aloha Essential CPQ 3.0</h2>
+        <p style="color:#64748b;font-size:13px;margin:0 0 28px">Quote Builder Platform</p>
+
+        <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:20px 24px;margin-bottom:24px;font-size:14px;color:#334155;line-height:1.7">
+          ${body.replace(/\n/g, "<br>")}
+        </div>
+
+        <p style="font-size:12px;color:#94a3b8;margin:0">
+          You received this message via Aloha Essential CPQ 3.0.
+        </p>
+      </div>
+    `;
     await sendEmail(
       to,
       subject,
-      `<div style="font-family:sans-serif;line-height:1.7;color:#1e293b">${body.replace(/\n/g, "<br>")}</div>`,
+      html,
       emailAttachments.length ? emailAttachments : undefined,
     );
     res.json({ sent: true });
