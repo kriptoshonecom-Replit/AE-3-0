@@ -7024,6 +7024,11 @@ tr:hover .drag-handle { opacity: 1; }
   overflow: hidden;
   animation: edit-modal-in 0.15s ease;
 }
+@media (min-width: 1024px) {
+  .cdm-modal {
+    width: min(1100px, 96vw);
+  }
+}
 
 /* Modal header */
 .cdm-modal-header {
