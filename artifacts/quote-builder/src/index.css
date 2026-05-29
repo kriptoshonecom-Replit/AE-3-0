@@ -7620,21 +7620,19 @@ select.cdm-cell-input {
   align-items: flex-start;
   flex-wrap: wrap;
 }
-.cdm-dashboard-left {
-  display: flex;
-  gap: 24px;
-  align-items: flex-start;
-  flex-wrap: wrap;
+
+/* Unified card grid — stat cards + KPI cards same width/height */
+.cdm-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
   flex: 1;
   min-width: 0;
+  align-items: stretch;
 }
-.cdm-dashboard-right {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-width: 200px;
-  width: 220px;
-  flex-shrink: 0;
+.cdm-cards-grid .cdm-stat-card {
+  height: 100%;
+  box-sizing: border-box;
 }
 .cdm-donut-wrap {
   display: flex;
@@ -7663,6 +7661,7 @@ select.cdm-cell-input {
 }
 
 /* Stat grid */
+/* .cdm-stat-grid kept for legacy reference — dashboard now uses .cdm-cards-grid */
 .cdm-stat-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

@@ -936,11 +936,16 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
           )}
 
           {/* DASHBOARD */}
-          {tab === "dashboard" && (
-            <div className="cdm-section">
-              <div className="cdm-dashboard">
-                {/* Left column — donut + stat grid */}
-                <div className="cdm-dashboard-left">
+          {tab === "dashboard" && (() => {
+            function fmtRev(n: number) {
+              if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+              if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`;
+              return `$${n.toFixed(0)}`;
+            }
+            return (
+              <div className="cdm-section">
+                <div className="cdm-dashboard">
+                  {/* Donut chart */}
                   <div className="cdm-donut-wrap">
                     <DonutChart pass={customer.passCount} fail={customer.failCount} noStatus={noStatus} />
                     <div className="cdm-donut-legend">
@@ -961,7 +966,8 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                     </div>
                   </div>
 
-                  <div className="cdm-stat-grid">
+                  {/* Unified card grid — stat cards + KPI cards same size */}
+                  <div className="cdm-cards-grid">
                     <div className="cdm-stat-card">
                       <span className="cdm-stat-label">Total Quotes</span>
                       <span className="cdm-stat-value">{customer.quotes.length}</span>
@@ -996,85 +1002,56 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                         {customer.quotes.length > 0 ? formatCurrency(totalMRR / customer.quotes.length) : "—"}
                       </span>
                     </div>
+
+                    {/* Revenue KPI cards — admin only, same card shell */}
+                    {isAdmin && kpisLoading && (
+                      <div className="cdm-stat-card" style={{ gridColumn: "span 3" }}>
+                        <span style={{ color: "var(--text-3)", fontSize: 13 }}>Loading revenue data…</span>
+                      </div>
+                    )}
+                    {isAdmin && custKpis && custKpis.totalPaymentsRevMo > 0 && (
+                      <div className="cdm-stat-card">
+                        <span className="cdm-stat-label">Payments Revenue</span>
+                        <div className="cdm-stat-value" style={{ color: "#16a34a", fontSize: 20 }}>
+                          {fmtRev(custKpis.passPaymentsRevMo)}
+                          <span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-3)" }}>/mo</span>
+                        </div>
+                        <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>
+                          {custKpis.passTotalSites > 0
+                            ? `${fmtRev(custKpis.passPaymentsRevMo / custKpis.passTotalSites)}/site · `
+                            : ""}
+                          {custKpis.passTotalSites} won site{custKpis.passTotalSites !== 1 ? "s" : ""}
+                        </div>
+                        <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap", alignItems: "center" }}>
+                          <span className="db-kpi-pass">Won {fmtRev(custKpis.passPaymentsRevMo)}</span>
+                          <span style={{ fontSize: 11, color: "var(--text-3)" }}>Pipeline {fmtRev(custKpis.totalPaymentsRevMo)}</span>
+                        </div>
+                      </div>
+                    )}
+                    {isAdmin && custKpis && custKpis.totalGatewayRevMo > 0 && (
+                      <div className="cdm-stat-card">
+                        <span className="cdm-stat-label">Gateway Revenue</span>
+                        <div className="cdm-stat-value" style={{ color: "#0369a1", fontSize: 20 }}>
+                          {fmtRev(custKpis.passGatewayRevMo)}
+                          <span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-3)" }}>/mo</span>
+                        </div>
+                        <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>
+                          {custKpis.passTotalSites > 0
+                            ? `${fmtRev(custKpis.passGatewayRevMo / custKpis.passTotalSites)}/site · `
+                            : ""}
+                          {custKpis.passTotalSites} won site{custKpis.passTotalSites !== 1 ? "s" : ""}
+                        </div>
+                        <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap", alignItems: "center" }}>
+                          <span className="db-kpi-pass">Won {fmtRev(custKpis.passGatewayRevMo)}</span>
+                          <span style={{ fontSize: 11, color: "var(--text-3)" }}>Pipeline {fmtRev(custKpis.totalGatewayRevMo)}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                {/* Right column — Payments + Gateway revenue KPI cards */}
-                {isAdmin && (
-                  <div className="cdm-dashboard-right">
-                    {kpisLoading && (
-                      <div style={{ color: "var(--text-3)", fontSize: 13, paddingTop: 8 }}>Loading revenue data…</div>
-                    )}
-                    {custKpis && (() => {
-                      function fmtRev(n: number) {
-                        if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-                        if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`;
-                        return `$${n.toFixed(0)}`;
-                      }
-                      return (
-                        <>
-                          {custKpis.totalPaymentsRevMo > 0 && (
-                            <div className="db-kpi-card">
-                              <div className="db-kpi-header">
-                                <span className="db-kpi-label">Payments Revenue</span>
-                                <span style={{ color: "#16a34a", opacity: 0.75 }}>
-                                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                                    <rect x="2" y="5" width="16" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
-                                    <path d="M2 9h16" stroke="currentColor" strokeWidth="1.5" />
-                                    <path d="M6 13h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                                  </svg>
-                                </span>
-                              </div>
-                              <div className="db-kpi-value" style={{ color: "#16a34a" }}>
-                                {fmtRev(custKpis.passPaymentsRevMo)}<span style={{ fontSize: 13, fontWeight: 400, color: "var(--text-3)" }}>/mo</span>
-                              </div>
-                              <div className="db-kpi-sub">
-                                {custKpis.passTotalSites > 0 ? `${fmtRev(custKpis.passPaymentsRevMo / custKpis.passTotalSites)}/site · ` : ""}
-                                {custKpis.passTotalSites} won site{custKpis.passTotalSites !== 1 ? "s" : ""}
-                              </div>
-                              <div className="db-kpi-breakdown">
-                                <span className="db-kpi-pass">Won {fmtRev(custKpis.passPaymentsRevMo)}</span>
-                                <span style={{ fontSize: 11, color: "var(--text-3)" }}>Pipeline {fmtRev(custKpis.totalPaymentsRevMo)}</span>
-                              </div>
-                            </div>
-                          )}
-                          {custKpis.totalGatewayRevMo > 0 && (
-                            <div className="db-kpi-card">
-                              <div className="db-kpi-header">
-                                <span className="db-kpi-label">Gateway Revenue</span>
-                                <span style={{ color: "#0369a1", opacity: 0.75 }}>
-                                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                                    <path d="M10 2a8 8 0 1 0 0 16A8 8 0 0 0 10 2z" stroke="currentColor" strokeWidth="1.5" />
-                                    <path d="M10 6v4l3 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
-                                </span>
-                              </div>
-                              <div className="db-kpi-value" style={{ color: "#0369a1" }}>
-                                {fmtRev(custKpis.passGatewayRevMo)}<span style={{ fontSize: 13, fontWeight: 400, color: "var(--text-3)" }}>/mo</span>
-                              </div>
-                              <div className="db-kpi-sub">
-                                {custKpis.passTotalSites > 0 ? `${fmtRev(custKpis.passGatewayRevMo / custKpis.passTotalSites)}/site · ` : ""}
-                                {custKpis.passTotalSites} won site{custKpis.passTotalSites !== 1 ? "s" : ""}
-                              </div>
-                              <div className="db-kpi-breakdown">
-                                <span className="db-kpi-pass">Won {fmtRev(custKpis.passGatewayRevMo)}</span>
-                                <span style={{ fontSize: 11, color: "var(--text-3)" }}>Pipeline {fmtRev(custKpis.totalGatewayRevMo)}</span>
-                              </div>
-                            </div>
-                          )}
-                          {custKpis.totalPaymentsRevMo === 0 && custKpis.totalGatewayRevMo === 0 && (
-                            <div style={{ color: "var(--text-3)", fontSize: 12, paddingTop: 8 }}>
-                              No payments or gateway revenue data for this customer.
-                            </div>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </div>
-                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* EMAIL */}
           {tab === "email" && (
