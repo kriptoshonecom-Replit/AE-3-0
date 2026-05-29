@@ -1003,13 +1003,13 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                       </span>
                     </div>
 
-                    {/* Revenue KPI cards — admin only, same card shell */}
-                    {isAdmin && kpisLoading && (
-                      <div className="cdm-stat-card" style={{ gridColumn: "span 3" }}>
+                    {/* Revenue KPI cards — all users */}
+                    {kpisLoading && (
+                      <div className="cdm-stat-card" style={{ gridColumn: "span 4" }}>
                         <span style={{ color: "var(--text-3)", fontSize: 13 }}>Loading revenue data…</span>
                       </div>
                     )}
-                    {isAdmin && custKpis && custKpis.totalPaymentsRevMo > 0 && (
+                    {custKpis && custKpis.totalPaymentsRevMo > 0 && (
                       <div className="cdm-stat-card">
                         <span className="cdm-stat-label">Payments Revenue</span>
                         <div className="cdm-stat-value" style={{ color: "#16a34a", fontSize: 20 }}>
@@ -1028,7 +1028,7 @@ export default function CustomerModal({ customer, isAdmin, onClose, onSaved }: P
                         </div>
                       </div>
                     )}
-                    {isAdmin && custKpis && custKpis.totalGatewayRevMo > 0 && (
+                    {custKpis && custKpis.totalGatewayRevMo > 0 && (
                       <div className="cdm-stat-card">
                         <span className="cdm-stat-label">Gateway Revenue</span>
                         <div className="cdm-stat-value" style={{ color: "#0369a1", fontSize: 20 }}>
