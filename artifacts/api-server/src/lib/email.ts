@@ -131,11 +131,11 @@ export async function sendWelcomeEmail(
       <div style="background:#f8f7ff;border:1px solid #e2d9f3;border-radius:10px;padding:20px 24px;margin-bottom:24px">
         <table style="width:100%;border-collapse:collapse">
           <tr>
-            <td style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#7c3aed;padding:6px 0;width:100px">Email</td>
+            <td style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#7c3aed;padding:6px 12px 6px 0;width:110px">Email:</td>
             <td style="font-size:14px;color:#1e293b;padding:6px 0">${to}</td>
           </tr>
           <tr>
-            <td style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#7c3aed;padding:6px 0">Password</td>
+            <td style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#7c3aed;padding:6px 12px 6px 0">Password:</td>
             <td style="font-size:14px;font-family:monospace;color:#1e293b;padding:6px 0;font-weight:600">${password}</td>
           </tr>
         </table>
