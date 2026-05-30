@@ -206,16 +206,14 @@ export default function AppSettingsPage() {
     <div className="admin-page">
       <div className="admin-topbar">
         <GlobalNavTrigger />
-        <div className="admin-topbar-title">
-          App Settings
-        </div>
+        <h1 className="admin-page-title">App Settings</h1>
       </div>
 
-      <div className="admin-body" style={{ maxWidth: 720, margin: "0 auto", paddingTop: 24 }}>
+      <div className="admin-body app-settings-body">
 
         {/* App Name */}
         <Section icon={<Type size={17} />} title="App Name" description="Changes the name shown in the navbar, PDF exports, and emails.">
-          <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+          <div className="app-settings-name-row">
             <label className="lib-label" style={{ flex: 1, margin: 0 }}>
               Application name
               <input
@@ -228,7 +226,7 @@ export default function AppSettingsPage() {
               />
             </label>
             <button
-              className="edit-modal-save"
+              className="edit-modal-save app-settings-save-btn"
               style={{ flexShrink: 0, height: 38, display: "flex", alignItems: "center", gap: 6 }}
               onClick={saveAppName}
               disabled={nameSaving || !appName.trim()}
@@ -257,7 +255,7 @@ export default function AppSettingsPage() {
           title="Brand Logos"
           description="Main logo used in headers, PDF exports, and emails. Small logo used as favicon (1:1, max 50×50 px)."
         >
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+          <div className="app-settings-logos-grid">
             {/* Main logo */}
             <div>
               <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-2)", marginBottom: 10 }}>
@@ -415,7 +413,7 @@ export default function AppSettingsPage() {
           <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-2)", marginBottom: 8 }}>
             Quote Builder Groups
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 18 }}>
+          <div className="app-settings-groups-grid" style={{ marginBottom: 18 }}>
             {allCategories.map((cat) => {
               const enabled = !disabledGroups.has(cat.id);
               return (
@@ -459,7 +457,7 @@ export default function AppSettingsPage() {
           <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-2)", marginBottom: 8, marginTop: 6 }}>
             PIT Configuration
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+          <div className="app-settings-groups-grid">
             {allPitCategories.map((cat) => {
               const key = `pit-${cat.id}`;
               const enabled = !disabledGroups.has(key);

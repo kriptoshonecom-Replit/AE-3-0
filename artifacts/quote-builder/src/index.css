@@ -7870,3 +7870,71 @@ select.cdm-cell-input {
   color: var(--text-3, #9ca3af);
   margin-bottom: 10px;
 }
+
+/* ══════════════════════════════════════════════════════════
+   APP SETTINGS PAGE
+   ══════════════════════════════════════════════════════════ */
+
+.app-settings-body {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 24px;
+}
+
+.app-settings-name-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.app-settings-logos-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.app-settings-groups-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+@media (max-width: 640px) {
+  .app-settings-body {
+    padding: 14px 14px;
+  }
+
+  /* Section cards: tighter padding */
+  .app-settings-body > div {
+    padding: 16px 14px !important;
+    margin-bottom: 14px !important;
+  }
+
+  /* Logo and group grids collapse to single column */
+  .app-settings-logos-grid,
+  .app-settings-groups-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Logo preview boxes: shorter on mobile */
+  .app-settings-logos-grid .logo-preview-box {
+    height: 90px;
+  }
+
+  /* App name row: stack input above button */
+  .app-settings-name-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .app-settings-save-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Accent color buttons: smaller on mobile */
+  .app-settings-body .accent-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+}
