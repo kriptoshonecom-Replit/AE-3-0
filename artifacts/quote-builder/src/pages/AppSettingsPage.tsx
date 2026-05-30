@@ -203,11 +203,23 @@ export default function AppSettingsPage() {
             </label>
             <button
               className="edit-modal-save"
-              style={{ flexShrink: 0, height: 38 }}
+              style={{ flexShrink: 0, height: 38, display: "flex", alignItems: "center", gap: 6 }}
               onClick={saveAppName}
               disabled={nameSaving || !appName.trim()}
             >
-              {nameSaving ? <RefreshCw size={13} className="spin" /> : "Save"}
+              {nameSaving ? (
+                <RefreshCw size={13} className="spin" />
+              ) : (
+                <>
+                  Save
+                  {appName.trim() !== settings.appName && (
+                    <span style={{
+                      width: 7, height: 7, borderRadius: "50%",
+                      background: "var(--accent)", display: "inline-block", flexShrink: 0,
+                    }} />
+                  )}
+                </>
+              )}
             </button>
           </div>
           {nameMsg && <div style={{ marginTop: 8 }}><SaveMsg msg={nameMsg} /></div>}
