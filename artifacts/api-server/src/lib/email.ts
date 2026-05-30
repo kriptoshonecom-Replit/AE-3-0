@@ -164,6 +164,58 @@ export async function sendWelcomeEmail(
   await send(to, subject, html);
 }
 
+export async function sendPasswordResetEmail(
+  to: string,
+  fullName: string,
+  newPassword: string,
+): Promise<void> {
+  const subject = "Aloha WebCalculator — Password Reset";
+  const loginUrl = `${getAppUrl()}/sign-in`;
+
+  const html = `
+    <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#1e293b">
+      <h2 style="color:#7c3aed;margin:0 0 4px">Aloha WebCalculator</h2>
+      <p style="color:#64748b;font-size:13px;margin:0 0 28px">Quote Builder Platform</p>
+
+      <p style="font-size:15px;margin:0 0 16px">Hi <strong>${fullName}</strong>,</p>
+      <p style="font-size:14px;color:#334155;margin:0 0 24px">
+        A password reset was requested for your account. Use the temporary password below to sign in,
+        then change it from your profile settings.
+      </p>
+
+      <div style="background:#f8f7ff;border:1px solid #e2d9f3;border-radius:10px;padding:20px 24px;margin-bottom:24px">
+        <table style="width:100%;border-collapse:collapse">
+          <tr>
+            <td style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#7c3aed;padding:6px 12px 6px 0;width:110px">Email:</td>
+            <td style="font-size:14px;color:#1e293b;padding:6px 0">${to}</td>
+          </tr>
+          <tr>
+            <td style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#7c3aed;padding:6px 12px 6px 0">Password:</td>
+            <td style="font-size:14px;font-family:monospace;color:#1e293b;padding:6px 0;font-weight:600">${newPassword}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div style="text-align:center;margin-bottom:28px">
+        <a href="${loginUrl}"
+           style="display:inline-block;background:#7c3aed;color:#ffffff;font-size:15px;font-weight:600;
+                  text-decoration:none;padding:13px 32px;border-radius:8px;letter-spacing:0.01em">
+          Sign in to Aloha CPQ →
+        </a>
+      </div>
+
+      <p style="font-size:13px;color:#64748b;margin:0 0 8px">
+        For your security, please change this password immediately after signing in.
+      </p>
+      <p style="font-size:13px;color:#94a3b8;margin:0">
+        If you didn't request a password reset, please contact your administrator immediately.
+      </p>
+    </div>
+  `;
+
+  await send(to, subject, html);
+}
+
 export async function sendReleaseNotification(
   to: string,
   subject: string,

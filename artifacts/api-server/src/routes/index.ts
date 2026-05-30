@@ -15,12 +15,14 @@ import adminDashboardRouter from "./adminDashboard";
 import amendmentsRouter from "./amendments";
 import customersRouter from "./customers";
 import savePdfRouter from "./savePdf";
+import appSettingsRouter from "./appSettings";
 
 const router: IRouter = Router();
 
 // ── Public / no-auth routes first ───────────────────────────────────────────
 router.use(healthRouter);
 router.use("/auth", authRouter);
+router.use(appSettingsRouter);
 router.use(alertConfigsRouter);
 router.use(statusPassRouter);
 router.use(productsRouter);

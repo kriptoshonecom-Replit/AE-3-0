@@ -114,6 +114,20 @@ async function runMigrations() {
     ON CONFLICT (key) DO NOTHING
   `);
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS brand_settings (
+      id INTEGER PRIMARY KEY DEFAULT 1,
+      app_name TEXT NOT NULL DEFAULT 'Aloha WebCalculator',
+      main_logo_url TEXT,
+      small_logo_url TEXT,
+      accent_color TEXT NOT NULL DEFAULT '#7c3aed',
+      disabled_group_ids JSONB NOT NULL DEFAULT '[]'
+    )
+  `);
+  await pool.query(`
+    INSERT INTO brand_settings (id) VALUES (1)
+    ON CONFLICT (id) DO NOTHING
+  `);
+  await pool.query(`
     ALTER TABLE quotes ADD COLUMN IF NOT EXISTS pdf_path TEXT
   `);
   await pool.query(`

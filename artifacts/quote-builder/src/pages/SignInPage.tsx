@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import logo from "/logo.png";
 import AuthSpinner from "@/components/AuthSpinner";
 import { Eye, EyeOff } from "lucide-react";
+import ForgotPasswordModal from "@/components/ForgotPasswordModal";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -20,6 +21,8 @@ export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [failCount, setFailCount] = useState(0);
+  const [showForgotModal, setShowForgotModal] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,12 +37,15 @@ export default function SignInPage() {
       });
       const data = await res.json() as { user?: object; error?: string };
       if (!res.ok) {
+        setFailCount((n) => n + 1);
         setError(data.error ?? "Sign in failed");
         return;
       }
+      setFailCount(0);
       await refetch();
       setLocation("/");
     } catch {
+      setFailCount((n) => n + 1);
       setError("Network error — please try again");
     } finally {
       setLoading(false);
@@ -59,7 +65,31 @@ export default function SignInPage() {
           <h2 className="auth-form-title">Sign in</h2>
           <p className="auth-form-subtitle">Enter your email and password to continue</p>
 
-          {error && <div className="auth-form-error">{error}</div>}
+          {error && (
+            <div className="auth-form-error">
+              {error}
+              {failCount >= 3 && (
+                <div style={{ marginTop: 8 }}>
+                  <button
+                    type="button"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      color: "var(--accent)",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                    }}
+                    onClick={() => setShowForgotModal(true)}
+                  >
+                    Forgot your password?
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="auth-form-group">
             <label className="auth-form-label" htmlFor="email">Email</label>
@@ -112,6 +142,13 @@ export default function SignInPage() {
           </p>
         </form>
       </div>
+
+      {showForgotModal && (
+        <ForgotPasswordModal
+          prefillEmail={email}
+          onClose={() => setShowForgotModal(false)}
+        />
+      )}
     </div>
   );
 }

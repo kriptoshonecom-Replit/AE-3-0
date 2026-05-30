@@ -9,7 +9,7 @@ import type { Quote } from "../types";
 import {
   Home, LayoutDashboard, UserPlus, Package, Building2,
   FileImage, Bell, BadgeCheck, BookOpen, ScrollText,
-  Rocket, PenLine, Users, BookMarked, ChevronRight, Clock,
+  Rocket, PenLine, Users, BookMarked, ChevronRight, Clock, Settings,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
@@ -187,6 +187,10 @@ export default function GlobalNav() {
               <button type="button" className={navLink("/admin/app-release")} onClick={() => go("/admin/app-release")}>
                 <Rocket size={16} />
                 App Release
+              </button>
+              <button type="button" className={navLink("/admin/app-settings")} onClick={() => go("/admin/app-settings")}>
+                <Settings size={16} />
+                App Settings
               </button>
               <button type="button" className={navLink("/amendments")} onClick={() => go("/amendments")}>
                 <PenLine size={16} />

@@ -4,6 +4,8 @@ import { X, Plus } from "lucide-react";
 import { computeLineItemTotal } from "../utils/quoteLogic";
 import { formatCurrency, generateId } from "../utils/calculations";
 import productsData from "../data/products.json";
+import { exportAmendmentToPDF } from "../utils/amendmentPdfExport";
+import type { AmendmentExportData } from "../utils/amendmentPdfExport";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -253,8 +255,47 @@ export default function AmendModal({
         });
       }
 
-      const d = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(d.error ?? "Save failed");
+      interface SavedRow {
+        amendmentNumber: number;
+        quoteNumber: string | null;
+        originalQuoteNumber: string | null;
+        companyName: string | null;
+        customerName: string | null;
+        createdAt: string;
+        error?: string;
+      }
+      const d = (await res.json()) as SavedRow;
+      if (!res.ok) throw new Error((d as unknown as { error?: string }).error ?? "Save failed");
+
+      // Auto-download PDF when creating a new amendment
+      if (!isEditMode) {
+        try {
+          const pdfData: AmendmentExportData = {
+            amendmentNumber: d.amendmentNumber,
+            quoteNumber: d.quoteNumber ?? null,
+            originalQuoteNumber: d.originalQuoteNumber ?? null,
+            companyName: d.companyName ?? null,
+            customerName: d.customerName ?? null,
+            createdAt: d.createdAt ?? new Date().toISOString(),
+            deltaGroups: deltaSummary.deltaGroups as unknown as AmendmentExportData["deltaGroups"],
+            subtotalDelta: deltaSummary.subtotalDelta,
+            mrrDelta: deltaSummary.mrrDelta,
+            restockingFee: deltaSummary.restockingFee,
+            discount: quote.meta.discount ?? 0,
+            tax: quote.meta.tax ?? 0,
+            notes,
+            addressNumber: quote.meta.addressNumber ?? "",
+            addressName: quote.meta.addressName ?? "",
+            addressCity: quote.meta.addressCity ?? "",
+            addressState: quote.meta.addressState ?? "",
+            zipCode: quote.meta.zipCode ?? "",
+            addressCountry: quote.meta.addressCountry ?? "",
+          };
+          await exportAmendmentToPDF(pdfData, "download");
+        } catch {
+          // PDF export failure is silent — amendment is already saved
+        }
+      }
       onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");

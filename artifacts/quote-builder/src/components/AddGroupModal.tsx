@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { X } from "lucide-react";
 import type { ProductCategory } from "../types";
+import { useAppSettings } from "../context/AppSettingsContext";
 
 interface Props {
   catalog: ProductCategory[];
@@ -10,7 +10,10 @@ interface Props {
 }
 
 export default function AddGroupModal({ catalog, existingGroupIds, onAdd, onClose }: Props) {
-  const available = catalog.filter((c) => !existingGroupIds.includes(c.id));
+  const { settings } = useAppSettings();
+  const available = catalog.filter(
+    (c) => !existingGroupIds.includes(c.id) && !settings.disabledGroupIds.includes(c.id)
+  );
 
   return (
     <div className="modal-overlay" onClick={onClose}>

@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { GlobalNavProvider } from "@/context/GlobalNavContext";
 import { SidebarQuoteProvider } from "@/context/SidebarQuoteContext";
+import { AppSettingsProvider } from "@/context/AppSettingsContext";
 import GlobalNav from "@/components/GlobalNav";
 import QuoteBuilder from "@/pages/QuoteBuilder";
 import SignInPage from "@/pages/SignInPage";
@@ -22,6 +23,7 @@ import DashboardPage from "@/pages/DashboardPage";
 import LogJournalPage from "@/pages/LogJournalPage";
 import AppReleasePage from "@/pages/AppReleasePage";
 import CDMPage from "@/pages/CDMPage";
+import AppSettingsPage from "@/pages/AppSettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +68,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function AppRoutes() {
   return (
+    <AppSettingsProvider>
     <GlobalNavProvider>
     <SidebarQuoteProvider>
     <AuthProvider>
@@ -112,6 +115,9 @@ function AppRoutes() {
           <Route path="/admin/app-release">
             <AdminRoute><AppReleasePage /></AdminRoute>
           </Route>
+          <Route path="/admin/app-settings">
+            <AdminRoute><AppSettingsPage /></AdminRoute>
+          </Route>
           <Route path="/customers">
             <ProtectedRoute><CDMPage /></ProtectedRoute>
           </Route>
@@ -120,6 +126,7 @@ function AppRoutes() {
     </AuthProvider>
     </SidebarQuoteProvider>
     </GlobalNavProvider>
+    </AppSettingsProvider>
   );
 }
 

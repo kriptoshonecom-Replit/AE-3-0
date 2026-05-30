@@ -7,6 +7,7 @@ import { eq, and } from "drizzle-orm";
 import { signToken } from "../lib/auth";
 import { requireAuth } from "../middlewares/requireAuth";
 import { logger } from "../lib/logger";
+import { sendPasswordResetEmail } from "../lib/email";
 
 const router = Router();
 
@@ -260,6 +261,50 @@ router.patch("/profile", requireAuth, async (req, res) => {
   } catch (err) {
     logger.error(err, "profile update error");
     res.status(500).json({ error: "Profile update failed" });
+  }
+});
+
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body as { email?: string };
+  if (!email?.trim()) {
+    res.status(400).json({ error: "Email is required" });
+    return;
+  }
+  const normalised = email.toLowerCase().trim();
+  try {
+    const [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.email, normalised))
+      .limit(1);
+
+    // Always respond OK — do not leak whether the email exists
+    if (!user) {
+      res.json({ success: true });
+      return;
+    }
+
+    // Generate a strong 12-char password with upper, lower, digit, special
+    const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    const lower = "abcdefghjkmnpqrstuvwxyz";
+    const digits = "23456789";
+    const special = "!@#$%&*";
+    const all = upper + lower + digits + special;
+    const pick = (s: string) => s[Math.floor(Math.random() * s.length)];
+    let pw = pick(upper) + pick(lower) + pick(digits) + pick(special);
+    for (let i = 4; i < 12; i++) pw += pick(all);
+    // Shuffle
+    const newPassword = pw.split("").sort(() => Math.random() - 0.5).join("");
+
+    const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+    await db.update(usersTable).set({ passwordHash }).where(eq(usersTable.id, user.id));
+
+    await sendPasswordResetEmail(user.email, user.fullName, newPassword);
+
+    res.json({ success: true });
+  } catch (err) {
+    logger.error(err, "forgot-password error");
+    res.status(500).json({ error: "Failed to reset password" });
   }
 });
 

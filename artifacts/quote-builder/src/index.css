@@ -3446,6 +3446,7 @@ textarea:focus::placeholder {
 .sidebar-version-footer {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 5px;
   padding: 8px 14px 12px;
   font-size: 10.5px;
