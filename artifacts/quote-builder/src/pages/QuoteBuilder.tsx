@@ -171,6 +171,11 @@ export default function QuoteBuilder() {
   }, []);
   const [saved, setSaved] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showReloadWarning, setShowReloadWarning] = useState(() => {
+    const flag = sessionStorage.getItem("cpq_unsaved_on_exit");
+    if (flag) { sessionStorage.removeItem("cpq_unsaved_on_exit"); return true; }
+    return false;
+  });
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -1088,6 +1093,8 @@ export default function QuoteBuilder() {
       setSaving(false);
     }
     setHasUnsavedChanges(false);
+    setShowReloadWarning(false);
+    sessionStorage.removeItem("cpq_unsaved_on_exit");
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -1211,9 +1218,10 @@ export default function QuoteBuilder() {
 
   useEffect(() => {
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isDirtyRef.current) {
+      if (isDirtyRef.current || isUnsavedNewRef.current) {
         e.preventDefault();
         e.returnValue = "";
+        sessionStorage.setItem("cpq_unsaved_on_exit", "1");
       }
     };
     window.addEventListener("beforeunload", onBeforeUnload);
@@ -1362,6 +1370,36 @@ export default function QuoteBuilder() {
 
   return (
     <div className="app-shell">
+      {/* Post-reload unsaved changes banner */}
+      {showReloadWarning && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999,
+          background: "#fef3c7", borderBottom: "2px solid #f59e0b",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "10px 20px", gap: 12, fontSize: 13, color: "#92400e",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <AlertTriangle size={15} style={{ flexShrink: 0 }} />
+            <span>
+              <strong>Your last session ended with unsaved changes.</strong>{" "}
+              The quote has been restored to its last saved state.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowReloadWarning(false)}
+            style={{
+              background: "none", border: "none", cursor: "pointer",
+              color: "#92400e", fontWeight: 700, fontSize: 16, lineHeight: 1,
+              padding: "0 4px", flexShrink: 0,
+            }}
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {/* Unsaved changes modal */}
       {pendingAction && (
         <UnsavedChangesModal onYes={handleUnsavedYes} onNo={handleUnsavedNo} />
