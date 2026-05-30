@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { Settings, Palette, Type, Upload, Check, RefreshCw, ImageIcon, Eye } from "lucide-react";
+import { Settings, Palette, Type, Upload, Check, RefreshCw, ImageIcon, Eye, Library } from "lucide-react";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 import { useAppSettings } from "@/context/AppSettingsContext";
+import MediaPickerModal, { type MediaFile } from "@/components/MediaPickerModal";
 import productsData from "../data/products.json";
 import pitData from "../data/pit-services.json";
 
@@ -81,6 +82,7 @@ export default function AppSettingsPage() {
   const [logoUploading, setLogoUploading] = useState<Record<string, boolean>>({ main: false, small: false });
   const mainLogoRef = useRef<HTMLInputElement>(null);
   const smallLogoRef = useRef<HTMLInputElement>(null);
+  const [mediaPickerTarget, setMediaPickerTarget] = useState<"main" | "small" | null>(null);
 
   /* Sync when settings load */
   useEffect(() => {
@@ -155,6 +157,27 @@ export default function AppSettingsPage() {
     void saveGroups(next);
   }
 
+  async function selectLogoFromLibrary(type: "main" | "small", file: MediaFile) {
+    setLogoUploading((p) => ({ ...p, [type]: true }));
+    setLogoMsg((p) => ({ ...p, [type]: "" }));
+    try {
+      const field = type === "main" ? "mainLogoUrl" : "smallLogoUrl";
+      const res = await fetch(`${API_BASE}/api/settings`, {
+        method: "PUT", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: file.path }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      await refresh();
+      setLogoMsg((p) => ({ ...p, [type]: "Saved!" }));
+    } catch {
+      setLogoMsg((p) => ({ ...p, [type]: "Error saving" }));
+    } finally {
+      setLogoUploading((p) => ({ ...p, [type]: false }));
+      setTimeout(() => setLogoMsg((p) => ({ ...p, [type]: "" })), 3000);
+    }
+  }
+
   async function uploadLogo(type: "main" | "small", file: File) {
     setLogoUploading((p) => ({ ...p, [type]: true }));
     setLogoMsg((p) => ({ ...p, [type]: "" }));
@@ -179,6 +202,7 @@ export default function AppSettingsPage() {
   const allPitCategories = pitData.categories as { id: string; name: string; lineItems: unknown[] }[];
 
   return (
+    <>
     <div className="admin-page">
       <div className="admin-topbar">
         <GlobalNavTrigger />
@@ -265,15 +289,25 @@ export default function AppSettingsPage() {
                 style={{ display: "none" }}
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadLogo("main", f); e.target.value = ""; }}
               />
-              <button
-                className="edit-modal-cancel"
-                style={{ width: "100%", marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-                onClick={() => mainLogoRef.current?.click()}
-                disabled={logoUploading.main}
-              >
-                {logoUploading.main ? <RefreshCw size={13} className="spin" /> : <Upload size={13} />}
-                {logoUploading.main ? "Uploading…" : "Upload Logo"}
-              </button>
+              <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                <button
+                  className="edit-modal-cancel"
+                  style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}
+                  onClick={() => setMediaPickerTarget("main")}
+                  disabled={logoUploading.main}
+                >
+                  <Library size={13} /> Library
+                </button>
+                <button
+                  className="edit-modal-cancel"
+                  style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}
+                  onClick={() => mainLogoRef.current?.click()}
+                  disabled={logoUploading.main}
+                >
+                  {logoUploading.main ? <RefreshCw size={13} className="spin" /> : <Upload size={13} />}
+                  {logoUploading.main ? "Uploading…" : "Upload new"}
+                </button>
+              </div>
               {logoMsg.main && <div style={{ marginTop: 6 }}><SaveMsg msg={logoMsg.main} /></div>}
             </div>
 
@@ -308,15 +342,25 @@ export default function AppSettingsPage() {
                 style={{ display: "none" }}
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadLogo("small", f); e.target.value = ""; }}
               />
-              <button
-                className="edit-modal-cancel"
-                style={{ width: "100%", marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-                onClick={() => smallLogoRef.current?.click()}
-                disabled={logoUploading.small}
-              >
-                {logoUploading.small ? <RefreshCw size={13} className="spin" /> : <Upload size={13} />}
-                {logoUploading.small ? "Uploading…" : "Upload Icon"}
-              </button>
+              <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                <button
+                  className="edit-modal-cancel"
+                  style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}
+                  onClick={() => setMediaPickerTarget("small")}
+                  disabled={logoUploading.small}
+                >
+                  <Library size={13} /> Library
+                </button>
+                <button
+                  className="edit-modal-cancel"
+                  style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}
+                  onClick={() => smallLogoRef.current?.click()}
+                  disabled={logoUploading.small}
+                >
+                  {logoUploading.small ? <RefreshCw size={13} className="spin" /> : <Upload size={13} />}
+                  {logoUploading.small ? "Uploading…" : "Upload new"}
+                </button>
+              </div>
               {logoMsg.small && <div style={{ marginTop: 6 }}><SaveMsg msg={logoMsg.small} /></div>}
             </div>
           </div>
@@ -380,8 +424,8 @@ export default function AppSettingsPage() {
                   style={{
                     display: "flex", alignItems: "center",
                     gap: 10, padding: "10px 14px", borderRadius: 7,
-                    border: `1px solid ${enabled ? "var(--accent-border)" : "var(--border)"}`,
-                    background: enabled ? "var(--accent-subtle)" : "var(--surface-subtle)",
+                    border: "1px solid var(--border)",
+                    background: "var(--surface)",
                     transition: "all 0.12s",
                   }}
                 >
@@ -425,8 +469,8 @@ export default function AppSettingsPage() {
                   style={{
                     display: "flex", alignItems: "center",
                     gap: 10, padding: "10px 14px", borderRadius: 7,
-                    border: `1px solid ${enabled ? "var(--accent-border)" : "var(--border)"}`,
-                    background: enabled ? "var(--accent-subtle)" : "var(--surface-subtle)",
+                    border: "1px solid var(--border)",
+                    background: "var(--surface)",
                     transition: "all 0.12s",
                   }}
                 >
@@ -459,5 +503,13 @@ export default function AppSettingsPage() {
 
       </div>
     </div>
+
+    {mediaPickerTarget && (
+      <MediaPickerModal
+        onSelect={(file) => { void selectLogoFromLibrary(mediaPickerTarget, file); }}
+        onClose={() => setMediaPickerTarget(null)}
+      />
+    )}
+    </>
   );
 }

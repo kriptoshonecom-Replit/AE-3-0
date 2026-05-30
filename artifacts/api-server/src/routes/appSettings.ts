@@ -41,6 +41,8 @@ router.put("/settings", requireAdmin, async (req, res) => {
     appName?: string;
     accentColor?: string;
     disabledGroupIds?: string[];
+    mainLogoUrl?: string;
+    smallLogoUrl?: string;
   };
   try {
     await getOrCreateSettings();
@@ -48,6 +50,8 @@ router.put("/settings", requireAdmin, async (req, res) => {
     if (body.appName !== undefined) updates.appName = body.appName.trim() || "Aloha WebCalculator";
     if (body.accentColor !== undefined) updates.accentColor = body.accentColor;
     if (body.disabledGroupIds !== undefined) updates.disabledGroupIds = body.disabledGroupIds;
+    if (body.mainLogoUrl !== undefined) updates.mainLogoUrl = body.mainLogoUrl;
+    if (body.smallLogoUrl !== undefined) updates.smallLogoUrl = body.smallLogoUrl;
 
     const [updated] = await db
       .update(brandSettingsTable)
