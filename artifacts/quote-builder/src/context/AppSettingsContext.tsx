@@ -16,6 +16,7 @@ const ACCENT_PALETTES: Record<string, { hover: string; subtle: string; border: s
   "#D92243": { hover: "#b51a37", subtle: "#fde8ec", border: "#f8c2cc" },
   "#59B292": { hover: "#479f7e", subtle: "#eaf7f2", border: "#c5e8d9" },
   "#1591DC": { hover: "#0e7bbf", subtle: "#e5f4fc", border: "#b8dff5" },
+  "#F4AE52": { hover: "#e09a3a", subtle: "#fff8ee", border: "#fde4b5" },
 };
 
 const DEFAULT_SETTINGS: AppSettings = {

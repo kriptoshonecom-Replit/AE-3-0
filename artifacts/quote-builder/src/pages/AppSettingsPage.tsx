@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Settings, Palette, ToggleLeft, ToggleRight, Type, Upload, Check, RefreshCw, ImageIcon } from "lucide-react";
+import { Settings, Palette, Type, Upload, Check, RefreshCw, ImageIcon, Eye } from "lucide-react";
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 import { useAppSettings } from "@/context/AppSettingsContext";
 import productsData from "../data/products.json";
@@ -11,6 +11,7 @@ const ACCENT_COLORS = [
   { value: "#D92243", label: "Dark Red", textColor: "#ffffff" },
   { value: "#59B292", label: "Green", textColor: "#ffffff" },
   { value: "#1591DC", label: "Blue", textColor: "#ffffff" },
+  { value: "#F4AE52", label: "Orange", textColor: "#ffffff" },
 ];
 
 function Section({ icon, title, description, children }: {
@@ -180,12 +181,11 @@ export default function AppSettingsPage() {
       <div className="admin-topbar">
         <GlobalNavTrigger />
         <div className="admin-topbar-title">
-          <Settings size={18} />
           App Settings
         </div>
       </div>
 
-      <div className="admin-body" style={{ maxWidth: 720, margin: "0 auto" }}>
+      <div className="admin-body" style={{ maxWidth: 720, margin: "0 auto", paddingTop: 24 }}>
 
         {/* App Name */}
         <Section icon={<Type size={17} />} title="App Name" description="Changes the name shown in the navbar, PDF exports, and emails.">
@@ -355,7 +355,7 @@ export default function AppSettingsPage() {
 
         {/* Product Group Toggles */}
         <Section
-          icon={<ToggleRight size={17} />}
+          icon={<Eye size={17} />}
           title="Product Group Visibility"
           description="Disabled groups are hidden from the Add Group popup in the Quote Builder. Already-added groups are unaffected."
         >
@@ -369,33 +369,38 @@ export default function AppSettingsPage() {
             {allCategories.map((cat) => {
               const enabled = !disabledGroups.has(cat.id);
               return (
-                <button
+                <div
                   key={cat.id}
-                  type="button"
-                  onClick={() => toggleGroup(cat.id)}
-                  disabled={groupsSaving}
                   style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                    gap: 10, padding: "10px 14px", borderRadius: 7, cursor: "pointer",
+                    display: "flex", alignItems: "center",
+                    gap: 10, padding: "10px 14px", borderRadius: 7,
                     border: `1px solid ${enabled ? "var(--accent-border)" : "var(--border)"}`,
                     background: enabled ? "var(--accent-subtle)" : "var(--surface-subtle)",
                     transition: "all 0.12s",
-                    textAlign: "left",
                   }}
                 >
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: enabled ? "var(--accent)" : "var(--text-3)" }}>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={enabled}
+                    onClick={() => toggleGroup(cat.id)}
+                    disabled={groupsSaving}
+                    className={`pit-toggle-switch ${enabled ? "pit-toggle-on" : "pit-toggle-off"}`}
+                  >
+                    <span className="pit-toggle-thumb" />
+                  </button>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: enabled ? "var(--accent)" : "var(--text-3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {cat.name}
                     </div>
                     <div style={{ fontSize: 11, color: "var(--text-3)" }}>
                       {(cat.items as unknown[]).length} product{(cat.items as unknown[]).length !== 1 ? "s" : ""}
                     </div>
                   </div>
-                  {enabled
-                    ? <ToggleRight size={20} color="var(--accent)" />
-                    : <ToggleLeft size={20} color="var(--text-3)" />
-                  }
-                </button>
+                  <span className={`pit-toggle-state ${enabled ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
+                    {enabled ? "On" : "Off"}
+                  </span>
+                </div>
               );
             })}
           </div>
