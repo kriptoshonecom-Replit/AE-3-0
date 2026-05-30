@@ -3,6 +3,7 @@ import { Settings, Palette, Type, Upload, Check, RefreshCw, ImageIcon, Eye } fro
 import GlobalNavTrigger from "@/components/GlobalNavTrigger";
 import { useAppSettings } from "@/context/AppSettingsContext";
 import productsData from "../data/products.json";
+import pitData from "../data/pit-services.json";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -175,6 +176,7 @@ export default function AppSettingsPage() {
   }
 
   const allCategories = productsData.categories as { id: string; name: string; items: unknown[] }[];
+  const allPitCategories = pitData.categories as { id: string; name: string; lineItems: unknown[] }[];
 
   return (
     <div className="admin-page">
@@ -365,7 +367,11 @@ export default function AppSettingsPage() {
             </span>
             {groupsMsg && <SaveMsg msg={groupsMsg} />}
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+          {/* Product Groups */}
+          <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-2)", marginBottom: 8 }}>
+            Quote Builder Groups
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 18 }}>
             {allCategories.map((cat) => {
               const enabled = !disabledGroups.has(cat.id);
               return (
@@ -395,6 +401,51 @@ export default function AppSettingsPage() {
                     </div>
                     <div style={{ fontSize: 11, color: "var(--text-3)" }}>
                       {(cat.items as unknown[]).length} product{(cat.items as unknown[]).length !== 1 ? "s" : ""}
+                    </div>
+                  </div>
+                  <span className={`pit-toggle-state ${enabled ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>
+                    {enabled ? "On" : "Off"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* PIT Configuration Groups */}
+          <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-2)", marginBottom: 8, marginTop: 6 }}>
+            PIT Configuration
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+            {allPitCategories.map((cat) => {
+              const key = `pit-${cat.id}`;
+              const enabled = !disabledGroups.has(key);
+              return (
+                <div
+                  key={key}
+                  style={{
+                    display: "flex", alignItems: "center",
+                    gap: 10, padding: "10px 14px", borderRadius: 7,
+                    border: `1px solid ${enabled ? "var(--accent-border)" : "var(--border)"}`,
+                    background: enabled ? "var(--accent-subtle)" : "var(--surface-subtle)",
+                    transition: "all 0.12s",
+                  }}
+                >
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={enabled}
+                    onClick={() => toggleGroup(key)}
+                    disabled={groupsSaving}
+                    className={`pit-toggle-switch ${enabled ? "pit-toggle-on" : "pit-toggle-off"}`}
+                  >
+                    <span className="pit-toggle-thumb" />
+                  </button>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: enabled ? "var(--accent)" : "var(--text-3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {cat.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--text-3)" }}>
+                      {(cat.lineItems as unknown[]).length} line item{(cat.lineItems as unknown[]).length !== 1 ? "s" : ""}
                     </div>
                   </div>
                   <span className={`pit-toggle-state ${enabled ? "pit-toggle-state-on" : "pit-toggle-state-off"}`}>

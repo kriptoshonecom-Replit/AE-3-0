@@ -3,6 +3,7 @@ import { AlertTriangle, Menu, Check, Save, Download, ChevronDown, FileText, Plus
 import { useAuth } from "@/context/AuthContext";
 import { useGlobalNav } from "@/context/GlobalNavContext";
 import { useSidebarQuoteContext } from "@/context/SidebarQuoteContext";
+import { useAppSettings } from "@/context/AppSettingsContext";
 import { useLocation } from "wouter";
 import logo from "/logo.png";
 import type { Quote, QuoteGroup, QuoteLineItem, QuoteMeta, ProductCategory, PitCategory } from "../types";
@@ -147,6 +148,7 @@ function autoAddLookupProducts(
 export default function QuoteBuilder() {
   const { user } = useAuth();
   const userId = user?.id ?? "";
+  const { settings: appSettings } = useAppSettings();
   const [location, setLocation] = useLocation();
 
   const [quote, setQuote] = useState<Quote>(createNewQuote);
@@ -235,6 +237,11 @@ export default function QuoteBuilder() {
 
   const [pitCategories, setPitCategories] = useState<PitCategory[]>(
     (pitDataStatic.categories as unknown as PitCategory[]).filter((c) => c.id !== "heatmap"),
+  );
+
+  const visiblePitCategories = useMemo(
+    () => pitCategories.filter((c) => !appSettings.disabledGroupIds.includes(`pit-${c.id}`)),
+    [pitCategories, appSettings.disabledGroupIds],
   );
 
   const [pitHourlyRate, setPitHourlyRate] = useState<number>(PIT_HOURLY_RATE);
@@ -1785,7 +1792,7 @@ export default function QuoteBuilder() {
                     onYesNoChange={handleYesNoChange}
                     optionalProgramToggles={optionalProgramToggles}
                     onOptionalProgramToggle={handleOptionalProgramToggle}
-                    pitCategories={pitCategories}
+                    pitCategories={visiblePitCategories}
                     pitHourlyRate={pitHourlyRate}
                     groups={quote.groups}
                     catalogMap={catalogMap}
