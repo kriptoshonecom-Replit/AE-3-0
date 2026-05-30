@@ -343,8 +343,14 @@ export default function ProfilePage() {
 
   if (!isLoaded) {
     return (
-      <div className="profile-loading">
-        <div className="spinner" />
+      <div className="admin-page">
+        <div className="admin-topbar">
+          <GlobalNavTrigger />
+          <h1 className="admin-page-title">My Profile</h1>
+        </div>
+        <div className="profile-loading">
+          <div className="spinner" />
+        </div>
       </div>
     );
   }
@@ -362,7 +368,12 @@ export default function ProfilePage() {
   const lastName = lastParts.join(" ");
 
   return (
-    <div className="profile-page">
+    <div className="admin-page">
+      <div className="admin-topbar">
+        <GlobalNavTrigger />
+        <h1 className="admin-page-title">My Profile</h1>
+      </div>
+      <div className="profile-body">
       <div className="profile-card">
         <div className="profile-header">
           <div className="profile-avatar">
@@ -410,15 +421,12 @@ export default function ProfilePage() {
         <PaymentsRevenueStats stats={stats} loading={statsLoading} />
 
         <div className="profile-actions">
-          <button className="btn-ghost" type="button" onClick={() => history.back()}>
-            <ChevronLeft size={14} />
-            Go Back
-          </button>
           <button className="btn-signout" type="button" onClick={handleSignOut}>
             <LogOut size={14} />
             Sign out
           </button>
         </div>
+      </div>
       </div>
 
       {showEdit && user && (

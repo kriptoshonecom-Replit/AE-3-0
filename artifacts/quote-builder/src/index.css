@@ -2672,17 +2672,15 @@ textarea:focus::placeholder {
 
 /* ── Profile Page ────────────────────────────────────── */
 
-.profile-page {
-  min-height: 100vh;
-  background: var(--bg);
+.profile-body {
   display: flex;
-  align-items: center;
   justify-content: center;
   padding: 24px 16px;
+  flex: 1;
 }
 
 .profile-loading {
-  min-height: 100vh;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
