@@ -170,6 +170,7 @@ export default function QuoteBuilder() {
       .catch(() => {});
   }, []);
   const [saved, setSaved] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -730,7 +731,7 @@ export default function QuoteBuilder() {
           });
         }
       }
-      if (markDirty) isDirtyRef.current = true;
+      if (markDirty) { isDirtyRef.current = true; setHasUnsavedChanges(true); }
     },
     [userId, stampStatus, editingOtherUserId]
   );
@@ -1086,6 +1087,7 @@ export default function QuoteBuilder() {
     } finally {
       setSaving(false);
     }
+    setHasUnsavedChanges(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -1443,6 +1445,17 @@ export default function QuoteBuilder() {
                 <>
                   <Save size={14} />
                   {isUnsavedNew ? "Save Quote" : "Save"}
+                  {hasUnsavedChanges && (
+                    <span style={{
+                      display: "inline-block",
+                      width: 7,
+                      height: 7,
+                      borderRadius: "50%",
+                      background: "var(--accent)",
+                      marginLeft: 2,
+                      flexShrink: 0,
+                    }} />
+                  )}
                 </>
               )}
             </button>
